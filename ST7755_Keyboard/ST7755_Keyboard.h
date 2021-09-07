@@ -31,6 +31,7 @@ class Key
 		Key(Adafruit_ST7735*, int, int, int, int, char*, int);
 		void display(int);
 		void displaySelected(int);
+		
 		int x;
 		int y;
 		int w;
@@ -76,12 +77,8 @@ class ST7755_Keyboard
 	int selected_index; // Index of selected key in list
 	int current_input_length; // Length of current input
 	int enter_pressed; // Indicate if enter pressed
-	
 	int last_mode; // Mode to return to when exiting tabs
 	int last_key; // Key last selected when entering tabs
 };
 
-
-
 #endif
-

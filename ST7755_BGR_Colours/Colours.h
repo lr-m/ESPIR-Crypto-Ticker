@@ -11,3 +11,7 @@
 #define SALMON 0x027F
 #define WHITE 0xFFFF
 #define BLACK 0x0000
+#define PINK 0xF81B
+#define LIGHTNING_BLUE 0xFF00
+#define NIGHT_BLUE 0x9802
+#define MOON_YELLOW 0x67DF

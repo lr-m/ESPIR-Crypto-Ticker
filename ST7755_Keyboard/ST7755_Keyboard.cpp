@@ -36,27 +36,41 @@ ST7755_Keyboard::ST7755_Keyboard(Adafruit_ST7735* display)
 	
 	// Define bottom keys
 	int tab_width = 36;
-	bottom_keys[0] = Key(tft, EDGE_BORDER, tft->height()-15, tab_width, KEY_HEIGHT, " <-- ", 1);
-	bottom_keys[1] = Key(tft, tft->width()/2 - tab_width/2, tft->height()-15, tab_width, KEY_HEIGHT, "Space", 1);
-	bottom_keys[2] = Key(tft, tft->width() - EDGE_BORDER - tab_width, tft->height()-15, tab_width, KEY_HEIGHT, "Enter", 1);
+	bottom_keys[0] = Key(tft, EDGE_BORDER, tft->height()-15, 
+		tab_width, KEY_HEIGHT, " <-- ", 1);
+	bottom_keys[1] = Key(tft, tft->width()/2 - tab_width/2, 
+		tft->height()-15, tab_width, KEY_HEIGHT, "Space", 1);
+	bottom_keys[2] = Key(tft, tft->width() - EDGE_BORDER - tab_width, 
+		tft->height()-15, tab_width, KEY_HEIGHT, "Enter", 1);
 	
 	int current_letter = 0;
 	
 	// Define the letters
-	char* key_chars[26] = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"};
+	char* key_chars[26] = {"q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", 
+		"d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m"};
 	
 	for (int i = 0; i < 10; i++){
-		letters[current_letter] = Key(tft, map(i, 0, 9, EDGE_BORDER, tft->width() - NORMAL_KEY_WIDTH - EDGE_BORDER), tft->height()/2 + EDGE_BORDER, NORMAL_KEY_WIDTH, KEY_HEIGHT, key_chars[current_letter], 0);
+		letters[current_letter] = Key(
+			tft, map(i, 0, 9, EDGE_BORDER, 
+				tft->width() - NORMAL_KEY_WIDTH - EDGE_BORDER), 
+				tft->height()/2 + EDGE_BORDER, NORMAL_KEY_WIDTH, 
+				KEY_HEIGHT, key_chars[current_letter], 0);
 		current_letter++;
 	}
 	
 	for (int i = 0; i < 9; i++){
-		letters[current_letter] = Key(tft, map(i, 0, 8, EDGE_BORDER + NORMAL_KEY_WIDTH/2, tft->width() - (3*NORMAL_KEY_WIDTH/2) - EDGE_BORDER), tft->height()/2 + 2*EDGE_BORDER + KEY_HEIGHT, NORMAL_KEY_WIDTH, KEY_HEIGHT, key_chars[current_letter], 0);
+		letters[current_letter] = Key(tft, map(i, 0, 8, EDGE_BORDER + NORMAL_KEY_WIDTH/2, 
+			tft->width() - (3*NORMAL_KEY_WIDTH/2) - EDGE_BORDER), 
+			tft->height()/2 + 2*EDGE_BORDER + KEY_HEIGHT, NORMAL_KEY_WIDTH, 
+			KEY_HEIGHT, key_chars[current_letter], 0);
 		current_letter++;
 	}
 	
 	for (int i = 0; i < 7; i++){
-		letters[current_letter] = Key(tft, map(i, 0, 6, EDGE_BORDER + 2*NORMAL_KEY_WIDTH, tft->width() - (3*NORMAL_KEY_WIDTH) - EDGE_BORDER), tft->height()/2 + 3*EDGE_BORDER + 2*KEY_HEIGHT, NORMAL_KEY_WIDTH, KEY_HEIGHT, key_chars[current_letter], 0);
+		letters[current_letter] = Key(tft, map(i, 0, 6, EDGE_BORDER + 2*NORMAL_KEY_WIDTH, 
+			tft->width() - (3*NORMAL_KEY_WIDTH) - EDGE_BORDER), 
+			tft->height()/2 + 3*EDGE_BORDER + 2*KEY_HEIGHT, NORMAL_KEY_WIDTH, 
+			KEY_HEIGHT, key_chars[current_letter], 0);
 		current_letter++;
 	}
 	
@@ -64,24 +78,39 @@ ST7755_Keyboard::ST7755_Keyboard(Adafruit_ST7735* display)
 	char* key_nums[10] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
 	
 	for (int i = 0; i < 10; i++){
-		numbers[i] = Key(tft, map(i, 0, 9, EDGE_BORDER + NORMAL_KEY_WIDTH/2, tft->width() - (3*NORMAL_KEY_WIDTH/2) - EDGE_BORDER), tft->height()/2 + 2*EDGE_BORDER + KEY_HEIGHT, NORMAL_KEY_WIDTH, KEY_HEIGHT, key_nums[i], 0);
+		numbers[i] = Key(tft, map(i, 0, 9, EDGE_BORDER + NORMAL_KEY_WIDTH/2, 
+			tft->width() - (3*NORMAL_KEY_WIDTH/2) - EDGE_BORDER), 
+			tft->height()/2 + 2*EDGE_BORDER + KEY_HEIGHT, NORMAL_KEY_WIDTH, 
+			KEY_HEIGHT, key_nums[i], 0);
 	}
 	
 	// Define the specials
-	char* key_specials[32] = {"!", "\"", "#", "$", "%", "&", "\"", "(", ")", "*", "+", ",", "-", ".", "/", ":", ";", "<", "=", ">", "?", "@", "[", "\\", "]", "^", "_", "`", "{", "|", "}", "~"};
+	char* key_specials[32] = {"!", "\"", "#", "$", "%", "&", "\"", "(", ")", 
+		"*", "+", ",", "-", ".", "/", ":", ";", "<", "=", ">", "?", "@", "[", 
+		"\\", "]", "^", "_", "`", "{", "|", "}", "~"};
 	current_letter = 0;
 	for (int i = 0; i < 11; i++){
-		specials[current_letter] = Key(tft, map(i, 0, 10, EDGE_BORDER, tft->width() - NORMAL_KEY_WIDTH - EDGE_BORDER), tft->height()/2 + EDGE_BORDER, NORMAL_KEY_WIDTH, KEY_HEIGHT, key_specials[current_letter], 0);
+		specials[current_letter] = Key(tft, map(i, 0, 10, EDGE_BORDER, 
+			tft->width() - NORMAL_KEY_WIDTH - EDGE_BORDER), 
+			tft->height()/2 + EDGE_BORDER, NORMAL_KEY_WIDTH, KEY_HEIGHT, 
+			key_specials[current_letter], 0);
 		current_letter++;
 	}
 	
 	for (int i = 0; i < 11; i++){
-		specials[current_letter] = Key(tft, map(i, 0, 10, EDGE_BORDER, tft->width() - NORMAL_KEY_WIDTH - EDGE_BORDER), tft->height()/2 + 2*EDGE_BORDER + KEY_HEIGHT, NORMAL_KEY_WIDTH, KEY_HEIGHT, key_specials[current_letter], 0);
+		specials[current_letter] = Key(tft, map(i, 0, 10, EDGE_BORDER, 
+			tft->width() - NORMAL_KEY_WIDTH - EDGE_BORDER), 
+			tft->height()/2 + 2*EDGE_BORDER + KEY_HEIGHT, NORMAL_KEY_WIDTH, 
+			KEY_HEIGHT, key_specials[current_letter], 0);
 		current_letter++;
 	}
 	
 	for (int i = 0; i < 10; i++){
-		specials[current_letter] = Key(tft, map(i, 0, 9, EDGE_BORDER + NORMAL_KEY_WIDTH/2, tft->width() - (3*NORMAL_KEY_WIDTH/2) - EDGE_BORDER), tft->height()/2 + 3*EDGE_BORDER + 2*KEY_HEIGHT, NORMAL_KEY_WIDTH, KEY_HEIGHT, key_specials[current_letter], 0);
+		specials[current_letter] = Key(tft, map(i, 0, 9, 
+			EDGE_BORDER + NORMAL_KEY_WIDTH/2, 
+			tft->width() - (3*NORMAL_KEY_WIDTH/2) - EDGE_BORDER), 
+			tft->height()/2 + 3*EDGE_BORDER + 2*KEY_HEIGHT, NORMAL_KEY_WIDTH, 
+			KEY_HEIGHT, key_specials[current_letter], 0);
 		current_letter++;
 	}
 	
@@ -167,7 +196,8 @@ void ST7755_Keyboard::exitTabs(){
 // Display the keyboard on the screen
 void ST7755_Keyboard::display()
 {
-	tft->fillRect(0, tft->height()/2, tft->width(), tft->height()/2, KEYBOARD_BG_COLOUR);
+	tft->fillRect(0, tft->height()/2, tft->width(), 
+		tft->height()/2, KEYBOARD_BG_COLOUR);
 	
 	if (mode == 0 || mode == 1){
 		for (int i = 0; i < 26; i++){
@@ -314,7 +344,8 @@ void ST7755_Keyboard::moveLeft(){
 }
 
 // Constructor for Key
-Key::Key(Adafruit_ST7735* display, int x_pos, int y_pos, int width, int height, char* act, int bottom){
+Key::Key(Adafruit_ST7735* display, int x_pos, int y_pos, int width, 
+		int height, char* act, int bottom){
 	tft = display;
 	x = x_pos;
 	y = y_pos;
