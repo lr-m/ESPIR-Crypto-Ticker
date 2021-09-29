@@ -30,6 +30,7 @@ extern unsigned char epd_bitmap_tron [];
 extern unsigned char epd_bitmap_cosmos [];
 extern unsigned char epd_bitmap_tether [];
 extern unsigned char epd_bitmap_bat [];
+extern unsigned char epd_bitmap_nu [];
 
 // Define PIN config
 #define TFT_CS              D3
@@ -39,12 +40,13 @@ extern unsigned char epd_bitmap_bat [];
 #define TFT_MOSI            D7
 #define RECV_PIN            D1
 
-#define COIN_COUNT          17
+#define COIN_COUNT          18
 #define MAX_SELECTED_COINS  8
 #define CANDLE_COUNT        24
 #define CANDLE_WIDTH        3
 
 // Positional constants
+#define NAME_START_2        98
 #define NAME_START_3        92
 #define NAME_START_4        86
 #define NAME_START_5        80
@@ -55,7 +57,7 @@ extern unsigned char epd_bitmap_bat [];
 #define CHANGE_START_X      60
 #define CHANGE_START_Y      50
 
-#define MENU_BUTTON_COUNT   3
+#define MENU_BUTTON_COUNT   4
 
 // For ST7735-based displays, we will use this call
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST);
@@ -65,7 +67,7 @@ int current_candles = 1; // Current number of candles displayed
 int selected_coins_count = 1; // Current number of coins selected
 int current_coin; // Index of current coin being displayed
 int current_second; // Current second from time NTP server
-int last_minute = 0; // Last minute for time update check
+unsigned long last_minute = 0; // Last minute for time update check
 
 // Flags
 int ssid_entered; // Indicates if SSID of network entered
@@ -128,6 +130,8 @@ COIN** selected_coins; // List of pointers to coins currently selected
 int curr_coin_list_index; // The index of the coin currently selected in the coin list submenu
 char** coin_list; // List of all coin codes
 int coin_cycle_delay; // Delay between coin changes
+int candle_update_delay;
+int last_candle_update_delay = 5;
 
 void setup(void) {
   Serial.begin(9600);
@@ -144,8 +148,9 @@ void setup(void) {
   // Initialise menu
   menu_button_functions = (char**) malloc(sizeof(char*) * MENU_BUTTON_COUNT);
   menu_button_functions[0] = "Settings";
-  menu_button_functions[1] = "Edit List";
-  menu_button_functions[2] = "Exit Menu";
+  menu_button_functions[1] = "Edit Coin List";
+  menu_button_functions[2] = "Clear WiFi Credentials";
+  menu_button_functions[3] = "Exit Menu";
   menu = (ST7755_Menu*) malloc(sizeof(ST7755_Menu));
   *menu = ST7755_Menu(&tft, MENU_BUTTON_COUNT, menu_button_functions);
 
@@ -173,14 +178,20 @@ void setup(void) {
   coins[14] = *createCoin("TRX", "tron", epd_bitmap_tron, RED, WHITE);
   coins[15] = *createCoin("ATOM", "cosmos", epd_bitmap_cosmos, DARK_GREY, WHITE);
   coins[16] = *createCoin("BAT", "basic-attention-token", epd_bitmap_bat, WHITE, SALMON);
+  coins[17] = *createCoin("NU", "nucypher", epd_bitmap_nu, WHITE, LIGHT_BLUE);
 
   // Add selectors to respective submenus
-  menu->getButtons()[0].addSelector("Coin cycle duration:", coin_change_times, 5, 1, 5);
+  menu->getButtons()[0].addSelector("Coin duration (secs):", coin_change_times, 5, 1, 5);
+  menu->getButtons()[0].addSelector("Candle duration (mins):", coin_change_times, 5, 1, 5);
   menu->getButtons()[1].addSelector("Select up to 8 coins:", coin_list, 4, MAX_SELECTED_COINS, COIN_COUNT);
 
   // Get default coin delay time from selector
   String str = coin_change_times[menu->getButtons()[0].selectors[0].getSelected()[0]];
   coin_cycle_delay = str.toInt();
+
+  // Get default update time from selector
+  str = coin_change_times[menu->getButtons()[0].selectors[0].getSelected()[0]];
+  candle_update_delay = str.toInt();
 
   // Try to read network credentials from EEPROM if they exist
   EEPROM.begin(512);
@@ -245,9 +256,12 @@ void loop() {
       // Begin ndp time client
       timeClient.begin();
       drawTime();
+
+      //getBitmap("BTC");
     
       network_initialised = 1;
     } else if (in_menu == 1) { // Do menu operations
+
       if (in_coinlist == 1){ // Interact with coin list submenu
         interactWithCoinList();
         return;
@@ -260,6 +274,8 @@ void loop() {
       
       interactWithMenu();
     } else { // Display crypto interface
+      updateAndDrawTime();
+      
         for (int i = 0; i < 50; i++){
           delay(10);
           if (irrecv.decode()){
@@ -280,27 +296,9 @@ void loop() {
             irrecv.resume();
           }
         }
-
-        // Check minutes and update time
-        last_minute = timeClient.getMinutes();
-        while(!timeClient.update()){delay(500);}
-        
-//        Serial.print("Current Time: ");
-//        Serial.print(timeClient.getMinutes());
-//        Serial.print(":");
-//        Serial.println(timeClient.getSeconds());
-
-        current_second = timeClient.getSeconds();
-      
-        // Draw time if a minute has passed since last drawn
-        if (last_minute != timeClient.getMinutes()){
-          Serial.println("Time Updated on Screen");
-          drawTime();
-          last_minute = timeClient.getMinutes();
-        }
       
         // Move data along every 15 minutes
-        if (timeClient.getMinutes()%15 == 0 && time_slot_moved == 0){
+        if (timeClient.getMinutes()%candle_update_delay == 0 && time_slot_moved == 0){
           Serial.println("Incremented Candles");
           for (int i = 0; i < selected_coins_count; i++){
             nextTimePeriod(selected_coins[i]);
@@ -340,6 +338,7 @@ String getFormattedTimeNoSeconds(NTPClient timeClient) {
   String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
 
   unsigned long minutes = (rawTime % 3600) / 60;
+  last_minute = minutes;
   String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
 
   return hoursStr + ":" + minuteStr;
@@ -352,6 +351,38 @@ void forceGetData(){
     delay(5000);
   }
   Serial.println("Successfully retrieved data");
+}
+
+unsigned char* getBitmap(char* coin_id){
+  Serial.println("\nGetting Bitmap");
+  client.setFingerprint(fingerprint);
+  http.begin(client, "https://192.168.1.109:5000/api/v1/resources/coins?id=BTC");
+  
+  int httpCode = http.GET();
+
+  if (httpCode > 0) {
+      StaticJsonDocument<800> doc;
+      // Get the request response payload (Price data)
+      DeserializationError error = deserializeJson(doc, http.getString());
+      Serial.println(http.getString());
+      if (error) {
+        Serial.print(F("deserializeJson() failed: "));
+        Serial.println(error.f_str());
+           //Close connection
+        http.end();   //Close connection
+        return NULL;
+      }
+
+      // Parameters
+      // The ArduinoJson assistant will generate your readable parameters.  Paste them here and remove any that you don't need.
+      JsonObject current;
+      current = doc[coin_id];
+      String hello = current["bitmap"];
+      Serial.println(hello);
+  }
+  http.end();   //Close connection
+
+  return NULL;
 }
 
 // Retrieves the current price, and 24hr change of the currently selected coins, uses CoinGecko API
@@ -570,7 +601,7 @@ void drawCandles(G_CANDLE* candles){
 
     tft.drawLine(bar_x, high_y, bar_x+2, high_y, color);
     tft.drawLine(bar_x+1, high_y, bar_x+1, min(opening_y, closing_y), color);
-    tft.fillRect(bar_x, min(opening_y, closing_y), CANDLE_WIDTH, max(opening_y, closing_y) - min(opening_y, closing_y), color);
+    tft.drawRect(bar_x, min(opening_y, closing_y), CANDLE_WIDTH, max(opening_y, closing_y) - min(opening_y, closing_y), color);
     tft.drawLine(bar_x+1, low_y, bar_x+1, max(opening_y, closing_y), color);
     tft.drawLine(bar_x, low_y, bar_x+2, low_y, color);
   }
@@ -710,8 +741,10 @@ void drawName(String coin_name){
     tft.setCursor(NAME_START_3, 6);
   } else if (coin_name.length() == 4) {
     tft.setCursor(NAME_START_4, 6);
-  } else {
+  } else if (coin_name.length() == 5){
     tft.setCursor(NAME_START_5, 6);
+  } else {
+    tft.setCursor(NAME_START_2, 6);
   }
   tft.print(coin_name);
 }
@@ -856,12 +889,16 @@ void interactWithMenu(){
           drawTime();
         }
 
+        if (button_action == "Clear WiFi Credentials"){
+          clearEEPROM();
+        }
+
         if (button_action == "Settings"){
           in_settings = 1;
           menu->getButtons()[0].drawSubMenu();
         }
 
-        if (button_action == "Edit List"){
+        if (button_action == "Edit Coin List"){
           in_coinlist = 1;
           menu->getButtons()[1].drawSubMenu();
         }
@@ -878,31 +915,7 @@ void interactWithCoinList(){
     if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00){
       char* action = menu->getButtons()[1].pressSubMenu();
       if (action == "Return"){
-        for (int i = 0; i < selected_coins_count; i++){
-          free(selected_coins[i]->candles);
-        }
-        current_candles = 1;
-        selected_coins_count = 0;
-        current_coin = 0;
-        Serial.print("\nCoins Selected: ");
-        for (int i = 0; i < MAX_SELECTED_COINS; i++){
-          if (menu->getButtons()[1].selectors[0].getSelected()[i] == -1){
-            break;
-          }
-          Serial.print((coins + menu->getButtons()[1].selectors[0].getSelected()[i])->coin_id);
-          Serial.print(", ");
-          selected_coins_count++;
-          selected_coins[i] = coins + menu->getButtons()[1].selectors[0].getSelected()[i];
-          selected_coins[i]->candles = (G_CANDLE*) malloc(sizeof(G_CANDLE) * CANDLE_COUNT);
-          initialiseCandles(selected_coins[i]->candles);
-        }
-
-        Serial.println("\nGetting data in return");
-
-        forceGetData();
-
-        Serial.println("Returned with data");
-        
+        resetCoins();
         in_coinlist = 0;
         menu->display();
       }
@@ -929,6 +942,33 @@ void interactWithCoinList(){
   }
 }
 
+void resetCoins(){
+  // Free current candles
+  for (int i = 0; i < selected_coins_count; i++){
+    free(selected_coins[i]->candles);
+  }
+  
+  current_candles = 1;
+  selected_coins_count = 0;
+  current_coin = 0;
+
+  // Get all selected coins
+  Serial.print("\nCoins Selected: ");
+  for (int i = 0; i < MAX_SELECTED_COINS; i++){
+    if (menu->getButtons()[1].selectors[0].getSelected()[i] == -1){
+      break;
+    }
+    Serial.print((coins + menu->getButtons()[1].selectors[0].getSelected()[i])->coin_id);
+    Serial.print(", ");
+    selected_coins_count++;
+    selected_coins[i] = coins + menu->getButtons()[1].selectors[0].getSelected()[i];
+    selected_coins[i]->candles = (G_CANDLE*) malloc(sizeof(G_CANDLE) * CANDLE_COUNT);
+    initialiseCandles(selected_coins[i]->candles);
+  }
+  
+  forceGetData();
+}
+
 // Interacts with the settings sub menu, catches keys pressed and performs corresponding menu actions
 void interactWithSettings(){
   menu->getButtons()[0].flashSelectedSelector();
@@ -938,6 +978,19 @@ void interactWithSettings(){
       if (action == "Return"){
         String str = coin_change_times[menu->getButtons()[0].selectors[0].getSelected()[0]];
         coin_cycle_delay = str.toInt();
+
+        str = coin_change_times[menu->getButtons()[0].selectors[1].getSelected()[0]];
+        candle_update_delay = str.toInt();
+
+        Serial.print(candle_update_delay);
+        Serial.print(" ");
+        Serial.println(last_candle_update_delay);
+
+        if (candle_update_delay != last_candle_update_delay){
+          resetCoins();
+        }
+
+        last_candle_update_delay = candle_update_delay;
         
         in_settings = 0;
         menu->display();
@@ -961,5 +1014,23 @@ void interactWithSettings(){
     }
     delay(50);
     irrecv.resume();
+  }
+}
+
+void updateAndDrawTime(){
+  // Check minutes and update time
+  while(!timeClient.update()){delay(500);}
+  
+//  Serial.print("Current Time: ");
+//  Serial.print(timeClient.getMinutes());
+//  Serial.print(":");
+//  Serial.println(timeClient.getSeconds());
+  
+  current_second = timeClient.getSeconds();
+
+  // Draw time if a minute has passed since last drawn
+  if (last_minute != timeClient.getMinutes()){
+    Serial.println("Time Updated on Screen");
+    drawTime();
   }
 }
