@@ -22,7 +22,7 @@ ST7755_Menu::ST7755_Menu(Adafruit_ST7735* display, int btn_count, char** button_
 	buttons = (Button*) malloc(sizeof(Button)*button_count);
 
 	for (int i = 0; i < button_count; i++){
-		buttons[i] = Button(tft, 0, 28+i*22, tft->width(), 20, button_values[i], 1);
+		buttons[i] = Button(tft, 0, 4+i*22, tft->width(), 20, button_values[i], 1);
 	}
 	
 	selected_button_index = 0;
@@ -38,9 +38,6 @@ void ST7755_Menu::display()
 {
 	tft->fillRect(0, 0, tft->width(), tft->height()-20, KEYBOARD_BG_COLOUR);
 	tft->setTextColor(ST77XX_WHITE);
-	tft->setTextSize(2);
-	tft->setCursor(60, 4);
-	tft->print("Menu:");
 	tft->setTextSize(1);
 	for (int i = 0; i < button_count; i++){
 		if (i == selected_button_index){
@@ -113,7 +110,7 @@ void Button::addSelector(char* prompt, char** options,
 	if (selector_count < MAX_SELECTORS){
 		selector_count++;
 		selectors[selector_count-1] = Selector(tft, 0, 
-			(selector_count)*30, prompt, options, window_size, max, vals);
+			(selector_count)*40, prompt, options, window_size, max, vals);
 	}
 }
 
@@ -178,12 +175,16 @@ void Button::subMenuUp(){
 
 // Selected the option on the left (if possible) in sub menu
 void Button::subMenuLeft(){
-	selectors[current_selector].moveLeft();
+	if (on_return_button == 0){
+		selectors[current_selector].moveLeft();
+	}
 }
 
 // Selected the option on the right (if possible) in sub menu
 void Button::subMenuRight(){
-	selectors[current_selector].moveRight();
+	if (on_return_button == 0){
+		selectors[current_selector].moveRight();
+	}
 }
 
 ////////////////////////////////////////////// Selector ///////////////////////////////////////////
@@ -213,8 +214,8 @@ Selector::Selector(Adafruit_ST7735* display, int x_pos, int y_pos,
 // Redraw the buttons of the selector
 void Selector::cycleButtons(){
 	for (int i = first_index; i <= (first_index + window_size)-1; i++){
-		tft->setCursor(map(i, first_index, first_index + window_size-1, 12, 
-			tft->width()-40)-3, y+16-3);
+		tft->setCursor(map(i, first_index, first_index + window_size-1, FIRST_BUTTON_X, 
+			tft->width()-LAST_BUTTON_X)-3, y+13);
 		
 		int selected_test = 0;
 		for (int j = 0; j < max_selected; j++){
@@ -225,15 +226,15 @@ void Selector::cycleButtons(){
 		}
 		
 		if (selected_test == 0){ // Not selected so display red background
-			tft->fillRoundRect(map(i, first_index, first_index + window_size-1, 12, 
-				tft->width()-40)-2, y+16-2, (tft->width()-25)/window_size, 12, 2, RED);
+			tft->fillRoundRect(map(i, first_index, first_index + window_size-1, FIRST_BUTTON_X, 
+				tft->width()-LAST_BUTTON_X)-2, y+14, (tft->width()-LAST_BUTTON_X)/window_size, 12, 2, RED);
 		} else { // Selected so display green background
-			tft->fillRoundRect(map(i, first_index, first_index + window_size-1, 12, 
-				tft->width()-40)-2, y+16-2, (tft->width()-25)/window_size, 12, 2, GREEN);
+			tft->fillRoundRect(map(i, first_index, first_index + window_size-1, FIRST_BUTTON_X, 
+				tft->width()-LAST_BUTTON_X)-2, y+14, (tft->width()-LAST_BUTTON_X)/window_size, 12, 2, GREEN);
 		}
 		
-		tft->setCursor(map(i, first_index, first_index + window_size-1, 12, 
-			tft->width()-40), y+16);
+		tft->setCursor(map(i, first_index, first_index + window_size-1, FIRST_BUTTON_X, 
+			tft->width()-LAST_BUTTON_X), y+16);
 		tft->print(options[i]);
 	}
 }
@@ -259,7 +260,7 @@ void Selector::displaySelected(){
 // Flash the selected option
 void Selector::flashSelected(){
 	tft->setCursor(map(current_changing_index, first_index, 
-		first_index + window_size-1, 12, tft->width()-40)-3, y+16-3);
+		first_index + window_size-1, FIRST_BUTTON_X, tft->width()-LAST_BUTTON_X)-3, y+13);
 	
 	int selected_test = 0;
 	for (int j = 0; j < max_selected; j++){
@@ -270,25 +271,25 @@ void Selector::flashSelected(){
 	}
 	
 	tft->fillRoundRect(map(current_changing_index, first_index, 
-		first_index + window_size-1, 12, tft->width()-40)-2, y+16-2, 
-		(tft->width()-25)/window_size, 12, 2, DARK_GREY);
+		first_index + window_size-1, FIRST_BUTTON_X, tft->width()-LAST_BUTTON_X)-2, y+14, 
+		(tft->width()-LAST_BUTTON_X)/window_size, 12, 2, DARK_GREY);
 	tft->setCursor(map(current_changing_index, first_index, 
-		first_index + window_size-1, 12, tft->width()-40), y+16);
+		first_index + window_size-1, FIRST_BUTTON_X, tft->width()-LAST_BUTTON_X), y+16);
 	tft->print(options[current_changing_index]);
 	delay(150);
 	if (selected_test == 0){ // Not selected so display red background
 		tft->fillRoundRect(map(current_changing_index, first_index, 
-			first_index + window_size-1, 12, tft->width()-40)-2, y+16-2, 
-			(tft->width()-25)/window_size, 12, 2, RED);
+			first_index + window_size-1, FIRST_BUTTON_X, tft->width()-LAST_BUTTON_X)-2, y+14, 
+			(tft->width()-LAST_BUTTON_X)/window_size, 12, 2, RED);
 	} else { // Selected so display green background
 		tft->fillRoundRect(map(current_changing_index, first_index, 
-			first_index + window_size-1, 12, tft->width()-40)-2, y+16-2, 
-			(tft->width()-25)/window_size, 12, 2, GREEN);
+			first_index + window_size-1, FIRST_BUTTON_X, tft->width()-LAST_BUTTON_X)-2, y+14, 
+			(tft->width()-LAST_BUTTON_X)/window_size, 12, 2, GREEN);
 	}
 	
 	
 	tft->setCursor(map(current_changing_index, first_index, 
-		first_index + window_size-1, 12, tft->width()-40), y+16);
+		first_index + window_size-1, FIRST_BUTTON_X, tft->width()-LAST_BUTTON_X), y+16);
 	tft->print(options[current_changing_index]);
 	
 	delay(250);
