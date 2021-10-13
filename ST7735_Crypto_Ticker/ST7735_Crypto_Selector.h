@@ -1,6 +1,6 @@
 /*
-  Test.h - Test library for Wiring - description
-  Copyright (c) 2006 John Doe.  All right reserved.
+  ST7735_Crypto_Selector.h - Amount Selector library for ST7735
+  Copyright (c) 2021 Luke Mills.  All right reserved.
 */
 
 #include <Adafruit_GFX.h>    // Core graphics library
@@ -39,4 +39,3 @@ class Price_Selector
 };
 
 #endif
-

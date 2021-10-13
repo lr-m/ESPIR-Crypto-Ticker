@@ -1,6 +1,6 @@
 /*
-  Test.h - Test library for Wiring - description
-  Copyright (c) 2006 John Doe.  All right reserved.
+  ST7735_Menu.h - Menu for ST7735
+  Copyright (c) 2021 Luke Mills.  All right reserved.
 */
 
 #include <Adafruit_GFX.h>    // Core graphics library
@@ -109,7 +109,4 @@ class ST7735_Menu
 	char** values;
 };
 
-
-
 #endif
-
