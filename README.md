@@ -3,7 +3,6 @@ ESP8266 NodeMCU powered Crypto Ticker that uses an ST7735 TFT screen to display 
 
 TODO
 - Finish README
-- Merge libraries into single library
 - Add candle graph for portfolio
 - Add search functionality and more cryptocurrencies
 - Create an api for the device to pull bitmaps and other details from
