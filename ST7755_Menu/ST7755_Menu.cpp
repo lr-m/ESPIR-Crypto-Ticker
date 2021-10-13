@@ -36,7 +36,7 @@ char* ST7755_Menu::press(){
 // Display the menu on the screen
 void ST7755_Menu::display()
 {
-	tft->fillRect(0, 0, tft->width(), tft->height()-20, KEYBOARD_BG_COLOUR);
+	tft->fillRect(0, 0, tft->width(), tft->height()-12, KEYBOARD_BG_COLOUR);
 	tft->setTextColor(ST77XX_WHITE);
 	tft->setTextSize(1);
 	for (int i = 0; i < button_count; i++){
@@ -110,13 +110,13 @@ void Button::addSelector(char* prompt, char** options,
 	if (selector_count < MAX_SELECTORS){
 		selector_count++;
 		selectors[selector_count-1] = Selector(tft, 0, 
-			(selector_count)*40, prompt, options, window_size, max, vals);
+			((selector_count)*40)-10, prompt, options, window_size, max, vals);
 	}
 }
 
 // Draw the buttons sub menu
 void Button::drawSubMenu(){
-	tft->fillRect(0, 0, tft->width(), tft->height()-20, KEYBOARD_BG_COLOUR);
+	tft->fillRect(0, 0, tft->width(), tft->height()-12, KEYBOARD_BG_COLOUR);
 	return_button->display();
 	
 	for (int i = 0; i < selector_count; i++){

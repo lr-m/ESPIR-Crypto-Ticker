@@ -1,8 +1,3 @@
-/*
-  ST7755_Keyboard.h - Keyboard library for ST7755 display
-  Copyright (c) 2021 Luke Mills.  All right reserved.
-*/
-
 #include "ST7755_Keyboard.h"
 #include "HardwareSerial.h"
 #include <Adafruit_GFX.h>    // Core graphics library
