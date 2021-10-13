@@ -8,9 +8,9 @@
 #include <ESP8266HTTPClient.h>
 #include <ArduinoJson.h>
 #include <IRremote.h>
-#include <ST7755_Keyboard.h>
-#include <ST7755_Menu.h>
-#include <ST7755_Crypto_Selector.h>
+#include <ST7735_Keyboard.h>
+#include <ST7735_Menu.h>
+#include <ST7735_Crypto_Selector.h>
 #include <Colours.h>
 
 // Pull in bitmaps from bitmaps.c
@@ -110,10 +110,10 @@ IRrecv irrecv(RECV_PIN);
 decode_results results;
 
 // Instantiate keyboard, menu, and portfolio editor
-ST7755_Keyboard* keyboard;
+ST7735_Keyboard* keyboard;
 
-ST7755_Menu* coin_menu;
-ST7755_Menu* portfolio_menu;
+ST7735_Menu* coin_menu;
+ST7735_Menu* portfolio_menu;
 char** coin_menu_button_functions;
 char** portfolio_menu_button_functions;
 char* coin_change_times[5] = {"5", "10", "15", "30", "60"};
@@ -168,8 +168,8 @@ void setup(void) {
   tft.setRotation(1);
 
   // Initialise keyboard
-  keyboard = (ST7755_Keyboard*) malloc(sizeof(ST7755_Keyboard));
-  *keyboard = ST7755_Keyboard(&tft);
+  keyboard = (ST7735_Keyboard*) malloc(sizeof(ST7735_Keyboard));
+  *keyboard = ST7735_Keyboard(&tft);
 
   // Initialise portfolio amount selector
   price_selector = (Price_Selector*) malloc(sizeof(Price_Selector));
@@ -182,8 +182,8 @@ void setup(void) {
   coin_menu_button_functions[1] = "Edit Coin List";
   coin_menu_button_functions[2] = "Clear WiFi Credentials";
   coin_menu_button_functions[3] = "Exit Menu";
-  coin_menu = (ST7755_Menu*) malloc(sizeof(ST7755_Menu));
-  *coin_menu = ST7755_Menu(&tft, COIN_MENU_BUTTON_COUNT, 
+  coin_menu = (ST7735_Menu*) malloc(sizeof(ST7735_Menu));
+  *coin_menu = ST7735_Menu(&tft, COIN_MENU_BUTTON_COUNT, 
                             coin_menu_button_functions);
 
   // Initialise portfolio menu
@@ -192,8 +192,8 @@ void setup(void) {
   portfolio_menu_button_functions[0] = "Edit Portfolio";
   portfolio_menu_button_functions[1] = "Clear WiFi Credentials";
   portfolio_menu_button_functions[2] = "Exit Menu";
-  portfolio_menu = (ST7755_Menu*) malloc(sizeof(ST7755_Menu));
-  *portfolio_menu = ST7755_Menu(&tft, PORTFOLIO_MENU_BUTTON_COUNT, 
+  portfolio_menu = (ST7735_Menu*) malloc(sizeof(ST7735_Menu));
+  *portfolio_menu = ST7735_Menu(&tft, PORTFOLIO_MENU_BUTTON_COUNT, 
                                 portfolio_menu_button_functions);
 
   // Create coin array
