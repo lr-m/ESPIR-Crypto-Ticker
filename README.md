@@ -16,10 +16,10 @@ ESP8266 NodeMCU powered Crypto Ticker that uses an ST7735 TFT screen to display 
 
 ## Portfolio Example (Random Coins and Amounts)
 ### Section 1 - Coin Details
-<img src="https://user-images.githubusercontent.com/47477832/137373354-35c3d439-3129-4abf-86ca-88a0efb7dda7.jpg" width="350">
+<img src="https://user-images.githubusercontent.com/47477832/137373359-00ccda17-8f93-40ca-89bd-db0e0d09f09f.jpg" width="350">
 
 ### Section 2 - Portfolio Proportions
-<img src="https://user-images.githubusercontent.com/47477832/137373359-00ccda17-8f93-40ca-89bd-db0e0d09f09f.jpg" width="350">
+<img src="https://user-images.githubusercontent.com/47477832/137373354-35c3d439-3129-4abf-86ca-88a0efb7dda7.jpg" width="350">
 
 ## Portfolio Menu
 <img src="https://user-images.githubusercontent.com/47477832/137286591-d63df87b-64ba-416c-b76b-cdac572d39a9.jpg" width="350">
