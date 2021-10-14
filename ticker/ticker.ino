@@ -69,6 +69,8 @@ extern unsigned char epd_bitmap_uniswap [];
 #define COIN_MENU_BUTTON_COUNT   4
 #define PORTFOLIO_MENU_BUTTON_COUNT 3
 
+#define DEG2RAD 0.0174532925   
+
 // For ST7735-based displays, we will use this call
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_MOSI, 
                         TFT_SCLK, TFT_RST);
@@ -94,7 +96,7 @@ int time_slot_moved = 0; // Indicates if candles have been moved along
 // For HTTP connection
 WiFiClientSecure client;
 HTTPClient http;
-const char *fingerprint  = ""; // Browser fingerprint
+const char *fingerprint  = "33c57b69e63b765c393df1193b1768b81b0a1fd9";
 char* url_start = "https://api.coingecko.com/api/v3/simple/price?ids=";
 char* url_end = "&vs_currencies=gbp&include_24hr_change=true";
 
@@ -131,6 +133,8 @@ char** coin_list; // List of all coin codes
 int coin_cycle_delay; // Delay between coin changes
 int candle_update_delay; // How often candles are pushed along (mins)
 int last_candle_update_delay = 5; // To detect changes in candle update time
+
+int portfolio_display_mode = 0;
 
 int mode = 1; // Coin or portfolio mode
 
@@ -310,6 +314,7 @@ void loop() {
         interactWithKeyboard();
       }
     } else if (network_initialised == 0){ // Initialise network
+      
       // If first value of eeprom is null terminator then take input from user
       char* loaded_ssid = (char*) malloc(sizeof(char) * 30);
       char* loaded_password = (char*) malloc(sizeof(char) * 30);
@@ -432,6 +437,18 @@ void loop() {
     
               drawCoinObj(selected_coins[current_coin]);
             }
+          } else if (mode == 2){
+            if (irrecv.decodedIRData.decodedRawData == 0xF708FF00){
+              //portfolio_display_mode = portfolio_display_mode - 1 < 0 ? 0 : portfolio_display_mode - 1;
+              Serial.println("left");
+              portfolio_display_mode = 0;
+              drawPortfolio();
+            } else if (irrecv.decodedIRData.decodedRawData == 0xA55AFF00){
+              //portfolio_display_mode = portfolio_display_mode + 1 > 1 ? 1 : portfolio_display_mode + 1;
+              Serial.println("right");
+              portfolio_display_mode = 1;
+              drawPortfolio();
+            }
           }
           
           irrecv.resume();
@@ -470,6 +487,23 @@ void loop() {
         }
       }
     }
+}
+
+int fillSegment (int x, int y, int startAngle, int subAngle, int r, unsigned int colour)
+{
+  float sx = cos((startAngle - 90) * DEG2RAD);                                              // calculate first pair of coordinates for segment start
+  float sy = sin((startAngle - 90) * DEG2RAD);
+  uint16_t x1 = sx * r + x;
+  uint16_t y1 = sy * r + y;
+
+  for (int i = startAngle; i < startAngle + subAngle; i++)                                  // draw color blocks every inc degrees 
+     {    
+     int x2 = cos((i + 1 - 90) * DEG2RAD) * r + x;                                          // calculate pair of coordinates for segment end
+     int y2 = sin((i + 1 - 90) * DEG2RAD) * r + y;
+     tft.fillTriangle(x1, y1, x2, y2, x, y, colour);
+     x1 = x2;                                                                               // copy segment end to segment start for next segment
+     y1 = y2;
+     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -526,41 +560,81 @@ void drawPortfolio(){
       }
 
       free(coin_price_owned);
-    
-      // Draw bar proportional to amount of coin owned
-      i = 0;
+
       double coin_total = 0;
       double current_total = 0;
-      while(selected_portfolio_indexes[i] != -1){
-        coin_total = coins[selected_portfolio_indexes[i]].current_price * 
-          coins[selected_portfolio_indexes[i]].amount;
-        
-        tft.fillRect(map(current_total, 0, total, 0, tft.width()), 24, 1 + 
-          map(coin_total, 0, total, 0, tft.width()), 5, 
-          coins[selected_portfolio_indexes[i]].portfolio_colour);
-    
-        current_total+=coin_total;
-        i++;
-      }
-    
-      // Draw coin code, cost of owned, and % of portfolio
       i = 0;
-      while(selected_portfolio_indexes[i] != -1){
-        coin_total = coins[selected_portfolio_indexes[i]].current_price * 
-          coins[selected_portfolio_indexes[i]].amount;
-        tft.setTextSize(1);
-        tft.setCursor(7, 35 + i * 10);
-        tft.fillRect(2, 34 + i * 10, 2, 10, 
-          coins[selected_portfolio_indexes[i]].portfolio_colour);
-        tft.print(coins[selected_portfolio_indexes[i]].coin_code);
-        tft.setCursor(42, 35 + i * 10);
-        tft.setTextColor(WHITE);
-        tft.print(char(156));
-        tft.print(coin_total);
-        tft.setCursor(120, 35 + i * 10);
-        tft.print(coin_total / total * 100, 1);
-        tft.print("%");
-        i++;
+      if (portfolio_display_mode == 0){
+        // Draw bar proportional to amount of coin owned
+        while(selected_portfolio_indexes[i] != -1){
+          coin_total = coins[selected_portfolio_indexes[i]].current_price * 
+            coins[selected_portfolio_indexes[i]].amount;
+          
+          tft.fillRect(map(current_total, 0, total, 0, tft.width()), 24, 1 + 
+            map(coin_total, 0, total, 0, tft.width()), 5, 
+            coins[selected_portfolio_indexes[i]].portfolio_colour);
+      
+          current_total+=coin_total;
+          i++;
+        }
+      
+        // Draw coin code, cost of owned, and % of portfolio
+        i = 0;
+        while(selected_portfolio_indexes[i] != -1){
+          coin_total = coins[selected_portfolio_indexes[i]].current_price * 
+            coins[selected_portfolio_indexes[i]].amount;
+          tft.setTextSize(1);
+          tft.setCursor(7, 35 + i * 10);
+          tft.fillRect(2, 34 + i * 10, 2, 10, 
+            coins[selected_portfolio_indexes[i]].portfolio_colour);
+          tft.print(coins[selected_portfolio_indexes[i]].coin_code);
+          tft.setCursor(42, 35 + i * 10);
+          tft.setTextColor(WHITE);
+          tft.print(char(156));
+          tft.print(coin_total);
+          tft.setCursor(116, 35 + i * 10);
+          if (coins[selected_portfolio_indexes[i]].current_change < 0){
+            tft.setTextColor(RED);
+          } else {
+            tft.setTextColor(GREEN);
+            tft.print('+');
+          }
+          tft.print(coins[selected_portfolio_indexes[i]].current_change);
+          tft.print('%');
+          tft.setTextColor(WHITE);
+          i++;
+        }
+      } else if (portfolio_display_mode == 1){
+        // Draw coin code, cost of owned, and % of portfolio
+        i = 0;
+        while(selected_portfolio_indexes[i] != -1){
+          coin_total = coins[selected_portfolio_indexes[i]].current_price * 
+            coins[selected_portfolio_indexes[i]].amount;
+          tft.setTextSize(1);
+          tft.setCursor(7, 35 + i * 10);
+          tft.fillRect(2, 34 + i * 10, 2, 10, 
+            coins[selected_portfolio_indexes[i]].portfolio_colour);
+          tft.print(coins[selected_portfolio_indexes[i]].coin_code);
+          tft.setCursor(42, 35 + i * 10);
+          tft.setTextColor(WHITE);
+          tft.print(coin_total/total * 100, 1);
+          tft.print('%');
+          i++;
+        }
+
+        // Draw pi chart proportional to amount of coin owned
+        i = 0;
+        while(selected_portfolio_indexes[i] != -1){
+          coin_total = coins[selected_portfolio_indexes[i]].current_price * 
+            coins[selected_portfolio_indexes[i]].amount;
+          
+          fillSegment(tft.width()/2 + 40, tft.height()/2 + 5, map(current_total, 0, *total_value, 0, 360),
+            map(coin_total, 0, *total_value, 0, 360),  35, 
+            coins[selected_portfolio_indexes[i]].portfolio_colour);
+      
+          current_total+=coin_total;
+          i++;
+        }
       }
     }
   }
@@ -705,6 +779,7 @@ int getData(int app_mode)
         while(selected_portfolio_indexes[j] != -1){
           current = doc[coins[selected_portfolio_indexes[j]].coin_id];
           coins[selected_portfolio_indexes[j]].current_price = current["gbp"];
+          coins[selected_portfolio_indexes[j]].current_change = current["gbp_24h_change"];
           j++;
         }
       }
