@@ -13,8 +13,8 @@ This screen displays characteristics of coins selected by the user in the menu, 
 
 ### Controller Navigation
 - '#' - This opens the Crypto menu that allows configuration and coin selection.
-- '&#8592;' - Moves the display along to the next coin.
-- '&#8594;' - Moves the display to the previous coin.
+- '&#8594;' - Moves the display along to the next coin.
+- '&#8592;' - Moves the display to the previous coin.
 - '&#8593;' - Moves to the next screen (Portfolio/Coin).
 - '&#8595;' - Moves to the previous screen (Portfolio/Coin).
 
@@ -54,8 +54,8 @@ This section displays the propertions of your portfolio, both graphically as a p
 ### Controller Navigation
 
 - '#' - Opens the menu.
-- '&#8592;' - Moves to the next section display.
-- '&#8594;' - Moves to the previous section display.
+- '&#8594;' - Moves to the next section display.
+- '&#8592;' - Moves to the previous section display.
 - '&#8593;' - Moves to the next screen (Portfolio/Coin).
 - '&#8595;' - Moves to the previous screen (Portfolio/Coin).
 
@@ -75,14 +75,14 @@ This is where the user can configure their Portfolio, selecting amounts of coins
 
 ### Controller Navigation
 #### Coin Not Selected
-- '&#8592;' - Moves to the next coin to select.
-- '&#8594;' - Moves to the previous coin to select.
+- '&#8594;' - Moves to the next coin to select.
+- '&#8592;' - Moves to the previous coin to select.
 - '#' - Go back to Portfolio Menu.
 - 'OK' - Enter the amount changer for the currently selected coin.
 
 #### Coin Selected
-- '&#8592;' - Multiplies the amount to add by 10.
-- '&#8594;' - Divides the amount to add by 10.
+- '&#8594;' - Multiplies the amount to add by 10.
+- '&#8592;' - Divides the amount to add by 10.
 - '&#8593;' - Adds the current amount to add to the coin amount.
 - '&#8595;' - Subtracts the current amount to add to the coin amount.
 - '#' - Go back to Portfolio Menu.
