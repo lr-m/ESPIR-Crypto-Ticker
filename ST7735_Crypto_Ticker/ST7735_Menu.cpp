@@ -8,6 +8,7 @@
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
 #include <Colours.h>
+#include <math.h>       /* floor */
 
 // Constructor for Keyboard
 ST7735_Menu::ST7735_Menu(Adafruit_ST7735* display, int btn_count, 
@@ -119,13 +120,8 @@ void Button::drawSubMenu() {
 	tft -> fillRect(0, 0, tft -> width(), tft -> height() - 12, KEYBOARD_BG_COLOUR);
 	return_button -> display();
 	
-	for (int i = 0; i < selector_count; i++){
-		if (i == current_selector && on_return_button == 0){
-			selectors[i].displaySelected();
-		} else {
-			selectors[i].display();
-		}
-	}
+	for (int i = 0; i < selector_count; i++)
+		selectors[i].display();
 }
 
 // Press the currently selected button on the sub menu
@@ -149,27 +145,33 @@ void Button::subMenuDown(){
 		on_return_button = 0;
 		current_selector = 0;
 		return_button -> display();
-	} else if (current_selector < selector_count - 1){
-		selectors[current_selector].display();
+	} else if (selectors[current_selector].atBottom() == 1 && current_selector != selector_count - 1){
+		//selectors[current_selector].display();
 		current_selector++;
+	} else if (selectors[current_selector].atBottom() == 0){
+		selectors[current_selector].moveDown();
 	}
-	
-	selectors[current_selector].displaySelected();
 }
 
 // Move up to the above component in the sub menu
 void Button::subMenuUp() {
 	if (on_return_button == 0){
-		if (current_selector == 0){
-			selectors[current_selector].display();
-			on_return_button = 1;
-			return_button -> displaySelected();
-		} else {
-			selectors[current_selector].display();
+		
+		if (selectors[current_selector].atTop() == 1){
+			if (current_selector == 0){
+				//selectors[current_selector].display();
+				on_return_button = 1;
+				return_button -> displaySelected();
+				return;
+			}
+			
+			//selectors[current_selector].display();
 			current_selector--;
-			selectors[current_selector].displaySelected();
+		} else {
+			selectors[current_selector].moveUp();
 		}
 	}
+
 }
 
 // Selected the option on the left (if possible) in sub menu
@@ -196,7 +198,6 @@ Selector::Selector(Adafruit_ST7735* display, int x_pos, int y_pos,
 	options = opt;
 	selected_index = 0;
 	window_size = size;
-	first_index = 0;
 	max_selected = max;
 	current_changing_index = 0;
 	value_count = count;
@@ -212,57 +213,77 @@ Selector::Selector(Adafruit_ST7735* display, int x_pos, int y_pos,
 
 // Redraw the buttons of the selector
 void Selector::cycleButtons() {
-	for (int i = first_index; i <= (first_index + window_size)-1; i++){
-		tft -> setCursor(map(i, first_index, first_index + window_size - 1, 
-			FIRST_BUTTON_X, tft -> width() - LAST_BUTTON_X) - 3, y + 13);
-		
-		int selected_test = 0;
-		for (int j = 0; j < max_selected; j++){
-			if (selected_indexes[j] == i){
-				selected_test = 1;
-				break;
-			}
+	int j = 0;
+	for (int i = 0; i < value_count; i++){
+		drawItem(i);
+	}
+}
+
+int Selector::atTop(){
+	return current_changing_index < window_size ? 1 : 0;
+}
+
+int Selector::atBottom(){
+	return current_changing_index >= value_count -  window_size ? 1 : 0;
+}
+
+void Selector::drawItem(int index){
+	tft -> setCursor(map(index%window_size, 0, window_size - 1, 
+		FIRST_BUTTON_X, tft -> width() - LAST_BUTTON_X) - 3, y + 13 + 13*floor(index/window_size));
+	
+	int selected_test = 0;
+	for (int j = 0; j < max_selected; j++){
+		if (selected_indexes[j] == index){
+			selected_test = 1;
+			break;
 		}
-		
-		if (selected_test == 0){ // Not selected so display red background
-			tft -> fillRoundRect(map(i, first_index, first_index + window_size - 1, 
-				FIRST_BUTTON_X, tft -> width() - LAST_BUTTON_X) - 2, y + 14, 
-				(tft -> width() - LAST_BUTTON_X) / window_size, 12, 2, RED);
-		} else { // Selected so display green background
-			tft -> fillRoundRect(map(i, first_index, first_index + window_size-1, 
-				FIRST_BUTTON_X, tft -> width() - LAST_BUTTON_X) - 2, y + 14, 
-				(tft -> width() - LAST_BUTTON_X) / window_size, 12, 2, GREEN);
-		}
-		
-		tft -> setCursor(map(i, first_index, first_index + window_size - 1, 
-			FIRST_BUTTON_X, tft -> width() - LAST_BUTTON_X), y + 16);
-		tft -> print(options[i]);
+	}
+	
+	if (selected_test == 0){ // Not selected so display red background
+		unselectIndex(index);
+	} else { // Selected so display green background
+		selectIndex(index);
 	}
 }
 
 // Display the selector
 void Selector::display() {
 	tft -> setCursor(x + 5, y);
-	tft -> fillRect(x, y - 3, tft -> width(), 35, ST77XX_BLACK);
+	tft -> fillRect(x, y - 3, tft -> width(), 35 + 13 * (ceil(value_count/window_size) - 1), ST77XX_BLACK);
 	tft -> print(prompt);
 	
 	this -> cycleButtons();
 }
 
-// Display the selector as selected
-void Selector::displaySelected() {
-	tft -> setCursor(x + 5, y);
-	tft -> fillRect(x, y - 3, tft -> width(), 35, DARK_GREY);
-	tft -> print(prompt);
+void Selector::selectIndex(int index){
+	tft -> setTextColor(WHITE);
 	
-	this -> cycleButtons();
+	tft -> fillRoundRect(map(index%window_size, 0, window_size - 1, 
+		FIRST_BUTTON_X, tft -> width() - LAST_BUTTON_X) - 2, y + 14 + 13*floor(index/window_size), 
+		(tft -> width() - LAST_BUTTON_X) / window_size, 12, 2, GREEN);
+		
+	tft -> setCursor(map(index%window_size, 0, window_size - 1, 
+			FIRST_BUTTON_X, tft -> width() - LAST_BUTTON_X), y + 16 + 13*floor(index/window_size));
+		tft -> print(options[index]);
+}
+
+void Selector::unselectIndex(int index){
+	tft -> setTextColor(WHITE);
+	
+	tft -> fillRoundRect(map(index%window_size, 0, window_size - 1, 
+		FIRST_BUTTON_X, tft -> width() - LAST_BUTTON_X) - 2, y + 14 + 13*floor(index/window_size), 
+		(tft -> width() - LAST_BUTTON_X) / window_size, 12, 2, RED);
+		
+	tft -> setCursor(map(index%window_size, 0, window_size - 1, 
+			FIRST_BUTTON_X, tft -> width() - LAST_BUTTON_X), y + 16 + 13*floor(index/window_size));
+		tft -> print(options[index]);
 }
 
 // Flash the selected option
 void Selector::flashSelected() {
-	tft -> setCursor(map(current_changing_index, first_index, 
-		first_index + window_size - 1, FIRST_BUTTON_X, tft -> width() - 
-			LAST_BUTTON_X) - 3, y + 13);
+	tft -> setCursor(map(current_changing_index%window_size, 0, 
+		window_size - 1, FIRST_BUTTON_X, tft -> width() - 
+			LAST_BUTTON_X) - 3, y + 13 + 13*floor(current_changing_index/window_size));
 	
 	int selected_test = 0;
 	for (int j = 0; j < max_selected; j++){
@@ -272,67 +293,63 @@ void Selector::flashSelected() {
 		}
 	}
 	
-	tft -> fillRoundRect(map(current_changing_index, first_index, 
-		first_index + window_size - 1, FIRST_BUTTON_X, tft -> width() - 
-		LAST_BUTTON_X) - 2, y + 14, (tft -> width() - LAST_BUTTON_X) / window_size, 
+	tft -> fillRoundRect(map(current_changing_index%window_size, 0, 
+		window_size - 1, FIRST_BUTTON_X, tft -> width() - 
+		LAST_BUTTON_X) - 2, y + 14 + 13*floor(current_changing_index/window_size), (tft -> width() - LAST_BUTTON_X) / window_size, 
 		12, 2, DARK_GREY);
-	tft -> setCursor(map(current_changing_index, first_index, 
-		first_index + window_size - 1, FIRST_BUTTON_X, tft -> width() - 
-		LAST_BUTTON_X), y + 16);
+	tft -> setCursor(map(current_changing_index%window_size, 0, 
+		window_size - 1, FIRST_BUTTON_X, tft -> width() - 
+		LAST_BUTTON_X), y + 16 + 13*floor(current_changing_index/window_size));
 	tft -> print(options[current_changing_index]);
 
-	delay(150);
+	delay(100);
 
 	if (selected_test == 0){ // Not selected so display red background
-		tft -> fillRoundRect(map(current_changing_index, first_index, 
-			first_index + window_size - 1, FIRST_BUTTON_X, tft -> width() - 
-			LAST_BUTTON_X) - 2, y + 14, (tft -> width() - LAST_BUTTON_X) / window_size, 
-			12, 2, RED);
+		unselectIndex(current_changing_index);
 	} else { // Selected so display green background
-		tft -> fillRoundRect(map(current_changing_index, first_index, 
-			first_index + window_size - 1, FIRST_BUTTON_X, tft -> width() - 
-			LAST_BUTTON_X) - 2, y + 14, (tft -> width() - LAST_BUTTON_X) / 
-			window_size, 12, 2, GREEN);
+		selectIndex(current_changing_index);
 	}
 	
-	
-	tft -> setCursor(map(current_changing_index, first_index, 
-		first_index + window_size - 1, FIRST_BUTTON_X, tft -> width() - 
-		LAST_BUTTON_X), y + 16);
-	tft -> print(options[current_changing_index]);
-	
-	delay(250);
+	delay(100);
 }
 
 // Move to the option on the left
 void Selector::moveLeft() {
-	if (current_changing_index > 0)
+	if (current_changing_index > 0){
+		drawItem(current_changing_index);
 		current_changing_index--;
-
-	
-	if (current_changing_index == first_index - 1 && first_index > 0){
-		first_index--;
-		this -> cycleButtons();
+		drawItem(current_changing_index);
 	}
 }
 
 // Move to the option on the right
 void Selector::moveRight() {
-	if (current_changing_index < value_count-1)
+	if (current_changing_index < value_count-1){
+		drawItem(current_changing_index);
 		current_changing_index++;
-
-	
-	if (current_changing_index == first_index + window_size && 
-			first_index + window_size < value_count){
-		first_index++;
-		this -> cycleButtons();
+		drawItem(current_changing_index);
 	}
+}
+
+void Selector::moveDown(){
+	current_changing_index = 
+		current_changing_index + window_size > value_count ? 
+		current_changing_index : 
+		current_changing_index + window_size;
+}
+
+void Selector::moveUp(){
+	current_changing_index = 
+		current_changing_index - window_size < 0 ? 
+		current_changing_index : 
+		current_changing_index - window_size;
 }
 
 // Press the current selected button
 void Selector::press() {
 	Serial.println("pressed");
 	if (max_selected == 1){
+		unselectIndex(selected_indexes[0]);
 		selected_indexes[0] = current_changing_index;
 	} else {
 		for (int i = 0; i < max_selected; i++){
@@ -346,27 +363,20 @@ void Selector::press() {
 
 				selected_indexes[max_selected-1] = -1;
 				
-				for (int i = 0; i < max_selected; i++){
-					Serial.print(selected_indexes[i]);
-					Serial.print(" ");
-				}
-				
 				return;
 			}
 		}
+		
+		if (selected_indexes[max_selected-1] != -1)
+			unselectIndex(selected_indexes[max_selected-1]);
 		
 		for (int i = max_selected - 1; i > 0; i--)
 			selected_indexes[i] = selected_indexes[i-1];
 
 		selected_indexes[0] = current_changing_index;
 	}
-	
-	for (int i = 0; i < max_selected; i++){
-		Serial.print(selected_indexes[i]);
-		Serial.print(" ");
-	}
-	Serial.println();
-	this -> cycleButtons();
+
+	selectIndex(current_changing_index);
 }
 
 // Return the indexes of the selected elements

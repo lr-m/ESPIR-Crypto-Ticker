@@ -8,6 +8,7 @@
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
 #include <String.h>  // String manipulation
+#include <Colours.h>
 
 // Constructor for Keyboard
 ST7735_Keyboard::ST7735_Keyboard(Adafruit_ST7735* display)
@@ -117,6 +118,44 @@ ST7735_Keyboard::ST7735_Keyboard(Adafruit_ST7735* display)
 	}
 	
 	selected = letters;
+}
+
+// Interacts with the keyboard
+void ST7735_Keyboard::interact(uint32_t* ir_data){
+  if (*ir_data == 0xE31CFF00)
+    press();
+
+  // 1
+  if (*ir_data == 0xBA45FF00)
+    setMode(0);
+
+  // 2
+  if (*ir_data == 0xB946FF00)
+    setMode(1);
+
+  // 3
+  if (*ir_data == 0xB847FF00)
+    setMode(2);
+
+  // 4
+  if (*ir_data == 0xBB44FF00)
+    setMode(3);
+
+  // DOWN
+  if (*ir_data == 0xAD52FF00)
+    goToTabs();
+
+  // UP
+  if (*ir_data == 0xE718FF00)
+    exitTabs();
+
+  // RIGHT
+  if (*ir_data == 0xA55AFF00)
+    moveRight();
+
+  // LEFT
+  if (*ir_data == 0xF708FF00)
+    moveLeft();
 }
 
 // Resets the keyboard between inputs
@@ -332,6 +371,28 @@ void ST7735_Keyboard::moveLeft(){
 	
 	selected -> displaySelected(mode);
 }
+
+// Displays the keyboard instructions for 5 seconds
+void ST7735_Keyboard::displayInstructions(){
+  tft -> fillScreen(BLACK);
+  tft -> setCursor(0, 0);
+  tft -> setTextColor(WHITE);
+  tft -> println("Keyboard Instructions");
+  tft -> setTextColor(RED);
+  tft -> println("\n*To see again, unplug device and plug it back in*\n");
+  tft -> setTextColor(WHITE);
+  tft -> println("<-- : Select Key on Left");
+  tft -> println("--> : Select Key on Right");
+  tft -> println("DOWN: Enter Bottom Row");
+  tft -> println("UP  : Exit Bottom Row\n");
+  tft -> println("1   : Lower Case");
+  tft -> println("2   : Upper Case");
+  tft -> println("3   : Numbers");
+  tft -> println("4   : Special Characters");
+  delay(5000);
+}
+
+
 
 // Constructor for Key
 Key::Key(Adafruit_ST7735* display, int x_pos, int y_pos, int width, 

@@ -62,6 +62,10 @@ class ST7735_Keyboard
 	void exitTabs();
 	int enterPressed();
 	char* getCurrentInput();
+	
+	void interact(uint32_t*);
+	
+	void displayInstructions();
 
   // library-accessible "private" interface
   private:

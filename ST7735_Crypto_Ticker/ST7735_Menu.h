@@ -33,13 +33,19 @@ class Selector
 	public:
 		Selector(Adafruit_ST7735*, int, int, char*, char**, int, int, int);
 		void display();
-		void displaySelected();
 		void flashSelected();
 		void moveLeft();
 		void moveRight();
+		void moveDown();
+		void moveUp();
 		void cycleButtons();
 		void press();
 		int* getSelected();
+		void selectIndex(int);
+		void unselectIndex(int);
+		void drawItem(int);
+		int atTop();
+		int atBottom();
 		
 		int x;
 		int y;
@@ -54,7 +60,6 @@ class Selector
 	private:
 		Adafruit_ST7735* tft;
 		int selected_index;
-		int first_index;
 };
 
 class Button
