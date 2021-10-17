@@ -2,6 +2,7 @@ TODO
 - Add network configuration and keyboard instructions to README
 - Add candle graph for portfolio
 - Add search functionality and more cryptocurrencies
+- Add ability for user to add coins to the current list (limited to max 20 coins to choose from), ability to choose coin colour
 - Create an api for the device to pull bitmaps and other details from!
 
 # ESP8266_ST7735_IR_CryptoTicker
