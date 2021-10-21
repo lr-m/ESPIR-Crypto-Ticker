@@ -1,5 +1,5 @@
 /*
-  ST7735_Menu.h - Menu for ST7735
+  ST7735_Portfolio_Editor.h - Portfolio editor interface for ST7735
   Copyright (c) 2021 Luke Mills.  All right reserved.
 */
 
@@ -29,7 +29,6 @@ class Price_Selector
 		void subValue();
 		void redrawValue();
 		void redrawValueChange();
-
 		int current_changing_index;
 
 	private:
@@ -49,6 +48,8 @@ class ST7735_Portfolio_Editor
 	char* press();
 	int interact(uint32_t*);
 	void display();
+	int amount_changed;
+	int checkForChange();
 	
 	Adafruit_ST7735* tft;
 	int active;

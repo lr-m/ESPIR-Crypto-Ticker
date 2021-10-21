@@ -1,5 +1,5 @@
 /*
-  ST7735_Menu.h - Menu for ST7735
+  ST7735_Portfolio_Editor.cpp - Portfolio editor interface for ST7735
   Copyright (c) 2021 Luke Mills.  All right reserved.
 */
 
@@ -25,6 +25,8 @@ ST7735_Portfolio_Editor::ST7735_Portfolio_Editor(Adafruit_ST7735* display, COIN*
 	
 	// Initialise portfolio arrays
 	selected_portfolio_indexes = (int*) malloc(sizeof(int) * 9);
+	
+	amount_changed = 0;
 
 	for (int i = 0; i < 9; i++)
 		selected_portfolio_indexes[i] = -1;
@@ -33,6 +35,16 @@ ST7735_Portfolio_Editor::ST7735_Portfolio_Editor(Adafruit_ST7735* display, COIN*
 // Sets the Portfolio Editor to be in a selected state
 void ST7735_Portfolio_Editor::setActive(){
 	active = 1;
+}
+
+// Check if the amount of any coin has changed
+int ST7735_Portfolio_Editor::checkForChange(){
+	if (amount_changed == 1){
+		amount_changed = 0;
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 // Displays the Portfolio Editor
@@ -66,6 +78,7 @@ int ST7735_Portfolio_Editor::interact(uint32_t* ir_data){
     }
     
     if (changing_amount == 0){
+	  
       tft -> setTextSize(1);
       tft -> fillRect(map(selected_portfolio_index % 4, 0, 3, 9, tft -> width() - 36) - 1, 
         map(floor(selected_portfolio_index / 4), 0, 5, 10, tft -> height() / 2) - 1, 31, 9, BLACK);
@@ -110,12 +123,16 @@ int ST7735_Portfolio_Editor::interact(uint32_t* ir_data){
         selector -> decreaseValueToAdd();
 
       //up
-      if (*ir_data == 0xE718FF00)
+      if (*ir_data == 0xE718FF00){
         selector -> addValue();
+		amount_changed = 1;
+	  }
 
       //down
-      if (*ir_data == 0xAD52FF00)
+      if (*ir_data == 0xAD52FF00){
         selector -> subValue();
+	    amount_changed = 1;
+	  }
 
       //ok
       if (*ir_data == 0xE31CFF00){
@@ -127,8 +144,6 @@ int ST7735_Portfolio_Editor::interact(uint32_t* ir_data){
     delay(100);
 	return 1;
 }
-
-
 
 // Constructor for Amount Selector
 Price_Selector::Price_Selector(Adafruit_ST7735* display) {

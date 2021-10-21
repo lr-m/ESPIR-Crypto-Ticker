@@ -11,6 +11,9 @@
 #include <ST7735_Keyboard.h>
 #include <ST7735_Menu.h>
 #include <ST7735_Portfolio_Editor.h>
+#include <ST7735_Portfolio.h>
+#include <ST7735_Coin_Changer.h>
+#include <ST7735_Candle_Graph.h>
 #include <Colours.h>
 #include <ST7735_Coin.h>
 
@@ -48,8 +51,6 @@ extern unsigned char epd_bitmap_uniswap [];
 #define RECV_PIN            D1
 
 #define MAX_SELECTED_COINS  8
-#define CANDLE_COUNT        24
-#define CANDLE_WIDTH        3
 
 // Positional constants
 #define NAME_START_2        98
@@ -66,14 +67,11 @@ extern unsigned char epd_bitmap_uniswap [];
 #define COIN_MENU_BUTTON_COUNT   5
 #define PORTFOLIO_MENU_BUTTON_COUNT 4
 
-#define DEG2RAD 0.0174532925   
-
 // For ST7735-based displays, we will use this call
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_MOSI, 
                         TFT_SCLK, TFT_RST);
 
 // For interface
-int current_candles = 1; // Current number of candles displayed
 int selected_coins_count = 1; // Current number of coins selected
 int current_coin; // Index of current coin being displayed
 int current_second; // Current second from time NTP server
@@ -88,7 +86,8 @@ int in_menu = 0; // Indicates if currently in the menu
 int in_settings = 0; // Indicates if currently in settings submenu
 int in_coinlist = 0; // Indicates if currently in coin list submenu
 int in_portfolio_editor = 0;
-int time_slot_moved = 0; // Indicates if candles have been moved along
+int coin_time_slot_moved = 0; // Indicates if coin candles have been moved along
+int portfolio_time_slot_moved = 0; // Indicates if portfolio candles have been moved along
 
 // For HTTP connection
 WiFiClientSecure client;
@@ -108,27 +107,27 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 IRrecv irrecv(RECV_PIN);
 decode_results results;
 
-// Instantiate keyboard, menu, and portfolio editor
+// Instantiate keyboard
 ST7735_Keyboard* keyboard;
 
+// Instantiate menu
 ST7735_Menu* coin_menu;
 ST7735_Menu* portfolio_menu;
 char** coin_menu_button_functions;
 char** portfolio_menu_button_functions;
 char* coin_change_times[5] = {"5", "10", "15", "30", "60"};
 
-Price_Selector* price_selector;
-
-// For Portfolio
+// Instantiate components of Portfolio
 ST7735_Portfolio_Editor* portfolio_editor;
+ST7735_Portfolio* portfolio;
+ST7735_Coin_Changer* coin_changer;
 
-int curr_coin_list_index; // Index of the coin currently selected in coin list
 char** coin_list; // List of all coin codes
 int coin_cycle_delay; // Delay between coin changes
-int candle_update_delay; // How often candles are pushed along (mins)
-int last_candle_update_delay = 5; // To detect changes in candle update time
-
-int portfolio_display_mode = 0;
+int coin_candle_update_delay; // How often candles are pushed along (mins)
+int last_coin_candle_update_delay = 5; // To detect changes in candle update time
+int portfolio_candle_update_delay; // How often candles are pushed along (mins)
+int last_portfolio_candle_update_delay = 5; // To detect changes in candle update time
 
 int mode = 1; // Coin or portfolio mode
 
@@ -146,10 +145,6 @@ void setup(void) {
   // Initialise keyboard
   keyboard = (ST7735_Keyboard*) malloc(sizeof(ST7735_Keyboard));
   *keyboard = ST7735_Keyboard(&tft);
-
-  // Initialise portfolio amount selector
-  price_selector = (Price_Selector*) malloc(sizeof(Price_Selector));
-  *price_selector = Price_Selector(&tft);
 
   // Initialise coin menu
   coin_menu_button_functions = (char**) malloc(sizeof(char*) * 
@@ -180,48 +175,47 @@ void setup(void) {
   selected_coins = (COIN**) malloc(sizeof(COIN*) * MAX_SELECTED_COINS);
   
   coin_list = (char**) malloc(sizeof(char*) * COIN_COUNT);
-  curr_coin_list_index = 0;
 
-  coins[0] = *createCoin("BTC", "bitcoin", epd_bitmap_bitcoin, 
-                          GOLD, WHITE, GOLD, 0);
-  coins[1] = *createCoin("ETH", "ethereum", epd_bitmap_ethereum, 
-                          WHITE, GRAY, GRAY, 0);
-  coins[2] = *createCoin("LTC", "litecoin", epd_bitmap_litecoin, 
-                          GRAY, WHITE, DARK_GREY, 0);
-  coins[3] = *createCoin("ADA", "cardano", epd_bitmap_cardano, 
-                          LIGHT_BLUE, WHITE, LIGHT_BLUE, 0);
-  coins[4] = *createCoin("BNB", "binancecoin", epd_bitmap_binance, 
-                          WHITE, GOLD, GOLD, 0);
-  coins[5] = *createCoin("USDT", "tether", epd_bitmap_tether, 
-                          GREEN, WHITE, GREEN, 0);
-  coins[6] = *createCoin("XRP", "ripple", epd_bitmap_xrp, 
-                          DARK_GREY, WHITE, DARK_GREY, 0);
-  coins[7] = *createCoin("DOGE", "dogecoin", epd_bitmap_dogecoin, 
-                          GOLD, WHITE, GOLD, 0);
-  coins[8] = *createCoin("DOT", "polkadot", epd_bitmap_dot, 
-                          WHITE, BLACK, WHITE, 0);
-  coins[9] = *createCoin("SOL", "solana", epd_bitmap_solana, 
-                          PINK, LIGHTNING_BLUE, PINK, 0);
-  coins[10] = *createCoin("LUNA", "terra-luna", epd_bitmap_terra, 
-                          NIGHT_BLUE, MOON_YELLOW, MOON_YELLOW, 0);
-  coins[11] = *createCoin("ALGO", "algorand", epd_bitmap_algorand, 
-                          WHITE, BLACK, WHITE, 0);
-  coins[12] = *createCoin("LINK", "chainlink", epd_bitmap_link, 
-                          DARK_BLUE, WHITE, DARK_BLUE, 0);
-  coins[13] = *createCoin("MATIC", "matic-network", epd_bitmap_matic, 
-                          PURPLE, WHITE, PURPLE, 0);
-  coins[14] = *createCoin("TRX", "tron", epd_bitmap_tron, 
-                          RED, WHITE, RED, 0);
-  coins[15] = *createCoin("ATOM", "cosmos", epd_bitmap_cosmos, 
-                          DARK_GREY, WHITE, DARK_GREY, 0);
-  coins[16] = *createCoin("BAT", "basic-attention-token", epd_bitmap_bat, 
-                          WHITE, SALMON, SALMON, 0);
-  coins[17] = *createCoin("NU", "nucypher", epd_bitmap_nu, 
-                          WHITE, LIGHT_BLUE, LIGHT_BLUE, 0);
-  coins[18] = *createCoin("AVAX", "avalanche-2", epd_bitmap_avax, 
-                          RED, WHITE, RED, 0);
-  coins[19] = *createCoin("UNI", "uniswap", epd_bitmap_uniswap, 
-                          WHITE, HOT_PINK, HOT_PINK, 0);
+  coins[0] = COIN("BTC", "bitcoin", epd_bitmap_bitcoin, 
+                          GOLD, WHITE, GOLD);
+  coins[1] = COIN("ETH", "ethereum", epd_bitmap_ethereum, 
+                          WHITE, GRAY, GRAY);
+  coins[2] = COIN("LTC", "litecoin", epd_bitmap_litecoin, 
+                          GRAY, WHITE, DARK_GREY);
+  coins[3] = COIN("ADA", "cardano", epd_bitmap_cardano, 
+                          LIGHT_BLUE, WHITE, LIGHT_BLUE);
+  coins[4] = COIN("BNB", "binancecoin", epd_bitmap_binance, 
+                          WHITE, GOLD, GOLD);
+  coins[5] = COIN("USDT", "tether", epd_bitmap_tether, 
+                          GREEN, WHITE, GREEN);
+  coins[6] = COIN("XRP", "ripple", epd_bitmap_xrp, 
+                          DARK_GREY, WHITE, DARK_GREY);
+  coins[7] = COIN("DOGE", "dogecoin", epd_bitmap_dogecoin, 
+                          GOLD, WHITE, GOLD);
+  coins[8] = COIN("DOT", "polkadot", epd_bitmap_dot, 
+                          WHITE, BLACK, WHITE);
+  coins[9] = COIN("SOL", "solana", epd_bitmap_solana, 
+                          PINK, LIGHTNING_BLUE, PINK);
+  coins[10] = COIN("LUNA", "terra-luna", epd_bitmap_terra, 
+                          NIGHT_BLUE, MOON_YELLOW, MOON_YELLOW);
+  coins[11] = COIN("ALGO", "algorand", epd_bitmap_algorand, 
+                          WHITE, BLACK, WHITE);
+  coins[12] = COIN("LINK", "chainlink", epd_bitmap_link, 
+                          DARK_BLUE, WHITE, DARK_BLUE);
+  coins[13] = COIN("MATIC", "matic-network", epd_bitmap_matic, 
+                          PURPLE, WHITE, PURPLE);
+  coins[14] = COIN("TRX", "tron", epd_bitmap_tron, 
+                          RED, WHITE, RED);
+  coins[15] = COIN("ATOM", "cosmos", epd_bitmap_cosmos, 
+                          DARK_GREY, WHITE, DARK_GREY);
+  coins[16] = COIN("BAT", "basic-attention-token", epd_bitmap_bat, 
+                          WHITE, SALMON, SALMON);
+  coins[17] = COIN("NU", "nucypher", epd_bitmap_nu, 
+                          WHITE, LIGHT_BLUE, LIGHT_BLUE);
+  coins[18] = COIN("AVAX", "avalanche-2", epd_bitmap_avax, 
+                          RED, WHITE, RED);
+  coins[19] = COIN("UNI", "uniswap", epd_bitmap_uniswap, 
+                          WHITE, HOT_PINK, HOT_PINK);
 
   // Add selectors to respective submenus
   coin_menu -> getButtons()[0].addSelector("Coin duration (secs):", 
@@ -232,18 +226,36 @@ void setup(void) {
                                           coin_list, 4, MAX_SELECTED_COINS, 
                                           COIN_COUNT);
 
+  portfolio_menu -> getButtons()[0].addSelector("Candle duration (mins):", 
+                                          coin_change_times, 5, 1, 5);
+
+  for (int i = 0; i < COIN_COUNT; i++)
+    coin_list[i] = coins[i].coin_code;
+
+  // Initialise portfolio  
+  portfolio_editor = (ST7735_Portfolio_Editor*) malloc(sizeof(ST7735_Portfolio_Editor));
+  *portfolio_editor = ST7735_Portfolio_Editor(&tft, coins);
+
+  portfolio = (ST7735_Portfolio*) malloc(sizeof(ST7735_Portfolio));
+  *portfolio = ST7735_Portfolio(&tft, portfolio_editor, coins);
+
+  coin_changer = (ST7735_Coin_Changer*) malloc(sizeof(ST7735_Coin_Changer));
+  *coin_changer = ST7735_Coin_Changer(&tft, coins);
+
   // Get default coin delay time from selector
   String str = coin_change_times[coin_menu -> getButtons()[0].selectors[0].getSelected()[0]];
   coin_cycle_delay = str.toInt();
 
   // Get default update time from selector
   str = coin_change_times[coin_menu -> getButtons()[0].selectors[0].getSelected()[0]];
-  candle_update_delay = str.toInt();
+  coin_candle_update_delay = str.toInt();
+  portfolio_candle_update_delay = str.toInt();
 
   // Try to read network credentials from EEPROM if they exist
   EEPROM.begin(512);
   byte value = EEPROM.read(0);
-  
+
+  // Check if credits have been written, take necessary action
   if (value == 0){
     ssid_entered = 0;
     password_entered = 0;
@@ -254,10 +266,6 @@ void setup(void) {
     ssid_entered = 1;
     password_entered = 1;
   }
-
-  // Initialise the portfolio editor
-  portfolio_editor = (ST7735_Portfolio_Editor*) malloc(sizeof(ST7735_Portfolio_Editor));
-  *portfolio_editor = ST7735_Portfolio_Editor(&tft, coins);
 }
 
 void loop() {
@@ -288,7 +296,6 @@ void loop() {
         irrecv.resume();
       }
     } else if (network_initialised == 0){ // Initialise network
-      
       // If first value of eeprom is null terminator then take input from user
       char* loaded_ssid = (char*) malloc(sizeof(char) * 30);
       char* loaded_password = (char*) malloc(sizeof(char) * 30);
@@ -304,17 +311,15 @@ void loop() {
 
       // Initialise the candle for first coin (bitcoin)
       selected_coins[0] = coins;
-      selected_coins[0] -> candles = (G_CANDLE*) malloc(sizeof(G_CANDLE) * 
-                                                      CANDLE_COUNT);
-      initialiseCandles(selected_coins[0] -> candles);
+      
+      selected_coins[0] -> candles = (Candle_Graph*) malloc(sizeof(Candle_Graph));
+      *(selected_coins[0] -> candles) = Candle_Graph(&tft, 26, tft.height()/2, tft.height()-22, 0);
 
       forceGetData(1); // Get data for coin
     
       // Begin ndp time client and draw time on screen
       timeClient.begin();
       drawTime();
-
-      //getBitmap("BTC");
     
       network_initialised = 1; // Indicate successful network init
     } else if (in_menu == 1) { // Do menu operations
@@ -332,7 +337,11 @@ void loop() {
         if (irrecv.decode()){
           if(portfolio_editor -> interact(&irrecv.decodedIRData.decodedRawData) == 0){
             drawMenu();
+
+            if (portfolio_editor -> checkForChange() == 1)
+              portfolio -> clearCandles();
           }
+          
           irrecv.resume();
         }
         return;
@@ -364,7 +373,7 @@ void loop() {
             if (mode == 1){
               drawCoinObj(selected_coins[current_coin]);
             } else {
-              drawPortfolio();
+              portfolio -> display();
             }
             
             break;
@@ -392,15 +401,11 @@ void loop() {
             }
           } else if (mode == 2){
             if (irrecv.decodedIRData.decodedRawData == 0xF708FF00){
-              //portfolio_display_mode = portfolio_display_mode - 1 < 0 ? 0 : portfolio_display_mode - 1;
-              Serial.println("left");
-              portfolio_display_mode = 0;
-              drawPortfolio();
+              portfolio -> previousMode();
+              portfolio -> display();
             } else if (irrecv.decodedIRData.decodedRawData == 0xA55AFF00){
-              //portfolio_display_mode = portfolio_display_mode + 1 > 1 ? 1 : portfolio_display_mode + 1;
-              Serial.println("right");
-              portfolio_display_mode = 1;
-              drawPortfolio();
+              portfolio -> nextMode();
+              portfolio -> display();
             }
           }
           
@@ -408,24 +413,42 @@ void loop() {
         }
       }
 
-      // Move data along every x minutes
-      if (timeClient.getMinutes() % candle_update_delay == 0 && 
-          time_slot_moved == 0){
-        Serial.println("Incremented Candles");
-        for (int i = 0; i < selected_coins_count; i++){
-          nextTimePeriod(selected_coins[i]);
-        }
-        current_candles = min(CANDLE_COUNT, current_candles+1);
-        time_slot_moved = true;
-      } else if (timeClient.getMinutes() % 5 != 0 && time_slot_moved == true){
-        time_slot_moved = false;
+      // Move coin data along every 'coin_candle_update_delay' minutes
+      if (timeClient.getMinutes() % coin_candle_update_delay == 0 && 
+          coin_time_slot_moved == 0){
+        Serial.println("Incremented Coin Candles");
+        for (int i = 0; i < selected_coins_count; i++)
+          selected_coins[i] -> candles -> nextTimePeriod(selected_coins[i]->current_price);
+       
+        coin_time_slot_moved = 1;
+      } else if (timeClient.getMinutes() % 5 != 0 && coin_time_slot_moved == 1){
+        coin_time_slot_moved = 0;
+      }
+
+      // Move portfolio data along every 'portfolio_candle_update_delay' minutes
+      if (timeClient.getMinutes() % portfolio_candle_update_delay == 0 && 
+          portfolio_time_slot_moved == 0){
+        Serial.println("Incremented Portfolio Candles");
+
+        portfolio -> nextTimePeriod();
+       
+        portfolio_time_slot_moved = 1;
+      } else if (timeClient.getMinutes() % 5 != 0 && portfolio_time_slot_moved == 1){
+        portfolio_time_slot_moved = 0;
       }
     
       // Update coin and portfolio data every 60 seconds
       if (current_second == 0){
+        // Get individual coin data
         forceGetData(1);
-        drawPortfolio();
-        delay(1000);
+
+        // Get data for portfolio coins
+        portfolio -> refreshSelectedCoins(); // Add any new coins to selected
+        forceGetData(2); // Get data
+        portfolio -> addPriceToCandles();
+
+        if (mode == 2)
+          portfolio -> display();
       }
 
       // Move to next coin every *selected* seconds if in crypto mode
@@ -465,176 +488,6 @@ void drawIntroAnimation(){
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////// Portfolio /////// ///////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/**
- * Draws the users portfolio on screen.
- */
-void drawPortfolio(){
-  tft.fillRect(0, 0, tft.width(), tft.height() - 15, BLACK);
-  double* total_value = (double*) malloc(sizeof(double));
-  *total_value = 0;
-  updatePortfolio(total_value);
-
-  // If in portfolio mode, draw the portfolio upon update
-  if (mode == 2){
-    tft.fillRect(0, 0, tft.width(), tft.height() - 12, BLACK);
-    tft.setTextSize(2);
-    tft.setTextColor(WHITE);
-    tft.setCursor(5, 4);
-
-    tft.print(char(156));
-    tft.print(*total_value);
-
-    if (portfolio_editor -> selected_portfolio_indexes[0] != -1){
-      double total = 0;
-      int i = 0;
-      double* coin_price_owned = (double*) malloc(sizeof(double) * 8);
-      
-      // Store cost of each owned coin
-      while(portfolio_editor -> selected_portfolio_indexes[i] != -1){
-        coin_price_owned[i] = coins[portfolio_editor -> selected_portfolio_indexes[i]].current_price * 
-          coins[portfolio_editor -> selected_portfolio_indexes[i]].amount;
-        total += coins[portfolio_editor -> selected_portfolio_indexes[i]].current_price * 
-          coins[portfolio_editor -> selected_portfolio_indexes[i]].amount;
-        i++;
-      }
-
-      // Sort by price of owned coin (simple bubble sort)
-      double temp = 0;
-      for (int k = 0; k < i - 1; k++){
-        for (int j = 0; j < i - k - 1; j++){
-          if (coin_price_owned[j + 1] > coin_price_owned[j]){
-            temp = portfolio_editor -> selected_portfolio_indexes[j];
-            portfolio_editor -> selected_portfolio_indexes[j] = portfolio_editor -> selected_portfolio_indexes[j + 1];
-            portfolio_editor -> selected_portfolio_indexes[j + 1] = temp;
-
-            temp = coin_price_owned[j];
-            coin_price_owned[j] = coin_price_owned[j+1];
-            coin_price_owned[j + 1] = temp;
-          }
-        }
-      }
-
-      free(coin_price_owned);
-
-      double coin_total = 0;
-      double current_total = 0;
-      i = 0;
-      if (portfolio_display_mode == 0){
-        // Draw bar proportional to amount of coin owned
-        while(portfolio_editor -> selected_portfolio_indexes[i] != -1){
-          coin_total = coins[portfolio_editor -> selected_portfolio_indexes[i]].current_price * 
-            coins[portfolio_editor -> selected_portfolio_indexes[i]].amount;
-          
-          tft.fillRect(map(current_total, 0, total, 0, tft.width()), 24, 1 + 
-            map(coin_total, 0, total, 0, tft.width()), 5, 
-            coins[portfolio_editor -> selected_portfolio_indexes[i]].portfolio_colour);
-      
-          current_total+=coin_total;
-          i++;
-        }
-      
-        // Draw coin code, cost of owned, and % of portfolio
-        i = 0;
-        while(portfolio_editor -> selected_portfolio_indexes[i] != -1){
-          coin_total = coins[portfolio_editor -> selected_portfolio_indexes[i]].current_price * 
-            coins[portfolio_editor -> selected_portfolio_indexes[i]].amount;
-          tft.setTextSize(1);
-          tft.setCursor(7, 35 + i * 10);
-          tft.fillRect(2, 34 + i * 10, 2, 10, 
-            coins[portfolio_editor -> selected_portfolio_indexes[i]].portfolio_colour);
-          tft.print(coins[portfolio_editor -> selected_portfolio_indexes[i]].coin_code);
-          tft.setCursor(42, 35 + i * 10);
-          tft.setTextColor(WHITE);
-          tft.print(char(156));
-          tft.print(coin_total);
-          tft.setCursor(116, 35 + i * 10);
-          if (coins[portfolio_editor -> selected_portfolio_indexes[i]].current_change < 0){
-            tft.setTextColor(RED);
-          } else {
-            tft.setTextColor(ST77XX_GREEN);
-            tft.print('+');
-          }
-          tft.print(coins[portfolio_editor -> selected_portfolio_indexes[i]].current_change);
-          tft.print('%');
-          tft.setTextColor(WHITE);
-          i++;
-        }
-      } else if (portfolio_display_mode == 1){
-        // Draw coin code, cost of owned, and % of portfolio
-        i = 0;
-        while(portfolio_editor -> selected_portfolio_indexes[i] != -1){
-          coin_total = coins[portfolio_editor -> selected_portfolio_indexes[i]].current_price * 
-            coins[portfolio_editor -> selected_portfolio_indexes[i]].amount;
-          tft.setTextSize(1);
-          tft.setCursor(7, 35 + i * 10);
-          tft.fillRect(2, 34 + i * 10, 2, 10, 
-            coins[portfolio_editor -> selected_portfolio_indexes[i]].portfolio_colour);
-          tft.print(coins[portfolio_editor -> selected_portfolio_indexes[i]].coin_code);
-          tft.setCursor(42, 35 + i * 10);
-          tft.setTextColor(WHITE);
-          tft.print(coin_total/total * 100, 1);
-          tft.print('%');
-          i++;
-        }
-
-        // Draw pi chart proportional to amount of coin owned
-        i = 0;
-        while(portfolio_editor -> selected_portfolio_indexes[i] != -1){
-          coin_total = coins[portfolio_editor -> selected_portfolio_indexes[i]].current_price * 
-            coins[portfolio_editor -> selected_portfolio_indexes[i]].amount;
-          
-          fillSegment(tft.width()/2 + 40, tft.height()/2 + 5, map(current_total, 0, *total_value, 0, 360),
-            map(coin_total, 0, *total_value, 0, 360),  35, 
-            coins[portfolio_editor -> selected_portfolio_indexes[i]].portfolio_colour);
-      
-          current_total+=coin_total;
-          i++;
-        }
-      }
-    }
-  }
-  free(total_value);
-}
-
-/**
- * Updates the users portfolio and returns current total value.
- */
-void updatePortfolio(double* total_value){
-  Serial.println("Updating Portfolio");
-
-  // Clear selected coins
-  for (int i = 0; i < 8; i++){
-    portfolio_editor -> selected_portfolio_indexes[i] = -1;
-  }
-
-  // Add up to 8 non-zero coins to selected in portfolio
-  int curr_selected_port_index = 0;
-  for (int i = 0; i < COIN_COUNT; i++){
-    if (coins[i].amount > 0){
-      portfolio_editor -> selected_portfolio_indexes[curr_selected_port_index] = i;
-      curr_selected_port_index++;
-
-      if (curr_selected_port_index == 8){
-        break;
-      }
-    }
-  }
-  
-  forceGetData(2);
-
-  // Get the current total portfolio value
-  int i = 0;
-  while(portfolio_editor -> selected_portfolio_indexes[i] != -1){
-    *total_value += coins[portfolio_editor -> selected_portfolio_indexes[i]].current_price * 
-      coins[portfolio_editor -> selected_portfolio_indexes[i]].amount;
-    i++;
-  }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////// Data Retrieval Functions ////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -664,37 +517,6 @@ void forceGetData(int app_mode){
   }
   Serial.println("Successfully retrieved data");
 }
-
-// unsigned char* getBitmap(char* coin_id){
-//   Serial.println("\nGetting Bitmap");
-//   client.setFingerprint(fingerprint);
-//   http.begin(client, "https://192.168.1.109:5000/api/v1/resources/coins?id=BTC");
-  
-//   int httpCode = http.GET();
-
-//   if (httpCode > 0) {
-//       StaticJsonDocument<800> doc;
-//       // Get the request response payload (Price data)
-//       DeserializationError error = deserializeJson(doc, http.getString());
-//       Serial.println(http.getString());
-//       if (error) {
-//         Serial.print(F("deserializeJson() failed: "));
-//         Serial.println(error.f_str());
-//            //Close connection
-//         http.end();   //Close connection
-//         return NULL;
-//       }
-
-//       // Parameters
-//       JsonObject current;
-//       current = doc[coin_id];
-//       String hello = current["bitmap"];
-//       Serial.println(hello);
-//   }
-//   http.end();   //Close connection
-
-//   return NULL;
-// }
 
 /**
  * Retrieves the current price, and 24hr change of the currently selected coins, 
@@ -730,7 +552,9 @@ int getData(int app_mode)
             current = doc[selected_coins[i] -> coin_id];
             selected_coins[i] -> current_price = current["gbp"];
             selected_coins[i] -> current_change = current["gbp_24h_change"];
-            addPrice(selected_coins[i], incrementForGraph(current["gbp"])); 
+
+            //selected_coins[i] -> candles -> addPrice(incrementForGraph(current["gbp"])); 
+            selected_coins[i] -> candles -> addPrice(current["gbp"]); 
         }
       } else if (app_mode == 2){
         int j = 0;
@@ -856,26 +680,6 @@ void initialiseNetwork(char* ssid, char* password){
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Creates a coin and returns pointer to it.
- */
-COIN* createCoin(char* code, char* id, const unsigned char* bitmap, 
-    uint16_t circle_col, uint16_t bm_col, uint16_t portfolio_col, double amount){
-  COIN* new_coin = (COIN*) malloc(sizeof(COIN));
-  new_coin -> coin_code = code;
-  new_coin -> coin_id = id;
-  new_coin -> bitmap = bitmap;
-  new_coin -> circle_colour = circle_col;
-  new_coin -> bm_colour = bm_col;
-  new_coin -> amount = amount;
-  new_coin -> portfolio_colour = portfolio_col;
-
-  coin_list[curr_coin_list_index] = code;
-  curr_coin_list_index++;
-  
-  return new_coin;
-}
-
-/**
  * Draws the passed coin object on the display
  */
 void drawCoinObj(COIN* coin){
@@ -886,7 +690,8 @@ void drawCoinObj(COIN* coin){
   drawName(coin -> coin_code);
   drawPrice(coin -> current_price);
   drawPercentageChange(coin -> current_change);
-  drawCandles(coin -> candles);
+  coin -> candles -> display();
+  //drawCandles(coin -> candles);
 }
 
 /**
@@ -894,11 +699,9 @@ void drawCoinObj(COIN* coin){
  */
 void resetCoins(){
   // Free current candles
-  for (int i = 0; i < selected_coins_count; i++){
+  for (int i = 0; i < selected_coins_count; i++)
     free(selected_coins[i] -> candles);
-  }
-  
-  current_candles = 1;
+
   selected_coins_count = 0;
   current_coin = 0;
 
@@ -912,139 +715,12 @@ void resetCoins(){
     Serial.print(", ");
     selected_coins_count++;
     selected_coins[i] = coins + coin_menu -> getButtons()[1].selectors[0].getSelected()[i];
-    selected_coins[i] -> candles = (G_CANDLE*) malloc(sizeof(G_CANDLE) * CANDLE_COUNT);
-    initialiseCandles(selected_coins[i] -> candles);
+
+    selected_coins[i] -> candles = (Candle_Graph*) malloc(sizeof(Candle_Graph));
+    *(selected_coins[i] -> candles) = Candle_Graph(&tft, 26, tft.height()/2, tft.height()-22, 0);
   }
   
   forceGetData(1);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////// Candle Graph Functions /////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/**
- * Initialises candle array.
- */
-G_CANDLE initialiseCandles(G_CANDLE* candle_arr){
-  for (int i = 0; i < CANDLE_COUNT; i++){
-    candle_arr[i].opening = -1;
-    candle_arr[i].closing = -1;
-    candle_arr[i].low = -1;
-    candle_arr[i].high = -1;
-  }
-}
-
-/**
- * Draws the candle chart onto the display.
- */
-void drawCandles(G_CANDLE* candles){
-  double max_val = -1;
-  double min_val = 99999999;
-  
-  for (int i = CANDLE_COUNT - current_candles; i < CANDLE_COUNT; i++){
-    if (candles[i].high > max_val){
-      max_val = candles[i].high;
-    }
-
-    if (candles[i].low < min_val){
-      min_val = candles[i].low;
-    }
-  }
-
-  int graph_top = tft.height()/2;
-  int graph_bottom = tft.height()-22;
-  
-  for (int i = CANDLE_COUNT - current_candles; i < CANDLE_COUNT; i++){
-    int opening_y;
-    int closing_y;
-    int high_y;
-    int low_y;
-
-    if (min_val != max_val){
-      opening_y = (candles[i].opening - min_val) * ((double) graph_top - 
-        (double) graph_bottom) / (max_val - min_val) + (double) graph_bottom;
-      closing_y = (candles[i].closing - min_val) * ((double) graph_top - 
-        (double) graph_bottom) / (max_val - min_val) + (double) graph_bottom;
-      high_y = (candles[i].high - min_val) * ((double) graph_top - 
-        (double) graph_bottom) / (max_val - min_val) + (double) graph_bottom;
-      low_y = (candles[i].low - min_val) * ((double) graph_top - 
-        (double) graph_bottom) / (max_val - min_val) + (double) graph_bottom;
-    } else {
-      opening_y = ((tft.height() / 2) + (tft.height() - 5)) / 2;
-      closing_y = ((tft.height() / 2) + (tft.height() - 5)) / 2;
-      high_y = ((tft.height() / 2) + (tft.height() - 5)) / 2;
-      low_y = ((tft.height() / 2) + (tft.height() - 5)) / 2;
-    }
-
-    int bar_x = map(i, 0, CANDLE_COUNT, 2, tft.width()-2);
-    uint16_t color; 
-
-    if (candles[i].opening > candles[i].closing){
-      color = RED;
-    } else {
-      color = ST77XX_GREEN;
-    }
-
-    tft.drawLine(bar_x, high_y, bar_x + 2, high_y, color);
-    tft.drawLine(bar_x + 1, high_y, bar_x + 1, min(opening_y, closing_y), color);
-    tft.fillRect(bar_x, min(opening_y, closing_y), CANDLE_WIDTH, 
-      max(opening_y, closing_y) - min(opening_y, closing_y), color);
-    tft.drawLine(bar_x + 1, low_y, bar_x + 1, max(opening_y, closing_y), color);
-    tft.drawLine(bar_x, low_y, bar_x + 2, low_y, color);
-  }
-}
-
-/**
- * Increments small values to larger values for the candle graph (to get by 
- * 2dp default precision).
- */
-float incrementForGraph(double val){
-  float to_incr = (float) val;
-  while(to_incr < 10000){
-    to_incr *= 10;
-  }
-  return to_incr;
-}
-
-/**
- * Adds the given price to the candle chart of the given coin.
- */
-void addPrice(COIN* coin, float val){
-  if (coin -> candles[CANDLE_COUNT - 1].opening == -1){
-    coin -> candles[CANDLE_COUNT - 1].opening = val;
-    coin -> candles[CANDLE_COUNT - 1].closing = val;
-    coin -> candles[CANDLE_COUNT - 1].high = val;
-    coin -> candles[CANDLE_COUNT - 1].low = val;
-  }
-
-  coin -> candles[CANDLE_COUNT-1].closing = val;
-
-  if (val > coin -> candles[CANDLE_COUNT-1].high)
-    coin -> candles[CANDLE_COUNT-1].high = val;
-
-  if (val < coin -> candles[CANDLE_COUNT - 1].low)
-    coin -> candles[CANDLE_COUNT - 1].low = val;
-}
-
-/**
- * Moves all of the candles down to the next time period index and initialies 
- * new time period.
- */
-void nextTimePeriod(COIN* coin){
-  coin -> candles[CANDLE_COUNT - 1].closing = incrementForGraph(coin -> current_price);
-
-  for (int i = 1; i < CANDLE_COUNT; i++){
-    coin -> candles[i - 1].opening = coin -> candles[i].opening;
-    coin -> candles[i - 1].closing = coin -> candles[i].closing;
-    coin -> candles[i - 1].high = coin -> candles[i].high;
-    coin -> candles[i - 1].low = coin -> candles[i].low;
-  }
-
-  coin -> candles[CANDLE_COUNT - 1].opening = incrementForGraph(coin -> current_price);
-  coin -> candles[CANDLE_COUNT - 1].high = incrementForGraph(coin -> current_price);
-  coin -> candles[CANDLE_COUNT - 1].low = incrementForGraph(coin -> current_price);
-  coin -> candles[CANDLE_COUNT - 1].closing = incrementForGraph(coin -> current_price);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1157,23 +833,6 @@ void drawBitmap(int16_t x, int16_t y,const uint8_t *bitmap, int16_t w,
       if(byte & 0x80) tft.drawPixel(x+i, y+j, color);
     }
   }
-}
-
-int fillSegment (int x, int y, int startAngle, int subAngle, int r, unsigned int colour)
-{
-  float sx = cos((startAngle - 90) * DEG2RAD);                                              // calculate first pair of coordinates for segment start
-  float sy = sin((startAngle - 90) * DEG2RAD);
-  uint16_t x1 = sx * r + x;
-  uint16_t y1 = sy * r + y;
-
-  for (int i = startAngle; i < startAngle + subAngle; i++)                                  // draw color blocks every inc degrees 
-     {    
-     int x2 = cos((i + 1 - 90) * DEG2RAD) * r + x;                                          // calculate pair of coordinates for segment end
-     int y2 = sin((i + 1 - 90) * DEG2RAD) * r + y;
-     tft.fillTriangle(x1, y1, x2, y2, x, y, colour);
-     x1 = x2;                                                                               // copy segment end to segment start for next segment
-     y1 = y2;
-     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1289,6 +948,10 @@ void interactWithMenu(){
           coin_menu -> getButtons()[1].drawSubMenu();
         }
 
+        if (button_action == "Add New Coin"){
+          coin_changer -> display();
+        }
+
         if (button_action == "Crypto Display Settings"){
           in_settings = 1;
           coin_menu -> getButtons()[0].drawSubMenu();
@@ -1320,11 +983,16 @@ void interactWithMenu(){
         char* button_action = portfolio_menu -> press();
         if (button_action == "Exit Menu"){
           in_menu = 0;
-          drawPortfolio();
+          
+          portfolio -> refreshSelectedCoins(); // Add any new coins to selected
+          forceGetData(2); // Get data
+          portfolio -> addPriceToCandles();
+          portfolio -> display(); // Now display the portfolio
         }
 
-        if (button_action == "Portfolio_Settings"){
-          
+        if (button_action == "Portfolio Settings"){
+          in_settings = 1;
+          portfolio_menu -> getButtons()[0].drawSubMenu();
         }
 
         if (button_action == "Clear WiFi Credentials")
@@ -1386,40 +1054,76 @@ void interactWithCoinList(){
  * Interacts with the settings sub menu, catches keys pressed and performs corresponding menu actions.
  */
 void interactWithSettings(){
-  coin_menu -> getButtons()[0].flashSelectedSelector();
-  if (irrecv.decode()){
-    if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00){
-      char* action = coin_menu -> getButtons()[0].pressSubMenu();
-      if (action == "Return"){
-        String str = coin_change_times[coin_menu -> getButtons()[0].selectors[0].getSelected()[0]];
-        coin_cycle_delay = str.toInt();
-
-        str = coin_change_times[coin_menu -> getButtons()[0].selectors[1].getSelected()[0]];
-        candle_update_delay = str.toInt();
-
-        if (candle_update_delay != last_candle_update_delay)
-          resetCoins();
-
-        last_candle_update_delay = candle_update_delay;
-        
-        in_settings = 0;
-        coin_menu -> display();
+  if (mode == 1){
+    coin_menu -> getButtons()[0].flashSelectedSelector();
+    if (irrecv.decode()){
+      if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00){
+        char* action = coin_menu -> getButtons()[0].pressSubMenu();
+        if (action == "Return"){
+          String str = coin_change_times[coin_menu -> getButtons()[0].selectors[0].getSelected()[0]];
+          coin_cycle_delay = str.toInt();
+  
+          str = coin_change_times[coin_menu -> getButtons()[0].selectors[1].getSelected()[0]];
+          coin_candle_update_delay = str.toInt();
+  
+          if (coin_candle_update_delay != last_coin_candle_update_delay)
+            resetCoins();
+  
+          last_coin_candle_update_delay = coin_candle_update_delay;
+          
+          in_settings = 0;
+          coin_menu -> display();
+        }
       }
+  
+      if (irrecv.decodedIRData.decodedRawData == 0xAD52FF00)
+        coin_menu -> getButtons()[0].subMenuDown();
+  
+      if (irrecv.decodedIRData.decodedRawData == 0xE718FF00)
+        coin_menu -> getButtons()[0].subMenuUp();
+  
+      if (irrecv.decodedIRData.decodedRawData == 0xF708FF00)
+        coin_menu -> getButtons()[0].subMenuLeft();
+  
+      if (irrecv.decodedIRData.decodedRawData == 0xA55AFF00)
+        coin_menu -> getButtons()[0].subMenuRight();
+  
+      delay(50);
+      irrecv.resume();
     }
-
-    if (irrecv.decodedIRData.decodedRawData == 0xAD52FF00)
-      coin_menu -> getButtons()[0].subMenuDown();
-
-    if (irrecv.decodedIRData.decodedRawData == 0xE718FF00)
-      coin_menu -> getButtons()[0].subMenuUp();
-
-    if (irrecv.decodedIRData.decodedRawData == 0xF708FF00)
-      coin_menu -> getButtons()[0].subMenuLeft();
-
-    if (irrecv.decodedIRData.decodedRawData == 0xA55AFF00)
-      coin_menu -> getButtons()[0].subMenuRight();
-
-    delay(50);
-    irrecv.resume();
+  } else if (mode == 2){
+    portfolio_menu -> getButtons()[0].flashSelectedSelector();
+    if (irrecv.decode()){
+      if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00){
+        char* action = portfolio_menu -> getButtons()[0].pressSubMenu();
+        if (action == "Return"){
+          String str = coin_change_times[portfolio_menu -> getButtons()[0].selectors[0].getSelected()[0]];
+          portfolio_candle_update_delay = str.toInt();
+  
+          if (portfolio_candle_update_delay != last_portfolio_candle_update_delay)
+            portfolio -> clearCandles();
+  
+          last_portfolio_candle_update_delay = portfolio_candle_update_delay;
+          
+          in_settings = 0;
+          portfolio_menu -> display();
+        }
+      }
+  
+      if (irrecv.decodedIRData.decodedRawData == 0xAD52FF00)
+        portfolio_menu -> getButtons()[0].subMenuDown();
+  
+      if (irrecv.decodedIRData.decodedRawData == 0xE718FF00)
+        portfolio_menu -> getButtons()[0].subMenuUp();
+  
+      if (irrecv.decodedIRData.decodedRawData == 0xF708FF00)
+        portfolio_menu -> getButtons()[0].subMenuLeft();
+  
+      if (irrecv.decodedIRData.decodedRawData == 0xA55AFF00)
+        portfolio_menu -> getButtons()[0].subMenuRight();
+  
+      delay(50);
+      irrecv.resume();
+    }
   }
 }
