@@ -1,8 +1,8 @@
 TODO
 - Add network configuration and keyboard instructions to README
-- Add candle graph for portfolio
-- Add search functionality and more cryptocurrencies
+- Add search functionality and more cryptocurrencies (work started)
 - Add ability for user to add coins to the current list (limited to max 20 coins to choose from), ability to choose coin colour
+- Add stock functionality (if suitable API exists)
 - Create an api for the device to pull bitmaps and other details from!
 
 # ESP8266_ST7735_IR_CryptoTicker
@@ -52,6 +52,12 @@ This section displays the propertions of your portfolio, both graphically as a p
 
 <img src="https://user-images.githubusercontent.com/47477832/137373354-35c3d439-3129-4abf-86ca-88a0efb7dda7.jpg" width="350">
 
+### Section 3 - Portfolio Candles
+
+This section displays the candle graph of the portfolio, similarly to the coin interface it takes time to fill up. Also displays the proportional bar seen in the first section.
+
+<img src="https://user-images.githubusercontent.com/47477832/138352170-c8b0ba11-bc68-4fd0-9fd1-a115281a0272.jpg" width="350">
+
 ### Controller Navigation
 
 - '#' - Opens the menu.
@@ -63,6 +69,8 @@ This section displays the propertions of your portfolio, both graphically as a p
 ## Portfolio Menu
 
 This is where the user can configure the settings of the Portfolio screen, and also access the Portfolio Editor.
+
+<img src="https://user-images.githubusercontent.com/47477832/138352360-5580b8b8-b8d9-427f-88a4-bff018310c92.jpg" width="350">
 
 ### Controller Navigation
 - '&#8593;' - Selects the menu item above the currently selected item.
