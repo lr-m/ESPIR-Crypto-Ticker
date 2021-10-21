@@ -1,16 +1,12 @@
-TODO
-- Add network configuration and keyboard instructions to README
-- Add search functionality and more cryptocurrencies (work started)
-- Add ability for user to add coins to the current list (limited to max 20 coins to choose from), ability to choose coin colour
-- Add stock functionality (if suitable API exists)
-- Create an api for the device to pull bitmaps and other details from!
-
 # ESP8266_ST7735_IR_CryptoTicker
 ESP8266 NodeMCU powered Crypto Ticker that uses an ST7735 TFT screen to display statistics and the candle chart for various cryptocurrencies, also utilising an IR remote for configuration and user input. Also has functionality that allows the user to add their own portfolio.
 
 ## Crypto Display
 
 This screen displays characteristics of coins selected by the user in the menu, it shows the current price, 24hr change, as well as a candle chart of the coin (which fills up over time). Up to 8 coins can be selected, and the coins are cycled through at a rate that can be selected by the user in the menu.
+
+<img src="https://user-images.githubusercontent.com/47477832/137286323-0c987a22-59e3-42f3-9926-4633200aa912.jpg" width="350">
+<img src="https://user-images.githubusercontent.com/47477832/137286402-810c95b3-79af-4720-b935-4e37dc9c8246.jpg" width="350">
 
 ### Controller Navigation
 - '#' - This opens the Crypto menu that allows configuration and coin selection.
@@ -19,9 +15,6 @@ This screen displays characteristics of coins selected by the user in the menu, 
 - '&#8593;' - Moves to the next screen (Portfolio/Coin).
 - '&#8595;' - Moves to the previous screen (Portfolio/Coin).
 
-<img src="https://user-images.githubusercontent.com/47477832/137286323-0c987a22-59e3-42f3-9926-4633200aa912.jpg" width="350">
-<img src="https://user-images.githubusercontent.com/47477832/137286402-810c95b3-79af-4720-b935-4e37dc9c8246.jpg" width="350">
-
 ## Crypto Menu
 
 This is where the user can configure some of the aspects of the crypto interface display. The options that can be configured are:
@@ -29,12 +22,12 @@ This is where the user can configure some of the aspects of the crypto interface
 - Candle delay - How long the time frame of each candle in the chart is.
 - Coin cycle delay - The duration between automatic cycling of coins.
 
+<img src="https://user-images.githubusercontent.com/47477832/138352726-f378f234-b823-466a-8eec-8e7c0f87b6b7.jpg" width="350">
+
 ### Controller Navigation
 
 - '&#8593;' - Selects the menu item above the currently selected item.
 - '&#8595;' - Selects the menu item below the currently selected item.
-
-<img src="https://user-images.githubusercontent.com/47477832/137286506-d7595e38-0bf3-4895-a8fa-acbab4440b2f.jpg" width="350">
 
 ## Portfolio Example (Random Coins and Amounts)
 
@@ -76,11 +69,11 @@ This is where the user can configure the settings of the Portfolio screen, and a
 - '&#8593;' - Selects the menu item above the currently selected item.
 - '&#8595;' - Selects the menu item below the currently selected item.
 
-<img src="https://user-images.githubusercontent.com/47477832/137286591-d63df87b-64ba-416c-b76b-cdac572d39a9.jpg" width="350">
-
 ## Portfolio Editor
 
 This is where the user can configure their Portfolio, selecting amounts of coins that they own.
+
+<img src="https://user-images.githubusercontent.com/47477832/137286628-f72da208-2558-4e68-b25a-122f7477f625.jpg" width="350">
 
 ### Controller Navigation
 #### Coin Not Selected
@@ -96,5 +89,3 @@ This is where the user can configure their Portfolio, selecting amounts of coins
 - '&#8595;' - Subtracts the current amount to add to the coin amount.
 - '#' - Go back to Portfolio Menu.
 - 'OK' - Exit the amount changer for the currently selected coin and return to coin selection.
-
-<img src="https://user-images.githubusercontent.com/47477832/137286628-f72da208-2558-4e68-b25a-122f7477f625.jpg" width="350">
