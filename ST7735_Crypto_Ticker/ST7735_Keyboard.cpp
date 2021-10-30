@@ -143,11 +143,11 @@ void ST7735_Keyboard::interact(uint32_t* ir_data){
 
   // DOWN
   if (*ir_data == 0xAD52FF00)
-    goToTabs();
+    moveDown();
 
   // UP
   if (*ir_data == 0xE718FF00)
-    exitTabs();
+    moveUp();
 
   // RIGHT
   if (*ir_data == 0xA55AFF00)
@@ -166,6 +166,15 @@ void ST7735_Keyboard::reset(){
 	current_string = (char*) malloc(sizeof(char) * (MAX_INPUT_LENGTH + 1));
 	current_string[0] = 0;
 	enter_pressed = 0;
+}
+
+void ST7735_Keyboard::end(){
+	current_input_length = 0;
+	free(current_string);
+	current_string = (char*) malloc(sizeof(char) * (MAX_INPUT_LENGTH + 1));
+	current_string[0] = 0;
+	enter_pressed = 0;
+	setModeClear(last_mode, last_key);
 }
 
 // Returns the current input
@@ -272,6 +281,19 @@ void ST7735_Keyboard::setMode(int new_mode, int key_index){
 	}
 }
 
+void ST7735_Keyboard::setModeClear(int new_mode, int key_index){
+	mode = new_mode;
+	selected_index = key_index;
+	
+	if (mode == 0 || mode == 1){
+		selected = letters + key_index;
+	} else if (mode == 2){
+		selected = numbers + key_index;
+	} else {
+		selected = specials + key_index;
+	}
+}
+
 // Overloaded set mode returns to the first key
 void ST7735_Keyboard::setMode(int new_mode){
 	mode = new_mode;
@@ -303,6 +325,75 @@ void ST7735_Keyboard::displayCurrentString(){
 	tft -> setTextColor(INPUT_COLOUR);
 	tft -> setCursor(0, 10);
 	tft -> print(current_string);
+}
+
+// Set the selected key to the key on the right
+void ST7735_Keyboard::moveDown(){
+	selected -> display(mode);
+	
+	if (mode == 0 || mode == 1){
+		if (selected_index < 9){
+			selected_index += 10;
+		} else if (selected_index == 9){
+			selected_index = 18;
+		} else if (selected_index < 19){
+			selected_index += 8;
+			if (selected_index < 19){
+				selected_index = 19;
+			} else if (selected_index > 25){
+				selected_index = 25;
+			}
+		} else if (selected_index < 26){
+			goToTabs();
+			selected -> displaySelected(mode);
+			return;
+		}
+		
+		selected = letters + selected_index;
+	} else if (mode == 2) {
+		goToTabs();
+	} else if (mode == 3){
+		if (selected_index < 21){
+			selected_index += 11;
+		} else if (selected_index == 21){
+			selected_index = 31;
+		} else if (selected_index < 32){
+			goToTabs();
+			selected -> displaySelected(mode);
+			return;
+		}
+		
+		selected = specials + selected_index;
+	}
+	
+	selected -> displaySelected(mode);
+}
+
+// Set the selected key to the key on the right
+void ST7735_Keyboard::moveUp(){
+	selected -> display(mode);
+	
+	if (mode == 0 || mode == 1){
+		if (selected_index >= 19){
+			selected_index -= 8;
+		} else if (selected_index >= 10){
+			selected_index -= 10;
+		}
+		
+		selected = letters + selected_index;
+	} else if (mode == 3) {
+		if (selected_index > 10){
+			selected_index -= 11;
+		} else if (selected_index > 19){
+			selected_index -= 10;
+		}
+		
+		selected = specials + selected_index;
+	} else if (mode == 4){
+		exitTabs();
+	}
+	
+	selected -> displaySelected(mode);
 }
 
 // Set the selected key to the key on the right

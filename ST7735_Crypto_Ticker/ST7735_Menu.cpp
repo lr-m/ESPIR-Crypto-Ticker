@@ -83,7 +83,7 @@ Button::Button(Adafruit_ST7735* display, int x_pos, int y_pos, int width,
 	selectors = (Selector*) malloc(sizeof(Selector) * MAX_SELECTORS);
 	if (return_sub_button == 1){
 		return_button = (Button*) malloc(sizeof(Button));
-		*return_button = Button(tft, 0, 0, tft -> width(), 20, "Return", 0);
+		*return_button = Button(tft, 0, 0, tft -> width(), 16, "Return", 0);
 	}
 	on_return_button = 1;
 	current_selector = 1;
@@ -92,7 +92,7 @@ Button::Button(Adafruit_ST7735* display, int x_pos, int y_pos, int width,
 // Display the Button
 void Button::display() {
 	tft -> fillRoundRect(x, y, w, h, 2, UNSELECTED_BG_COLOUR);
-	tft -> setCursor(x + 8, y + 6);
+	tft -> setCursor(x + 8, y + (h - 8)/2);
 	tft -> setTextColor(UNSELECTED_LETTER_COLOUR);
 	tft -> print(action);
 }
@@ -100,7 +100,7 @@ void Button::display() {
 // Display the Button as selected
 void Button::displaySelected() {
 	tft -> fillRoundRect(x, y, w, h, 2, SELECTED_BG_COLOUR);
-	tft -> setCursor(x + 8, y + 6);
+	tft -> setCursor(x + 8, y + (h - 8)/2);
 	tft -> setTextColor(SELECTED_LETTER_COLOUR);
 	tft -> print(action);
 }
@@ -111,7 +111,7 @@ void Button::addSelector(char* prompt, char** options,
 	if (selector_count < MAX_SELECTORS){
 		selector_count++;
 		selectors[selector_count - 1] = Selector(tft, 0, 
-			((selector_count) * 40) - 10, prompt, options, window_size, max, vals);
+			((selector_count) * 32) - 10, prompt, options, window_size, max, vals);
 	}
 }
 
@@ -188,7 +188,7 @@ void Button::subMenuRight() {
 
 
 
-
+// Constructor for selector
 Selector::Selector(Adafruit_ST7735* display, int x_pos, int y_pos, 
 		char* act, char** opt, int size, int max, int count) {
 	tft = display;
@@ -219,17 +219,19 @@ void Selector::cycleButtons() {
 	}
 }
 
+// Indicate if the currently selected index is at the top of the selector
 int Selector::atTop(){
 	return current_changing_index < window_size ? 1 : 0;
 }
 
+// Indicate if the currently selected index is at the bottom of the selector
 int Selector::atBottom(){
 	return current_changing_index >= value_count -  window_size ? 1 : 0;
 }
 
 void Selector::drawItem(int index){
 	tft -> setCursor(map(index%window_size, 0, window_size - 1, 
-		FIRST_BUTTON_X, tft -> width() - LAST_BUTTON_X) - 3, y + 13 + 13*floor(index/window_size));
+		3, tft -> width() - (tft -> width()/window_size)) - 3, y + 5 + 13*floor(index/window_size));
 	
 	int selected_test = 0;
 	for (int j = 0; j < max_selected; j++){
@@ -249,34 +251,36 @@ void Selector::drawItem(int index){
 // Display the selector
 void Selector::display() {
 	tft -> setCursor(x + 5, y);
-	tft -> fillRect(x, y - 3, tft -> width(), 35 + 13 * (ceil(value_count/window_size) - 1), ST77XX_BLACK);
+	tft -> fillRect(x, y - 3, tft -> width(), 31 + 13 * (ceil(value_count/window_size) - 1), ST77XX_BLACK);
 	tft -> print(prompt);
 	
 	this -> cycleButtons();
 }
 
+// Display the element at the passed index with a green background
 void Selector::selectIndex(int index){
 	tft -> setTextColor(WHITE);
 	
-	tft -> fillRoundRect(map(index%window_size, 0, window_size - 1, 
-		FIRST_BUTTON_X, tft -> width() - LAST_BUTTON_X) - 2, y + 14 + 13*floor(index/window_size), 
-		(tft -> width() - LAST_BUTTON_X) / window_size, 12, 2, GREEN);
+	tft -> fillRoundRect(map(index%window_size, 0, window_size - 1, 3, tft -> width() - (tft -> width()/window_size)), 
+		y + 10 + 13*floor(index/window_size), 0.9 * (tft -> width() / window_size), 12, 2, GREEN);
 		
-	tft -> setCursor(map(index%window_size, 0, window_size - 1, 
-			FIRST_BUTTON_X, tft -> width() - LAST_BUTTON_X), y + 16 + 13*floor(index/window_size));
-		tft -> print(options[index]);
+	tft -> setCursor(map(index%window_size, 0, window_size - 1, 3, tft -> width() - (tft -> width()/window_size)) + 2, 
+		y + 12 + 13*floor(index/window_size));
+	
+	tft -> print(options[index]);
 }
 
+// Display the element at the passed index with a red background
 void Selector::unselectIndex(int index){
 	tft -> setTextColor(WHITE);
 	
-	tft -> fillRoundRect(map(index%window_size, 0, window_size - 1, 
-		FIRST_BUTTON_X, tft -> width() - LAST_BUTTON_X) - 2, y + 14 + 13*floor(index/window_size), 
-		(tft -> width() - LAST_BUTTON_X) / window_size, 12, 2, RED);
+	tft -> fillRoundRect(map(index%window_size, 0, window_size - 1, 3, tft -> width() - (tft -> width()/window_size)), 
+		y + 10 + 13*floor(index/window_size), 0.9 * (tft -> width() / window_size), 12, 2, RED);
 		
-	tft -> setCursor(map(index%window_size, 0, window_size - 1, 
-			FIRST_BUTTON_X, tft -> width() - LAST_BUTTON_X), y + 16 + 13*floor(index/window_size));
-		tft -> print(options[index]);
+	tft -> setCursor(map(index%window_size, 0, window_size - 1, 3, tft -> width() - (tft -> width()/window_size)) + 2, 
+		y + 12 + 13*floor(index/window_size));
+	
+	tft -> print(options[index]);
 }
 
 // Flash the selected option
@@ -293,13 +297,12 @@ void Selector::flashSelected() {
 		}
 	}
 	
-	tft -> fillRoundRect(map(current_changing_index%window_size, 0, 
-		window_size - 1, FIRST_BUTTON_X, tft -> width() - 
-		LAST_BUTTON_X) - 2, y + 14 + 13*floor(current_changing_index/window_size), (tft -> width() - LAST_BUTTON_X) / window_size, 
-		12, 2, DARK_GREY);
-	tft -> setCursor(map(current_changing_index%window_size, 0, 
-		window_size - 1, FIRST_BUTTON_X, tft -> width() - 
-		LAST_BUTTON_X), y + 16 + 13*floor(current_changing_index/window_size));
+	tft -> fillRoundRect(map(current_changing_index%window_size, 0, window_size - 1, 3, tft -> width() - (tft -> width()/window_size)), 
+		y + 10 + 13*floor(current_changing_index/window_size), 0.9 * (tft -> width() / window_size), 12, 2, DARK_GREY);
+		
+	tft -> setCursor(map(current_changing_index%window_size, 0, window_size - 1, 3, tft -> width() - (tft -> width()/window_size)) + 2, 
+		y + 12 + 13*floor(current_changing_index/window_size));
+
 	tft -> print(options[current_changing_index]);
 
 	delay(100);
@@ -331,6 +334,7 @@ void Selector::moveRight() {
 	}
 }
 
+// Move to the option below
 void Selector::moveDown(){
 	current_changing_index = 
 		current_changing_index + window_size > value_count ? 
@@ -338,6 +342,7 @@ void Selector::moveDown(){
 		current_changing_index + window_size;
 }
 
+// Move to the option above
 void Selector::moveUp(){
 	current_changing_index = 
 		current_changing_index - window_size < 0 ? 

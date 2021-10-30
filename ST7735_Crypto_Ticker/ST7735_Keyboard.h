@@ -19,7 +19,7 @@
 #define UNSELECTED_BG_COLOUR 0x8C51
 #define SELECTED_BG_COLOUR 0xD69A
 #define PROMPT_COLOUR 0xFFFF
-#define INPUT_COLOUR 0xF800
+#define INPUT_COLOUR 0x07E0
 #define PROMPT_BACKGROUND 0x0000
 #define SELECTED_LETTER_COLOUR 0x0000
 #define UNSELECTED_LETTER_COLOUR 0xFFFF
@@ -55,6 +55,8 @@ class ST7735_Keyboard
 	void displayPrompt(String prompt);
 	void moveRight();
 	void moveLeft();
+	void moveUp();
+	void moveDown();
 	void setMode(int);
 	void setMode(int, int);
 	void reset();
@@ -62,6 +64,8 @@ class ST7735_Keyboard
 	void exitTabs();
 	int enterPressed();
 	char* getCurrentInput();
+	void end();
+	void setModeClear(int, int);
 	
 	void interact(uint32_t*);
 	

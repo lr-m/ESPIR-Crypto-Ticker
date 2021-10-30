@@ -1,4 +1,6 @@
 // Colours
+// bgr, 5:6:5
+
 #define GRAY 0xAD75
 #define GOLD 0x05FC
 #define RED 0x001F
@@ -16,3 +18,4 @@
 #define NIGHT_BLUE 0x9802
 #define MOON_YELLOW 0x67DF
 #define HOT_PINK 0xF817
+
