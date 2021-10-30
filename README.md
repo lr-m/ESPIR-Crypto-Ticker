@@ -12,8 +12,8 @@ If the device detects that there are no network credentials stored in the EEPROM
 
 This screen displays characteristics of coins selected by the user in the menu, it shows the current price, 24hr change, as well as a candle chart of the coin (which fills up over time). Up to 8 coins can be selected, and the coins are cycled through at a rate that can be selected by the user in the menu.
 
-<img src="https://user-images.githubusercontent.com/47477832/137286323-0c987a22-59e3-42f3-9926-4633200aa912.jpg" width="350">
-<img src="https://user-images.githubusercontent.com/47477832/137286402-810c95b3-79af-4720-b935-4e37dc9c8246.jpg" width="350">
+<img src="https://user-images.githubusercontent.com/47477832/139539473-5c04ddb7-ac7f-4104-9e64-166611e64a84.jpg" width="350">
+<img src="https://user-images.githubusercontent.com/47477832/139539466-6838b78b-e29e-4d7e-8318-47401f1934f9.jpg" width="350">
 
 ### Controller Navigation
 - '#' - This opens the Crypto menu that allows configuration and coin selection.
