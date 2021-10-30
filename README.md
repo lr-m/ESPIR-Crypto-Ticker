@@ -1,6 +1,13 @@
 # ESP8266_ST7735_IR_CryptoTicker
 ESP8266 NodeMCU powered Crypto Ticker that uses an ST7735 TFT screen to display statistics and the candle chart for various cryptocurrencies, also utilising an IR remote for configuration and user input. Also has functionality that allows the user to add their own portfolio.
 
+## Initialisation/Network Config
+When the device is plugged in, it displays the logo/name and gives the user the opportunity to clear any existing WiFi credentials from the EEPROM memory if needed (e.g. changed router SSID).
+
+If the device detects that there are credentials stored in the EEPROM, it will use these to try and connect the the router with the given SSID, using the given password.
+
+If the device detects that there are no network credentials stored in the EEPROM, then the user is presented with a keyboard that they can use to enter their SSID first, and then their password second. These details are then used to connect to the network.
+
 ## Crypto Display
 
 This screen displays characteristics of coins selected by the user in the menu, it shows the current price, 24hr change, as well as a candle chart of the coin (which fills up over time). Up to 8 coins can be selected, and the coins are cycled through at a rate that can be selected by the user in the menu.
@@ -19,6 +26,7 @@ This screen displays characteristics of coins selected by the user in the menu, 
 
 This is where the user can configure some of the aspects of the crypto interface display. The options that can be configured are:
 - Coin list - What coins are being updated and displayed.
+- Add new coin - Here is where users can add any coin that is available on CoinGecko
 - Candle delay - How long the time frame of each candle in the chart is.
 - Coin cycle delay - The duration between automatic cycling of coins.
 
@@ -28,6 +36,30 @@ This is where the user can configure some of the aspects of the crypto interface
 
 - '&#8593;' - Selects the menu item above the currently selected item.
 - '&#8595;' - Selects the menu item below the currently selected item.
+
+## Add New Coin
+
+To add a new coin, you need to know a few things, the api ID, the code, and the rgb values of the colour you want to represent it.
+
+#### Step 1 - Select coin to replace
+- Need to replace a coin in the existing coins with the new coin, so select a coin to replace (navigating with arrows and selecting with 'OK').
+
+<img src="https://user-images.githubusercontent.com/47477832/139539178-94739a21-270e-48e3-8fa8-addb168e3221.jpg" width="350">
+
+#### Step 2 - Enter ID and Code of token
+- To find the ID of the token, find it on CoinGecko and look for the API key, this is what you need. For example, for the coin Monero (XMR), you would navigate to https://www.coingecko.com/en/coins/monero to find the api ID, which in this case is 'monero'. The code can also be found here. Use the keyboard to enter the values and hit enter when completed.
+- There is a check in place that ensures the provided id is valid.
+
+<img src="https://user-images.githubusercontent.com/47477832/139539189-ba87a33e-c34f-428f-9506-14d2eeea6cf2.jpg" width="350">
+
+#### Step 3 - Enter the colour you want to represent the coin
+- Need to select a colour to represent the coin in the portfolio and coin interfaces, using the rgb value found earlier, enter these into their respective entry point using the up and down arrows to adjust them (+-10 each time). Then hit enter when this is completed.
+
+<img src="https://user-images.githubusercontent.com/47477832/139539200-7f4f052d-43b2-41fb-bf82-f24453523ad7.jpg" width="350">
+
+#### Now the coin has been added
+
+<img src="https://user-images.githubusercontent.com/47477832/139539217-48aa2375-cc52-4f42-af42-204172f71bde.jpg" width="350">
 
 ## Portfolio Example (Random Coins and Amounts)
 
