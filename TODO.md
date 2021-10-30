@@ -1,6 +1,3 @@
-- Fix heap issue (reduce dynamic allocation as to reduce heap fragmentation)
-- Add network configuration and keyboard instructions to README
-- Add search functionality and more cryptocurrencies (work started)
-- Add ability for user to add coins to the current list (limited to max 20 coins to choose from), ability to choose coin colour
+- Update README with full functionality
 - Add stock functionality (if suitable API exists)
 - Create an api for the device to pull bitmaps and other details from!
