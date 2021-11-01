@@ -33,11 +33,11 @@ void ST7735_Portfolio::drawValue(double *total_value) {
   tft->setTextColor(WHITE);
   tft->setCursor(5, 4);
 
-  tft->print(char(156));
+  tft -> print(char(156));
   if (*total_value >= 100000000) {
-    tft->print(String(*total_value, 0));
+    tft -> print(String(*total_value, 0));
   } else {
-    tft->print(*total_value);
+    tft -> print(*total_value);
   }
 }
 
@@ -126,21 +126,21 @@ void ST7735_Portfolio::drawBarSummary(double *total_value) {
     tft->fillRect(2, 34 + i * 10, 2, 10,
                   coins[portfolio_editor->selected_portfolio_indexes[i]]
                       .portfolio_colour);
-    tft->print(
+    tft -> print(
         coins[portfolio_editor->selected_portfolio_indexes[i]].coin_code);
     tft->setCursor(52, 35 + i * 10);
     tft->setTextColor(WHITE);
-    tft->print(char(156));
+    tft -> print(char(156));
 
-    if (coin_total > 100000000) {
-      tft->print(String(coin_total, 0));
+    if (coin_total >= 100000000) {
+      tft -> print(String(coin_total, 0));
     } else if (coin_total >= 10000000) {
-      tft->print(String(coin_total, 1));
+      tft -> print(String(coin_total, 1));
     } else {
-      tft->print(coin_total, 1);
+      tft -> print(String(coin_total, 1));
     }
 
-    tft->setCursor(123, 35 + i * 10);
+    tft -> setCursor(123, 35 + i * 10);
 
     if (coins[portfolio_editor->selected_portfolio_indexes[i]].current_change <
         0) {
@@ -152,32 +152,32 @@ void ST7735_Portfolio::drawBarSummary(double *total_value) {
     if (coin_total < 10000000000) {
       if (coins[portfolio_editor->selected_portfolio_indexes[i]]
               .current_change > 0) {
-        tft->print('+');
+        tft -> print('+');
       }
 
       if (abs(coins[portfolio_editor->selected_portfolio_indexes[i]]
-                  .current_change) > 1000) {
-        tft->print(String(coins[portfolio_editor->selected_portfolio_indexes[i]]
+                  .current_change) >= 1000) {
+        tft -> print(String(coins[portfolio_editor->selected_portfolio_indexes[i]]
                               .current_change,
                           0));
       } else if (abs(coins[portfolio_editor->selected_portfolio_indexes[i]]
-                         .current_change) > 100) {
-        tft->print(String(coins[portfolio_editor->selected_portfolio_indexes[i]]
+                         .current_change) >= 100) {
+        tft -> print(String(coins[portfolio_editor->selected_portfolio_indexes[i]]
                               .current_change,
                           0));
       } else if (abs(coins[portfolio_editor->selected_portfolio_indexes[i]]
-                         .current_change) > 10) {
-        tft->print(String(coins[portfolio_editor->selected_portfolio_indexes[i]]
+                         .current_change) >= 10) {
+        tft -> print(String(coins[portfolio_editor->selected_portfolio_indexes[i]]
                               .current_change,
                           1));
       } else if (abs(coins[portfolio_editor->selected_portfolio_indexes[i]]
                          .current_change) >= 0) {
-        tft->print(String(coins[portfolio_editor->selected_portfolio_indexes[i]]
+        tft -> print(String(coins[portfolio_editor->selected_portfolio_indexes[i]]
                               .current_change,
                           2));
       }
 
-      tft->print('%');
+      tft -> print('%');
       tft->setTextColor(WHITE);
     }
     i++;
@@ -196,17 +196,17 @@ void ST7735_Portfolio::drawPieSummary(double *total_value) {
     coin_total =
         coins[portfolio_editor->selected_portfolio_indexes[i]].current_price *
         coins[portfolio_editor->selected_portfolio_indexes[i]].amount;
-    tft->setTextSize(1);
-    tft->setCursor(7, 35 + i * 10);
-    tft->fillRect(2, 34 + i * 10, 2, 10,
+    tft -> setTextSize(1);
+    tft -> setCursor(7, 35 + i * 10);
+    tft -> fillRect(2, 34 + i * 10, 2, 10,
                   coins[portfolio_editor->selected_portfolio_indexes[i]]
                       .portfolio_colour);
-    tft->print(
+    tft -> print(
         coins[portfolio_editor->selected_portfolio_indexes[i]].coin_code);
-    tft->setCursor(50, 35 + i * 10);
-    tft->setTextColor(WHITE);
-    tft->print(coin_total / (*total_value) * 100, 1);
-    tft->print('%');
+    tft -> setCursor(50, 35 + i * 10);
+    tft -> setTextColor(WHITE);
+    tft -> print(String(coin_total / (*total_value) * 100, 1));
+    tft -> print('%');
     i++;
   }
 

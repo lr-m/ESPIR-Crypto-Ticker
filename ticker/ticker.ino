@@ -131,7 +131,8 @@ void setup(void) {
   irrecv.enableIRIn(); // Enable IR reciever
 
   // Initialise display
-  tft.initR(INITR_GREENTAB); // Init ST7735S chip
+  //tft.initR(INITR_GREENTAB); // Init ST7735S chip
+  tft.initR(INITR_BLACKTAB); // Init ST7735S chip
   tft.setRotation(1);
 
   // Initialise keyboard
@@ -236,6 +237,10 @@ void setup(void) {
   // Try to read network credentials from EEPROM if they exist
   EEPROM.begin(512);
   byte value = EEPROM.read(0);
+
+  // First ever boot has random memory, need to clear
+  if (value != 1 && value != 0)
+    clearEEPROM();
 
   // Check if credits have been written, take necessary action
   if (value == 0) {

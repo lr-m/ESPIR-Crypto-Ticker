@@ -122,13 +122,13 @@ void COIN::drawPrice(Adafruit_ST7735 *display) {
 
   String print_price;
 
-  if (current_price / 10000 > 1) {
+  if (current_price / 10000 >= 1) {
     print_price = String(current_price, 1);
-  } else if (current_price / 1000 > 1) {
+  } else if (current_price / 1000 >= 1) {
     print_price = String(current_price, 2);
-  } else if (current_price / 100 > 1) {
+  } else if (current_price / 100 >= 1) {
     print_price = String(current_price, 3);
-  } else if (current_price / 10 > 1) {
+  } else if (current_price / 10 >= 1) {
     print_price = String(current_price, 4);
   } else {
     print_price = String(current_price, 5);

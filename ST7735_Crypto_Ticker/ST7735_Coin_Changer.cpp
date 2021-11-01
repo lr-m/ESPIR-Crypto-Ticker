@@ -299,7 +299,8 @@ int ST7735_Coin_Changer::rgb_to_bgr(unsigned char r, unsigned char g,
   unsigned char green = g >> 2;
   unsigned char blue = b >> 3;
 
-  int result = (blue << (5 + 6)) | (green << 5) | red;
+  //int result = (blue << (5 + 6)) | (green << 5) | red;
+  int result = (red << (5 + 6)) | (green << 5) | blue;
 
   return result;
 }
