@@ -137,7 +137,7 @@ void ST7735_Portfolio::drawBarSummary(double *total_value) {
     } else if (coin_total >= 10000000) {
       tft -> print(String(coin_total, 1));
     } else {
-      tft -> print(String(coin_total, 1));
+      tft -> print(String(coin_total, 2));
     }
 
     tft -> setCursor(123, 35 + i * 10);
