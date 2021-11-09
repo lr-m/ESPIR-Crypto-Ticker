@@ -1,6 +1,8 @@
 # ESP8266_ST7735_IR_CryptoTicker
 ESP8266 NodeMCU powered Crypto Ticker that uses an ST7735 TFT screen to display statistics and the candle chart for various cryptocurrencies, also utilising an IR remote for configuration and user input. Also has functionality that allows the user to add their own portfolio.
 
+**NOTE: If you are using this and would like any more features or modifications to be made please let me know by opening an issue, with the title beginning as 'Feature Request - '.**
+
 ## Components
 - NodeMCU ESP8266 WiFi Microcontroller CP2102
 - IR Reciever / Remote
