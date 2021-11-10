@@ -3,6 +3,34 @@ ESP8266 NodeMCU powered Crypto Ticker that uses an ST7735 TFT screen to display 
 
 **NOTE: If you are using this and would like any more features or modifications to be made please let me know by opening an issue, with the title beginning as 'Feature Request - '.**
 
+## IMPORTANT
+
+To use this sketch, you need to add the thumbprint from your browser (line 59 of ticker.ino)
+
+To get the thumbprint (on Chrome):
+
+1. Visit https://www.coingecko.com/api/documentations/v3#/
+2. Click the lock next to the URL/Search Bar
+<img src="https://user-images.githubusercontent.com/47477832/141087977-d66bf865-c321-4be8-a7fc-5842b174abb6.png" width="500">
+
+3. In the menu, click 'Connection is Secure'
+<img src="https://user-images.githubusercontent.com/47477832/141087990-272294f7-a46d-4fca-abb0-e3807b0af890.png" width="500">
+
+4. Then click 'Certificate Is Valid'
+<img src="https://user-images.githubusercontent.com/47477832/141088004-75575b7c-f048-4956-ba34-611ce81b0ee0.png" width="500">
+
+5. Click on the 'details' tab that appears
+6. Scroll down to the 'thumbprint' field, click this and copy the thumbprint
+<img src="https://user-images.githubusercontent.com/47477832/141088030-66d95251-5cf8-4dd5-860b-816f506b50da.png" width="500">
+
+7. Replace line 59 of ticker.ino with the copied fingerprint, for example:
+
+```const char *fingerprint = "*YOUR FINGERPRINT HERE (TUTORIAL IN INSTRUCTIONS)";```
+Becomes:
+```const char *fingerprint = "4j3krnm34k53j6n4k3kj5n6kl3l54n5k4m532";```
+(Invalid example fingerprint used above, do not copy)
+
+
 ## Components
 - NodeMCU ESP8266 WiFi Microcontroller CP2102
 - IR Reciever / Remote
