@@ -56,6 +56,8 @@ extern unsigned char epd_bitmap_uniswap[];
 #define COIN_MENU_BUTTON_COUNT 5
 #define PORTFOLIO_MENU_BUTTON_COUNT 4
 
+const char *fingerprint = "*YOUR FINGERPRINT HERE (TUTORIAL IN INSTRUCTIONS)";
+
 // For ST7735-based displays, we will use this call
 Adafruit_ST7735 tft =
     Adafruit_ST7735(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST);
@@ -82,7 +84,6 @@ int portfolio_time_slot_moved =
 // For HTTP connection
 WiFiClientSecure client;
 HTTPClient http;
-const char *fingerprint = "33c57b69e63b765c393df1193b1768b81b0a1fd9";
 char *url_start = "https://api.coingecko.com/api/v3/simple/price?ids=";
 char *url_end = "&vs_currencies=gbp&include_24hr_change=true";
 
