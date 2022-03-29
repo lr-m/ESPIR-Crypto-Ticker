@@ -31,12 +31,6 @@ ST7735_Portfolio_Editor::ST7735_Portfolio_Editor(Adafruit_ST7735 *display,
 
   for (int i = 0; i < 9; i++)
     selected_portfolio_indexes[i] = -1;
-
-  selected_portfolio_indexes[0] = 0;
-  selected_portfolio_indexes[1] = 1;
-  selected_portfolio_indexes[2] = 3;
-  selected_portfolio_indexes[3] = 11;
-  selected_portfolio_indexes[4] = 15;
 }
 
 // Sets the Portfolio Editor to be in a selected state
