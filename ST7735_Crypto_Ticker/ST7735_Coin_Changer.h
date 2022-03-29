@@ -47,8 +47,8 @@ class ST7735_Coin_Changer
 		int interact(uint32_t*);
 		int active;
 		ST7735_Keyboard* keyboard;
-		char* loaded_id;
-		char* loaded_code;
+		char loaded_id[30];
+		char loaded_code[10];
 		int verified_id;
 		void verificationSuccess();
 		void verificationFailed();

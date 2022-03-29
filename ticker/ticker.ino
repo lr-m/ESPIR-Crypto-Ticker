@@ -17,7 +17,6 @@
 #include <ST7735_Portfolio_Editor.h>
 #include <WiFiUdp.h>
 
-
 extern unsigned char epd_bitmap_name[];
 extern unsigned char epd_bitmap_logo[];
 extern unsigned char epd_bitmap_logo_cropped[];
@@ -51,12 +50,10 @@ extern unsigned char epd_bitmap_uniswap[];
 #define TFT_MOSI D7
 #define RECV_PIN D1
 
-#define MAX_SELECTED_COINS 8
+#define MAX_SELECTED_COINS 6
 
 #define COIN_MENU_BUTTON_COUNT 5
 #define PORTFOLIO_MENU_BUTTON_COUNT 4
-
-const char *fingerprint = "*YOUR FINGERPRINT HERE (TUTORIAL IN INSTRUCTIONS)";
 
 // For ST7735-based displays, we will use this call
 Adafruit_ST7735 tft =
@@ -64,7 +61,7 @@ Adafruit_ST7735 tft =
 
 // For interface
 int selected_coins_count = 1;   // Current number of coins selected
-int current_coin;               // Index of current coin being displayed
+int current_coin = -1;               // Index of current coin being displayed
 int current_second;             // Current second from time NTP server
 unsigned long last_minute = -1; // Last minute for time update check
 
@@ -84,6 +81,7 @@ int portfolio_time_slot_moved =
 // For HTTP connection
 WiFiClientSecure client;
 HTTPClient http;
+const char *fingerprint = "*YOUR FINGERPRINT HERE";
 char *url_start = "https://api.coingecko.com/api/v3/simple/price?ids=";
 char *url_end = "&vs_currencies=gbp&include_24hr_change=true";
 
@@ -115,6 +113,7 @@ ST7735_Coin_Changer *coin_changer;
 
 char **coin_list;             // List of all coin codes
 int coin_cycle_delay;         // Delay between coin changes
+int next_coin_change = -1;    // Allows temporary extension of coin change delay
 int coin_candle_update_delay; // How often candles are pushed along (mins)
 int last_coin_candle_update_delay =
     5;                             // To detect changes in candle update time
@@ -132,8 +131,8 @@ void setup(void) {
   irrecv.enableIRIn(); // Enable IR reciever
 
   // Initialise display
-  //tft.initR(INITR_GREENTAB); // Init ST7735S chip
-  tft.initR(INITR_BLACKTAB); // Init ST7735S chip
+  tft.initR(INITR_GREENTAB); // Init ST7735S chip
+  //tft.initR(INITR_BLACKTAB); // Init ST7735S chip
   tft.setRotation(1);
 
   // Initialise keyboard
@@ -170,40 +169,40 @@ void setup(void) {
 
   coin_list = (char **)malloc(sizeof(char *) * COIN_COUNT);
 
-  coins[0] = COIN("BTC", "bitcoin", epd_bitmap_bitcoin, GOLD, WHITE, GOLD);
-  coins[1] = COIN("ETH", "ethereum", epd_bitmap_ethereum, WHITE, GRAY, GRAY);
+  coins[0] = COIN("BTC", "bitcoin", epd_bitmap_bitcoin, GOLD, WHITE, GOLD, 0);
+  coins[1] = COIN("ETH", "ethereum", epd_bitmap_ethereum, WHITE, GRAY, GRAY, 0);
   coins[2] =
-      COIN("LTC", "litecoin", epd_bitmap_litecoin, GRAY, WHITE, DARK_GREY);
+      COIN("LTC", "litecoin", epd_bitmap_litecoin, GRAY, WHITE, DARK_GREY, 0);
   coins[3] =
-      COIN("ADA", "cardano", epd_bitmap_cardano, LIGHT_BLUE, WHITE, LIGHT_BLUE);
-  coins[4] = COIN("BNB", "binancecoin", epd_bitmap_binance, WHITE, GOLD, GOLD);
-  coins[5] = COIN("USDT", "tether", epd_bitmap_tether, GREEN, WHITE, GREEN);
-  coins[6] = COIN("XRP", "ripple", epd_bitmap_xrp, DARK_GREY, WHITE, DARK_GREY);
-  coins[7] = COIN("DOGE", "dogecoin", epd_bitmap_dogecoin, GOLD, WHITE, GOLD);
-  coins[8] = COIN("DOT", "polkadot", epd_bitmap_dot, WHITE, BLACK, WHITE);
+      COIN("ADA", "cardano", epd_bitmap_cardano, LIGHT_BLUE, WHITE, LIGHT_BLUE, 0);
+  coins[4] = COIN("BNB", "binancecoin", epd_bitmap_binance, WHITE, GOLD, GOLD, 0);
+  coins[5] = COIN("USDT", "tether", epd_bitmap_tether, GREEN, WHITE, GREEN, 0);
+  coins[6] = COIN("XRP", "ripple", epd_bitmap_xrp, DARK_GREY, WHITE, DARK_GREY, 0);
+  coins[7] = COIN("DOGE", "dogecoin", epd_bitmap_dogecoin, GOLD, WHITE, GOLD, 0);
+  coins[8] = COIN("DOT", "polkadot", epd_bitmap_dot, WHITE, BLACK, WHITE, 0);
   coins[9] =
-      COIN("SOL", "solana", epd_bitmap_solana, PINK, LIGHTNING_BLUE, PINK);
+      COIN("SOL", "solana", epd_bitmap_solana, PINK, LIGHTNING_BLUE, PINK, 0);
   coins[10] = COIN("LUNA", "terra-luna", epd_bitmap_terra, NIGHT_BLUE,
-                   MOON_YELLOW, MOON_YELLOW);
+                   MOON_YELLOW, MOON_YELLOW, 0);
   coins[11] =
-      COIN("ALGO", "algorand", epd_bitmap_algorand, WHITE, BLACK, WHITE);
+      COIN("ALGO", "algorand", epd_bitmap_algorand, WHITE, BLACK, WHITE, 0);
   coins[12] =
-      COIN("LINK", "chainlink", epd_bitmap_link, DARK_BLUE, WHITE, DARK_BLUE);
+      COIN("LINK", "chainlink", epd_bitmap_link, DARK_BLUE, WHITE, DARK_BLUE, 0);
   coins[13] =
-      COIN("MATIC", "matic-network", epd_bitmap_matic, PURPLE, WHITE, PURPLE);
-  coins[14] = COIN("TRX", "tron", epd_bitmap_tron, RED, WHITE, RED);
+      COIN("MATIC", "matic-network", epd_bitmap_matic, PURPLE, WHITE, PURPLE, 0);
+  coins[14] = COIN("TRX", "tron", epd_bitmap_tron, RED, WHITE, RED, 0);
   coins[15] = COIN("BAT", "basic-attention-token", epd_bitmap_bat, WHITE,
-                   SALMON, SALMON);
-  coins[16] = COIN("AVAX", "avalanche-2", epd_bitmap_avax, RED, WHITE, RED);
+                   SALMON, SALMON, 0);
+  coins[16] = COIN("AVAX", "avalanche-2", epd_bitmap_avax, RED, WHITE, RED, 0);
   coins[17] =
-      COIN("UNI", "uniswap", epd_bitmap_uniswap, WHITE, HOT_PINK, HOT_PINK);
+      COIN("UNI", "uniswap", epd_bitmap_uniswap, WHITE, HOT_PINK, HOT_PINK, 0);
 
   // Add selectors to respective submenus
   coin_menu->getButtons()[0].addSelector(
       "Coin duration (secs):", coin_change_times, 5, 1, 5);
   coin_menu->getButtons()[0].addSelector(
       "Candle duration (mins):", coin_change_times, 5, 1, 5);
-  coin_menu->getButtons()[1].addSelector("Select up to 8 coins:", coin_list, 3,
+  coin_menu->getButtons()[1].addSelector("Select up to 5 coins:", coin_list, 3,
                                          MAX_SELECTED_COINS, COIN_COUNT);
 
   portfolio_menu->getButtons()[0].addSelector(
@@ -257,6 +256,11 @@ void setup(void) {
 }
 
 void loop() {
+  Serial.print("Free heap: ");
+  Serial.println(ESP.getFreeHeap());
+  Serial.print("Fragmentation: ");
+  Serial.println(ESP.getHeapFragmentation());
+  Serial.println();
   if (ssid_entered == 0) { // Get network name
     if (keyboard->enterPressed() == 1) {
       // Indicate SSID and pwd loaded into EEPROM
@@ -283,6 +287,9 @@ void loop() {
       keyboard->interact(&irrecv.decodedIRData.decodedRawData);
       irrecv.resume();
     }
+
+    // Commit changes to EEPROM
+    EEPROM.commit();
   } else if (network_initialised == 0) { // Initialise network
     // If first value of eeprom is null terminator then take input from user
     char *loaded_ssid = (char *)malloc(sizeof(char) * 30);
@@ -294,12 +301,8 @@ void loop() {
 
     initialiseNetwork(loaded_ssid, loaded_password);
 
-    // Only commit to EEPROM when correct credientials provided
-    EEPROM.commit();
-
     // Initialise the candle for first coin (bitcoin)
     selected_coins[0] = coins;
-
     selected_coins[0]->initCandles(&tft);
 
     forceGetData(1); // Get data for coin
@@ -354,6 +357,7 @@ void loop() {
 
     interactWithMenu();
   } else { // Display crypto interface
+
     updateAndDrawTime();
 
     for (int i = 0; i < 50; i++) {
@@ -376,7 +380,7 @@ void loop() {
           irrecv.resume();
 
           if (mode == 1) {
-            selected_coins[current_coin]->display(&tft);
+            displayNextCoin();
           } else {
             portfolio->display();
           }
@@ -388,21 +392,12 @@ void loop() {
         if (mode == 1) {
           // Previous coin
           if (irrecv.decodedIRData.decodedRawData == 0xF708FF00) {
-            if (current_coin == 0)
-              current_coin = selected_coins_count;
-
-            current_coin--;
-
-            selected_coins[current_coin]->display(&tft);
+            displayPreviousCoin();
           }
 
           // Next coin
           if (irrecv.decodedIRData.decodedRawData == 0xA55AFF00) {
-            current_coin++;
-            if (current_coin == selected_coins_count)
-              current_coin = 0;
-
-            selected_coins[current_coin]->display(&tft);
+            displayNextCoin();
           }
         } else if (mode == 2) {
           if (irrecv.decodedIRData.decodedRawData == 0xF708FF00) {
@@ -416,6 +411,10 @@ void loop() {
 
         irrecv.resume();
       }
+    }
+
+    if (next_coin_change == -1){
+      displayNextCoin();
     }
 
     // Move coin data along every 'coin_candle_update_delay' minutes
@@ -460,15 +459,38 @@ void loop() {
 
     // Move to next coin every *selected* seconds if in crypto mode
     if (mode == 1) {
-      if (current_second % coin_cycle_delay == 0) {
-        Serial.println("Moved to Next Coin");
-        selected_coins[current_coin]->display(&tft);
-
-        current_coin++;
-        if (current_coin == selected_coins_count)
-          current_coin = 0;
+      if (current_second == next_coin_change) {
+        displayNextCoin();
       }
     }
+  }
+}
+
+void displayNextCoin(){      
+  current_coin++;
+  if (current_coin == selected_coins_count)
+    current_coin = 0;
+
+  selected_coins[current_coin]->display(&tft);
+
+  incrementCoinCycleDelay();
+}
+
+void displayPreviousCoin(){
+  if (current_coin == 0)
+    current_coin = selected_coins_count;
+
+  current_coin--;
+
+  selected_coins[current_coin]->display(&tft);
+
+  incrementCoinCycleDelay();
+}
+
+void incrementCoinCycleDelay(){
+  next_coin_change = current_second + coin_cycle_delay;
+  if (next_coin_change >= 60){
+    next_coin_change -= 60;
   }
 }
 
@@ -499,16 +521,17 @@ void drawIntroAnimation() {
 /**
  * Returns the current time formatted as MM:SS
  */
-String getFormattedTimeNoSeconds(NTPClient timeClient) {
+void getFormattedTimeNoSeconds(NTPClient timeClient) {
+//  Serial.println("Getting formatted time string");
   unsigned long rawTime = timeClient.getEpochTime();
-  unsigned long hours = (rawTime % 86400L) / 3600;
-  String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
-
+//  unsigned long hours = (rawTime % 86400L) / 3600;
+//  String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
+//
   unsigned long minutes = (rawTime % 3600) / 60;
   last_minute = minutes;
-  String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
-
-  return hoursStr + ":" + minuteStr;
+//  String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
+//
+//  return hoursStr + ":" + minuteStr;
 }
 
 /**
@@ -533,12 +556,13 @@ int getData(int app_mode) {
   // Instanciate Secure HTTP communication
   client.setFingerprint(fingerprint);
 
-  char *url = constructURL(app_mode); // Get the URL
+  char url[200];
+  constructURL(app_mode, url); // Get the URL
 
   http.begin(client, url);
   int httpCode = http.GET();
 
-  free(url);
+//  free(url);
 
   if (httpCode > 0) {
     StaticJsonDocument<800> doc;
@@ -584,14 +608,15 @@ int verifyID(char *id) {
   // Instanciate Secure HTTP communication
   client.setFingerprint(fingerprint);
 
-  char *url = constructURL(id); // Get the URL
+  char url[200];
+  constructURL(id, url); // Get the URL
 
   http.begin(client, url);
   int httpCode = http.GET();
 
   Serial.println(url);
 
-  free(url);
+//  free(url);
 
   if (httpCode > 0) {
     StaticJsonDocument<800> doc;
@@ -618,14 +643,13 @@ int verifyID(char *id) {
 /**
  * Constructs the URL for data retrieval.
  */
-char *constructURL(int app_mode) {
-  char *url = (char *)malloc(sizeof(char) * 200);
+void constructURL(int app_mode, char* url_buffer) {
   int curr_url_pos = 0;
   int i = 0;
 
   // Add start of url
   while (url_start[i] != 0) {
-    url[curr_url_pos] = url_start[i];
+    url_buffer[curr_url_pos] = url_start[i];
     curr_url_pos++;
     i++;
   }
@@ -636,21 +660,21 @@ char *constructURL(int app_mode) {
     for (int j = 0; j < selected_coins_count - 1; j++) {
       i = 0;
       while (selected_coins[j]->coin_id[i] != 0) {
-        url[curr_url_pos] = selected_coins[j]->coin_id[i];
+        url_buffer[curr_url_pos] = selected_coins[j]->coin_id[i];
         curr_url_pos++;
         i++;
       }
 
-      url[curr_url_pos] = '%';
-      url[curr_url_pos + 1] = '2';
-      url[curr_url_pos + 2] = 'C';
+      url_buffer[curr_url_pos] = '%';
+      url_buffer[curr_url_pos + 1] = '2';
+      url_buffer[curr_url_pos + 2] = 'C';
       curr_url_pos += 3;
     }
 
     // Add final coin to url
     i = 0;
     while (selected_coins[selected_coins_count - 1]->coin_id[i] != 0) {
-      url[curr_url_pos] = selected_coins[selected_coins_count - 1]->coin_id[i];
+      url_buffer[curr_url_pos] = selected_coins[selected_coins_count - 1]->coin_id[i];
       curr_url_pos++;
       i++;
     }
@@ -662,15 +686,15 @@ char *constructURL(int app_mode) {
       while (
           coins[portfolio_editor->selected_portfolio_indexes[j]].coin_id[i] !=
           0) {
-        url[curr_url_pos] =
+        url_buffer[curr_url_pos] =
             coins[portfolio_editor->selected_portfolio_indexes[j]].coin_id[i];
         curr_url_pos++;
         i++;
       }
 
-      url[curr_url_pos] = '%';
-      url[curr_url_pos + 1] = '2';
-      url[curr_url_pos + 2] = 'C';
+      url_buffer[curr_url_pos] = '%';
+      url_buffer[curr_url_pos + 1] = '2';
+      url_buffer[curr_url_pos + 2] = 'C';
       curr_url_pos += 3;
 
       j++;
@@ -680,22 +704,20 @@ char *constructURL(int app_mode) {
   // Add ending to URL
   i = 0;
   while (url_end[i] != 0) {
-    url[curr_url_pos] = url_end[i];
+    url_buffer[curr_url_pos] = url_end[i];
     curr_url_pos++;
     i++;
   }
-  url[curr_url_pos] = 0;
-  return url;
+  url_buffer[curr_url_pos] = 0;
 }
 
-char *constructURL(char *coin_id) {
-  char *url = (char *)malloc(sizeof(char) * 200);
+void constructURL(char *coin_id, char* url_buffer) {
   int curr_url_pos = 0;
   int i = 0;
 
   // Add start of url
   while (url_start[i] != 0) {
-    url[curr_url_pos] = url_start[i];
+    url_buffer[curr_url_pos] = url_start[i];
     curr_url_pos++;
     i++;
   }
@@ -705,7 +727,7 @@ char *constructURL(char *coin_id) {
   // Add final coin to url
   i = 0;
   while (coin_id[i] != 0) {
-    url[curr_url_pos] = coin_id[i];
+    url_buffer[curr_url_pos] = coin_id[i];
     curr_url_pos++;
     i++;
   }
@@ -713,12 +735,11 @@ char *constructURL(char *coin_id) {
   // Add ending to URL
   i = 0;
   while (url_end[i] != 0) {
-    url[curr_url_pos] = url_end[i];
+    url_buffer[curr_url_pos] = url_end[i];
     curr_url_pos++;
     i++;
   }
-  url[curr_url_pos] = 0;
-  return url;
+  url_buffer[curr_url_pos] = 0;
 }
 
 /**
@@ -769,7 +790,7 @@ void resetCoins() {
   }
 
   selected_coins_count = 0;
-  current_coin = 0;
+  current_coin = -1;
 
   Serial.println(2);
   Serial.println(ESP.getFreeHeap(), DEC);
@@ -811,7 +832,8 @@ void drawTime() {
 
   tft.print(daysOfTheWeek[timeClient.getDay()]);
   tft.setCursor(tft.width() - 32, tft.height() - 10);
-  tft.print(getFormattedTimeNoSeconds(timeClient));
+  //tft.print(getFormattedTimeNoSeconds(timeClient));
+  getFormattedTimeNoSeconds(timeClient);
 }
 
 /**
@@ -819,17 +841,43 @@ void drawTime() {
  */
 void updateAndDrawTime() {
   // Check minutes and update time
+  Serial.print("1 Free heap: ");
+  Serial.print(ESP.getFreeHeap());
+  Serial.print(" Fragmentation: ");
+  Serial.println(ESP.getHeapFragmentation());
+  
   while (!timeClient.update()) {
     delay(500);
   }
 
+  Serial.print("2 Free heap: ");
+  Serial.print(ESP.getFreeHeap());
+  Serial.print(" Fragmentation: ");
+  Serial.println(ESP.getHeapFragmentation());
+
   current_second = timeClient.getSeconds();
+
+  Serial.print("3 Free heap: ");
+  Serial.print(ESP.getFreeHeap());
+  Serial.print(" Fragmentation: ");
+  Serial.println(ESP.getHeapFragmentation());
 
   // Draw time if a minute has passed since last drawn
   if (last_minute != timeClient.getMinutes()) {
     Serial.println("Time Updated on Screen");
     drawTime();
+
+    Serial.print("4 Free heap: ");
+    Serial.print(ESP.getFreeHeap());
+    Serial.print(" Fragmentation: ");
+    Serial.println(ESP.getHeapFragmentation());
   }
+
+  Serial.print("5 Free heap: ");
+  Serial.print(ESP.getFreeHeap());
+  Serial.print(" Fragmentation: ");
+  Serial.println(ESP.getHeapFragmentation());
+  Serial.println();
 }
 
 /**
@@ -933,7 +981,6 @@ int checkForCredsClear() {
   return 0;
 }
 
-
 /**
  * Interacts with the menu, catches keys pressed and performs corresponding
  * menu actions.
@@ -971,13 +1018,10 @@ void interactWithMenu() {
 
         if (button_action == "Exit Menu") {
           in_menu = 0;
-          selected_coins[current_coin]->display(&tft);
+          forceGetData(1); 
+          updateAndDrawTime();
 
-          current_coin++;
-          if (current_coin == selected_coins_count)
-            current_coin = 0;
-
-          drawTime();
+          displayNextCoin();
         }
 
         if (button_action == "Clear WiFi Credentials")

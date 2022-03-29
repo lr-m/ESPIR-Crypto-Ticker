@@ -24,11 +24,11 @@
 // For storing coins
 class COIN {
 public:
-  COIN(char *, char *, const unsigned char *, uint16_t, uint16_t, uint16_t);
-  COIN(char *, char *, uint16_t, const unsigned char *);
+  COIN(char *, char *, const unsigned char *, uint16_t, uint16_t, uint16_t, double);
+  COIN(char *, char *, uint16_t, const unsigned char *, double);
 
-  char *coin_code;
-  char *coin_id;
+  char coin_code[10];
+  char coin_id[30];
   double current_price;
   double current_change;
   double amount;

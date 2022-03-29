@@ -2,7 +2,7 @@
 // bgr, 5:6:5
 
 // If INITR_GREENTAB used, uncomment this (bgr, 5:6:5)
-/*
+
 #define GRAY 0xAD75
 #define GOLD 0x05FC
 #define RED 0x001F
@@ -20,8 +20,8 @@
 #define NIGHT_BLUE 0x9802
 #define MOON_YELLOW 0x67DF
 #define HOT_PINK 0xF817
-*/
 
+/*
 // If INITR_BLACKTAB used, uncomment this (rgb, 5:6:5)
 #define GRAY 0xB5B6
 #define GOLD 0xD560
@@ -40,3 +40,4 @@
 #define NIGHT_BLUE 0x01D4
 #define MOON_YELLOW 0xD660
 #define HOT_PINK 0xF81A
+*/

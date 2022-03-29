@@ -233,15 +233,18 @@ void ST7735_Portfolio::display() {
   tft->fillRect(0, 0, tft->width(), tft->height() - 12, BLACK);
 
   // If in portfolio mode, draw the portfolio upon update
-  double *total_value = (double *)malloc(sizeof(double));
-  *total_value = 0;
-  getTotalValue(total_value);
-  drawValue(total_value);
+  double total_value = 0;
+  getTotalValue(&total_value);
+  drawValue(&total_value);
 
   // Check that there are coins with non-zero values owned
   if (portfolio_editor->selected_portfolio_indexes[0] != -1) {
     int i = 0;
-    double *coin_price_owned = (double *)malloc(sizeof(double) * 8);
+    double coin_price_owned[8];
+
+    for (int i = 0; i < 8; i++){
+      coin_price_owned[i] = 0;
+    }
 
     // Store cost of each owned coin
     while (portfolio_editor->selected_portfolio_indexes[i] != -1) {
@@ -268,18 +271,14 @@ void ST7735_Portfolio::display() {
       }
     }
 
-    free(coin_price_owned);
-
     if (display_mode == 0) {
-      drawBarSummary(total_value);
+      drawBarSummary(&total_value);
     } else if (display_mode == 1) {
-      drawPieSummary(total_value);
+      drawPieSummary(&total_value);
     } else if (display_mode == 2) {
-      drawCandleChart(total_value);
+      drawCandleChart(&total_value);
     }
   }
-
-  free(total_value);
 }
 
 // Refreshes the selected coins, adding any new coins that may have been added

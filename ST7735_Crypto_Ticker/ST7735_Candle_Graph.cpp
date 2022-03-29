@@ -71,7 +71,7 @@ void Candle_Graph::display() {
     if (candles[i].high > max_val)
       max_val = candles[i].high;
 
-    if (candles[i].low < min_val)
+    if (candles[i].low < min_val && candles[i].low >= 0)
       min_val = candles[i].low;
   }
 
@@ -113,6 +113,8 @@ void Candle_Graph::display() {
       high_y = (top + bottom) / 2;
       low_y = (top + bottom) / 2;
     }
+
+    if (candles[i].low < 0) continue;
 
     int bar_x = map(i, 0, count, 2, tft->width() - 2);
     uint16_t color;

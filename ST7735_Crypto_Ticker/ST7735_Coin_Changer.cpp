@@ -152,8 +152,6 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
     keyboard->interact(ir_data);
     if (keyboard->enterPressed() == 1) {
       // Indicate SSID and pwd loaded into EEPROM
-      loaded_id = (char *)malloc(sizeof(char) * 25);
-
       int i = 0;
       char *keyboard_val = keyboard->getCurrentInput();
 
@@ -171,8 +169,6 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
     keyboard->interact(ir_data);
     if (keyboard->enterPressed() == 1) {
       // Indicate SSID and pwd loaded into EEPROM
-      loaded_code = (char *)malloc(sizeof(char) * 10);
-
       int i = 0;
       char *keyboard_val = keyboard->getCurrentInput();
 
@@ -231,8 +227,20 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
 // Load the entered details into the coin with the selected ID
 void ST7735_Coin_Changer::loadIntoSelectedCoin() {
   coins[current_replacing_index].bitmap_present = 0;
-  coins[current_replacing_index].coin_code = loaded_code;
-  coins[current_replacing_index].coin_id = loaded_id;
+  
+  int i = 0;
+  while(loaded_code[i] != 0){
+    coins[current_replacing_index].coin_code[i] = loaded_code[i];
+    i++;
+  }
+  coins[current_replacing_index].coin_code[i] = 0;
+
+  i = 0;
+  while(loaded_id[i] != 0){
+     coins[current_replacing_index].coin_id[i] = loaded_id[i];
+    i++;
+  }
+  coins[current_replacing_index].coin_id[i] = 0;
 
   coins[current_replacing_index].portfolio_colour = rgb_to_bgr(
       pickers[0].getValue(), pickers[1].getValue(), pickers[2].getValue());
@@ -299,8 +307,8 @@ int ST7735_Coin_Changer::rgb_to_bgr(unsigned char r, unsigned char g,
   unsigned char green = g >> 2;
   unsigned char blue = b >> 3;
 
-  //int result = (blue << (5 + 6)) | (green << 5) | red;
-  int result = (red << (5 + 6)) | (green << 5) | blue;
+  int result = (blue << (5 + 6)) | (green << 5) | red;
+  //int result = (red << (5 + 6)) | (green << 5) | blue;
 
   return result;
 }

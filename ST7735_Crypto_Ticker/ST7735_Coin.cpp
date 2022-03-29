@@ -5,15 +5,28 @@
 #include <Colours.h>
 
 // Constructor for Coin with bitmap
-COIN::COIN(char *code, char *id, const unsigned char *bm, uint16_t circle_col,
-           uint16_t bm_col, uint16_t portfolio_col) {
-  coin_code = code;
-  coin_id = id;
+COIN::COIN(char* code, char *id, const unsigned char* bm, uint16_t circle_col,
+           uint16_t bm_col, uint16_t portfolio_col, double coin_amount) {
+
+  int i = 0;
+  while(code[i] != 0){
+    coin_code[i] = code[i];
+    i++;
+  }
+  coin_code[i] = 0;
+
+  i = 0;
+  while(id[i] != 0){
+    coin_id[i] = id[i];
+    i++;
+  }
+  coin_id[i] = 0;
+
   bitmap = bm;
   circle_colour = circle_col;
   bm_colour = bm_col;
   portfolio_colour = portfolio_col;
-  amount = 0;
+  amount = coin_amount;
   candles_init = 0;
 
   bitmap_present = 1;
@@ -21,11 +34,23 @@ COIN::COIN(char *code, char *id, const unsigned char *bm, uint16_t circle_col,
 
 // Constructor for coin without bitmap
 COIN::COIN(char *code, char *id, uint16_t portfolio_col,
-           const unsigned char *bm) {
-  coin_code = code;
-  coin_id = id;
+           const unsigned char *bm, double coin_amount) {
+  int i = 0;
+  while(code[i] != 0){
+    coin_code[i] = code[i];
+    i++;
+  }
+  coin_code[i] = 0;
+
+  i = 0;
+  while(id[i] != 0){
+    coin_id[i] = id[i];
+    i++;
+  }
+  coin_id[i] = 0;
+
   portfolio_colour = portfolio_col;
-  amount = 0;
+  amount = coin_amount;
   bitmap = bm;
   bitmap_present = 0;
 }
