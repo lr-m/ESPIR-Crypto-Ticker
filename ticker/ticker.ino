@@ -81,7 +81,7 @@ int portfolio_time_slot_moved =
 // For HTTP connection
 WiFiClientSecure client;
 HTTPClient http;
-const char *fingerprint = "*YOUR FINGERPRINT HERE";
+const char *fingerprint = "33c57b69e63b765c393df1193b1768b81b0a1fd9";
 char *url_start = "https://api.coingecko.com/api/v3/simple/price?ids=";
 char *url_end = "&vs_currencies=gbp&include_24hr_change=true";
 
@@ -127,7 +127,6 @@ COIN *coins;           // List of coins that can be selected
 COIN **selected_coins; // List of pointers to coins currently selected
 
 void setup(void) {
-  Serial.begin(9600);
   irrecv.enableIRIn(); // Enable IR reciever
 
   // Initialise display
@@ -256,11 +255,6 @@ void setup(void) {
 }
 
 void loop() {
-  Serial.print("Free heap: ");
-  Serial.println(ESP.getFreeHeap());
-  Serial.print("Fragmentation: ");
-  Serial.println(ESP.getHeapFragmentation());
-  Serial.println();
   if (ssid_entered == 0) { // Get network name
     if (keyboard->enterPressed() == 1) {
       // Indicate SSID and pwd loaded into EEPROM
@@ -357,15 +351,13 @@ void loop() {
 
     interactWithMenu();
   } else { // Display crypto interface
-
     updateAndDrawTime();
-
-    for (int i = 0; i < 50; i++) {
-      delay(10);
+    
+    for (int i = 0; i < 10; i++) {
+      delay(50);
       if (irrecv.decode()) {
         // Check if '#' pressed to open menu
         if (irrecv.decodedIRData.decodedRawData == 0xF20DFF00) {
-          Serial.println("Menu Opened");
           in_menu = 1;
           drawMenu();
           delay(250);
@@ -420,7 +412,6 @@ void loop() {
     // Move coin data along every 'coin_candle_update_delay' minutes
     if (timeClient.getMinutes() % coin_candle_update_delay == 0 &&
         coin_time_slot_moved == 0) {
-      Serial.println("Incremented Coin Candles");
       for (int i = 0; i < selected_coins_count; i++)
         selected_coins[i]->candles->nextTimePeriod(
             selected_coins[i]->current_price);
@@ -433,8 +424,6 @@ void loop() {
     // Move portfolio data along every 'portfolio_candle_update_delay' minutes
     if (timeClient.getMinutes() % portfolio_candle_update_delay == 0 &&
         portfolio_time_slot_moved == 0) {
-      Serial.println("Incremented Portfolio Candles");
-
       portfolio->nextTimePeriod();
 
       portfolio_time_slot_moved = 1;
@@ -522,7 +511,6 @@ void drawIntroAnimation() {
  * Returns the current time formatted as MM:SS
  */
 void getFormattedTimeNoSeconds(NTPClient timeClient) {
-//  Serial.println("Getting formatted time string");
   unsigned long rawTime = timeClient.getEpochTime();
 //  unsigned long hours = (rawTime % 86400L) / 3600;
 //  String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
@@ -538,14 +526,10 @@ void getFormattedTimeNoSeconds(NTPClient timeClient) {
  * Attempts to get data from the coingecko api until it successfully gets it.
  */
 void forceGetData(int app_mode) {
-  Serial.print("\nGetting Coin Data. Free Heap: ");
-  Serial.println(ESP.getFreeHeap(), DEC);
   while (getData(app_mode) == 0) {
-    Serial.println("Failed to get data, retrying...");
+    //Serial.println("Failed to get data, retrying...");
     delay(5000);
   }
-  Serial.print("Successfully retrieved data. . Free Heap: ");
-  Serial.println(ESP.getFreeHeap(), DEC);
 }
 
 /**
@@ -562,15 +546,11 @@ int getData(int app_mode) {
   http.begin(client, url);
   int httpCode = http.GET();
 
-//  free(url);
-
   if (httpCode > 0) {
     StaticJsonDocument<800> doc;
     // Get the request response payload (Price data)
     DeserializationError error = deserializeJson(doc, http.getString());
     if (error) {
-      Serial.print(F("deserializeJson() failed: "));
-      Serial.println(error.f_str());
       http.end(); // Close connection
       return 0;
     }
@@ -614,23 +594,14 @@ int verifyID(char *id) {
   http.begin(client, url);
   int httpCode = http.GET();
 
-  Serial.println(url);
-
-//  free(url);
-
   if (httpCode > 0) {
     StaticJsonDocument<800> doc;
     // Get the request response payload (Price data)
     DeserializationError error = deserializeJson(doc, http.getString());
     if (error) {
-      Serial.print(F("deserializeJson() failed: "));
-      Serial.println(error.f_str());
       http.end(); // Close connection
       return 0;
     }
-
-    Serial.println(doc.size());
-    Serial.println(doc.isNull());
 
     http.end();
     if (doc.size() != 1) {
@@ -782,8 +753,6 @@ void initialiseNetwork(char *ssid, char *password) {
  * Resets all of the coins (clears candles).
  */
 void resetCoins() {
-  Serial.println(1);
-  Serial.println(ESP.getFreeHeap(), DEC);
   // Free current candles
   for (int i = 0; i < selected_coins_count; i++) {
     selected_coins[i]->freeCandles();
@@ -792,19 +761,11 @@ void resetCoins() {
   selected_coins_count = 0;
   current_coin = -1;
 
-  Serial.println(2);
-  Serial.println(ESP.getFreeHeap(), DEC);
-
   // Get all selected coins
-  Serial.print("\nCoins Selected: ");
   for (int i = 0; i < MAX_SELECTED_COINS; i++) {
     if (coin_menu->getButtons()[1].selectors[0].getSelected()[i] == -1)
       break;
-
-    Serial.print(
-        (coins + coin_menu->getButtons()[1].selectors[0].getSelected()[i])
-            ->coin_id);
-    Serial.print(", ");
+      
     selected_coins_count++;
     selected_coins[i] =
         coins + coin_menu->getButtons()[1].selectors[0].getSelected()[i];
@@ -812,12 +773,7 @@ void resetCoins() {
     selected_coins[i]->initCandles(&tft);
   }
 
-  Serial.println(3);
-  Serial.println(ESP.getFreeHeap(), DEC);
-
   forceGetData(1);
-  Serial.println(4);
-  Serial.println(ESP.getFreeHeap(), DEC);
 }
 
 
@@ -841,43 +797,16 @@ void drawTime() {
  */
 void updateAndDrawTime() {
   // Check minutes and update time
-  Serial.print("1 Free heap: ");
-  Serial.print(ESP.getFreeHeap());
-  Serial.print(" Fragmentation: ");
-  Serial.println(ESP.getHeapFragmentation());
-  
   while (!timeClient.update()) {
     delay(500);
   }
 
-  Serial.print("2 Free heap: ");
-  Serial.print(ESP.getFreeHeap());
-  Serial.print(" Fragmentation: ");
-  Serial.println(ESP.getHeapFragmentation());
-
   current_second = timeClient.getSeconds();
-
-  Serial.print("3 Free heap: ");
-  Serial.print(ESP.getFreeHeap());
-  Serial.print(" Fragmentation: ");
-  Serial.println(ESP.getHeapFragmentation());
 
   // Draw time if a minute has passed since last drawn
   if (last_minute != timeClient.getMinutes()) {
-    Serial.println("Time Updated on Screen");
     drawTime();
-
-    Serial.print("4 Free heap: ");
-    Serial.print(ESP.getFreeHeap());
-    Serial.print(" Fragmentation: ");
-    Serial.println(ESP.getHeapFragmentation());
   }
-
-  Serial.print("5 Free heap: ");
-  Serial.print(ESP.getFreeHeap());
-  Serial.print(" Fragmentation: ");
-  Serial.println(ESP.getHeapFragmentation());
-  Serial.println();
 }
 
 /**
@@ -909,17 +838,6 @@ void clearEEPROM() {
     EEPROM.write(i, 0);
 
   EEPROM.commit();
-}
-
-/**
- * Prints the contents of the EEPROM to serial.
- */
-void printEEPROM() {
-  // Clear EEPROM
-  for (int i = 0; i < 512; i++) {
-    Serial.print(EEPROM.read(i));
-    Serial.print(" ");
-  }
 }
 
 /**
@@ -973,7 +891,7 @@ void loadCredsFromEEPROM(char *ssid, char *pass) {
 int checkForCredsClear() {
   if (irrecv.decode()) {
     if (irrecv.decodedIRData.decodedRawData == 0xE916FF00) {
-      Serial.println("Cleared EEPROM Stored Credentials");
+      //Serial.println("Cleared EEPROM Stored Credentials");
       clearEEPROM();
       return 1;
     }
