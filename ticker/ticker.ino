@@ -81,7 +81,7 @@ int portfolio_time_slot_moved =
 // For HTTP connection
 WiFiClientSecure client;
 HTTPClient http;
-const char *fingerprint = "33c57b69e63b765c393df1193b1768b81b0a1fd9";
+const char *fingerprint = "*Your fingerprint here";
 char *url_start = "https://api.coingecko.com/api/v3/simple/price?ids=";
 char *url_end = "&vs_currencies=gbp&include_24hr_change=true";
 
