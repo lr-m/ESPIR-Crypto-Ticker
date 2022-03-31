@@ -23,7 +23,7 @@ To get the thumbprint (on Chrome):
 6. Scroll down to the 'thumbprint' field, click this and copy the thumbprint
 <img src="https://user-images.githubusercontent.com/47477832/141088030-66d95251-5cf8-4dd5-860b-816f506b50da.png" width="250">
 
-7. Replace line 59 of ticker.ino with the copied fingerprint, for example:
+7. Replace line 84 of ticker.ino with the copied fingerprint, for example:
 
 ```const char *fingerprint = "*YOUR FINGERPRINT HERE (TUTORIAL IN INSTRUCTIONS)";```
 
