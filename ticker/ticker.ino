@@ -50,7 +50,7 @@ extern unsigned char epd_bitmap_uniswap[];
 #define TFT_MOSI D7
 #define RECV_PIN D1
 
-#define MAX_SELECTED_COINS 6
+#define MAX_SELECTED_COINS 9
 
 #define COIN_MENU_BUTTON_COUNT 5
 #define PORTFOLIO_MENU_BUTTON_COUNT 4
@@ -81,7 +81,7 @@ int portfolio_time_slot_moved =
 // For HTTP connection
 WiFiClientSecure client;
 HTTPClient http;
-const char *fingerprint = "*Your fingerprint here";
+const char *fingerprint = "YOUR FINGERPRINT HERE";
 char *url_start = "https://api.coingecko.com/api/v3/simple/price?ids=";
 char *url_end = "&vs_currencies=gbp&include_24hr_change=true";
 
@@ -201,7 +201,7 @@ void setup(void) {
       "Coin duration (secs):", coin_change_times, 5, 1, 5);
   coin_menu->getButtons()[0].addSelector(
       "Candle duration (mins):", coin_change_times, 5, 1, 5);
-  coin_menu->getButtons()[1].addSelector("Select up to 5 coins:", coin_list, 3,
+  coin_menu->getButtons()[1].addSelector("Select up to 9 coins:", coin_list, 3,
                                          MAX_SELECTED_COINS, COIN_COUNT);
 
   portfolio_menu->getButtons()[0].addSelector(
@@ -303,7 +303,6 @@ void loop() {
 
     // Begin ndp time client and draw time on screen
     timeClient.begin();
-    drawTime();
 
     network_initialised = 1; // Indicate successful network init
   } else if (in_menu == 1) { // Do menu operations
@@ -351,7 +350,7 @@ void loop() {
 
     interactWithMenu();
   } else { // Display crypto interface
-    updateAndDrawTime();
+    updateTime();
     
     for (int i = 0; i < 10; i++) {
       delay(50);
@@ -507,20 +506,6 @@ void drawIntroAnimation() {
 }
 
 // Data Retrieval
-/**
- * Returns the current time formatted as MM:SS
- */
-void getFormattedTimeNoSeconds(NTPClient timeClient) {
-  unsigned long rawTime = timeClient.getEpochTime();
-//  unsigned long hours = (rawTime % 86400L) / 3600;
-//  String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
-//
-  unsigned long minutes = (rawTime % 3600) / 60;
-  last_minute = minutes;
-//  String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
-//
-//  return hoursStr + ":" + minuteStr;
-}
 
 /**
  * Attempts to get data from the coingecko api until it successfully gets it.
@@ -778,35 +763,15 @@ void resetCoins() {
 
 
 /**
- * Draws the current time and day on the display.
- */
-void drawTime() {
-  tft.fillRect(0, tft.height() - 12, tft.width(), 12, BLACK);
-  tft.setTextColor(WHITE);
-  tft.setCursor(3, tft.height() - 10);
-  tft.setTextSize(1);
-
-  tft.print(daysOfTheWeek[timeClient.getDay()]);
-  tft.setCursor(tft.width() - 32, tft.height() - 10);
-  //tft.print(getFormattedTimeNoSeconds(timeClient));
-  getFormattedTimeNoSeconds(timeClient);
-}
-
-/**
  * Updates and draws the current time.
  */
-void updateAndDrawTime() {
+void updateTime() {
   // Check minutes and update time
   while (!timeClient.update()) {
     delay(500);
   }
 
   current_second = timeClient.getSeconds();
-
-  // Draw time if a minute has passed since last drawn
-  if (last_minute != timeClient.getMinutes()) {
-    drawTime();
-  }
 }
 
 /**
@@ -937,7 +902,7 @@ void interactWithMenu() {
         if (button_action == "Exit Menu") {
           in_menu = 0;
           forceGetData(1); 
-          updateAndDrawTime();
+          updateTime();
 
           displayNextCoin();
         }
@@ -989,7 +954,6 @@ void drawMenu() {
   } else if (mode == 2) {
     portfolio_menu->display();
   }
-  drawTime();
 }
 
 /**

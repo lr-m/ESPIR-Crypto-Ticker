@@ -35,7 +35,7 @@ char* ST7735_Menu::press() {
 
 // Display the menu on the screen
 void ST7735_Menu::display() {
-	tft -> fillRect(0, 0, tft -> width(), tft -> height() - 12, KEYBOARD_BG_COLOUR);
+	tft -> fillRect(0, 0, tft -> width(), tft -> height(), KEYBOARD_BG_COLOUR);
 	tft -> setTextColor(ST77XX_WHITE);
 	tft -> setTextSize(1);
 	for (int i = 0; i < button_count; i++){
@@ -117,7 +117,7 @@ void Button::addSelector(char* prompt, char** options,
 
 // Draw the buttons sub menu
 void Button::drawSubMenu() {
-	tft -> fillRect(0, 0, tft -> width(), tft -> height() - 12, KEYBOARD_BG_COLOUR);
+	tft -> fillRect(0, 0, tft -> width(), tft -> height(), KEYBOARD_BG_COLOUR);
 	return_button -> display();
 	
 	for (int i = 0; i < selector_count; i++)

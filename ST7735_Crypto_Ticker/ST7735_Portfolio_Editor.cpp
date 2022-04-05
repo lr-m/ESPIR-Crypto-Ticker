@@ -25,11 +25,11 @@ ST7735_Portfolio_Editor::ST7735_Portfolio_Editor(Adafruit_ST7735 *display,
   changing_amount = 0;
 
   // Initialise portfolio arrays
-  selected_portfolio_indexes = (int *)malloc(sizeof(int) * 9);
+  selected_portfolio_indexes = (int *)malloc(sizeof(int) * MAX_COINS+1);
 
   amount_changed = 0;
 
-  for (int i = 0; i < 9; i++)
+  for (int i = 0; i < MAX_COINS+1; i++)
     selected_portfolio_indexes[i] = -1;
 }
 
@@ -48,7 +48,7 @@ int ST7735_Portfolio_Editor::checkForChange() {
 
 // Displays the Portfolio Editor
 void ST7735_Portfolio_Editor::display() {
-  tft->fillRect(0, 0, tft->width(), tft->height() - 12, BLACK);
+  tft->fillRect(0, 0, tft->width(), tft->height(), BLACK);
   tft->setTextColor(WHITE);
 
   int i = 0;

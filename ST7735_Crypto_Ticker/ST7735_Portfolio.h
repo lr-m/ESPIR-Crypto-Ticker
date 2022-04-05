@@ -34,6 +34,7 @@ public:
   void clearCandles();
   void previousMode();
   void nextMode();
+  void drawPropBar(double *);
 
 private:
   Adafruit_ST7735 *tft;

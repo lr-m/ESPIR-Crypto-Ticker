@@ -256,7 +256,7 @@ void ST7735_Coin_Changer::loadIntoSelectedCoin() {
 // Display the coin changer interface on screen
 void ST7735_Coin_Changer::display() {
   if (stage == 0) { // Choose coin to replace
-    tft->fillRect(0, 0, tft->width(), tft->height() - 12, BLACK);
+    tft->fillRect(0, 0, tft->width(), tft->height(), BLACK);
     tft->setCursor(5, 5);
     tft->setTextColor(WHITE);
     tft->print("Select coin to replace:");

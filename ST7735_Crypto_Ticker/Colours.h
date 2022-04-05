@@ -1,6 +1,7 @@
 // Colours
 // bgr, 5:6:5
 
+
 // If INITR_GREENTAB used, uncomment this (bgr, 5:6:5)
 
 #define GRAY 0xAD75

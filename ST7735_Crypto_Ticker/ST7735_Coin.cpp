@@ -70,14 +70,14 @@ void COIN::initCandles(Adafruit_ST7735 *display) {
     candles_init = 1;
     candles = (Candle_Graph *)malloc(sizeof(Candle_Graph));
     *(candles) = Candle_Graph(display, 26, display->height() / 2,
-                              display->height() - 22, 0);
+                              display->height() - 10, 0);
   }
 }
 
 // Display properties of coin on display
 void COIN::display(Adafruit_ST7735 *display) {
   display->setTextColor(WHITE);
-  display->fillRect(0, 0, display->width(), display->height() - 12, BLACK);
+  display->fillRect(0, 0, display->width(), display->height(), BLACK);
 
   if (bitmap_present == 1) {
     display->fillCircle(12, 12, 44, circle_colour);

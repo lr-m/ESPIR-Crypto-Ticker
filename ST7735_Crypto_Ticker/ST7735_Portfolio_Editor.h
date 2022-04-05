@@ -12,6 +12,8 @@
 #ifndef ST7735_Portfolio_Editor_h
 #define ST7735_Portfolio_Editor_h
 
+#define MAX_COINS 9
+
 class Price_Selector {
 public:
   Price_Selector(Adafruit_ST7735 *);

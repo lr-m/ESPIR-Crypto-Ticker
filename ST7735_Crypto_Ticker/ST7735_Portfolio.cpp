@@ -20,7 +20,7 @@ ST7735_Portfolio::ST7735_Portfolio(Adafruit_ST7735 *display,
   coins = coin_arr;
 
   candle_graph = (Candle_Graph *)malloc(sizeof(Candle_Graph));
-  *candle_graph = Candle_Graph(tft, CANDLE_COUNT, 42, tft->height() - 22, 1);
+  *candle_graph = Candle_Graph(tft, CANDLE_COUNT, 36, tft->height() - 10, 1);
 
   display_mode = 0;
 
@@ -57,26 +57,30 @@ void ST7735_Portfolio::previousMode() {
 
 // Draws the candle chart
 void ST7735_Portfolio::drawCandleChart(double *total_value) {
+  // drawPropBar(total_value);
+
+  candle_graph->display();
+}
+
+void ST7735_Portfolio::drawPropBar(double *total_value) {
   double coin_total = 0;
   double current_total = 0;
   int i = 0;
 
-  // Draw bar proportional to amount of coin owned
+  //Draw bar proportional to amount of coin owned
   while (portfolio_editor->selected_portfolio_indexes[i] != -1) {
     coin_total =
         coins[portfolio_editor->selected_portfolio_indexes[i]].current_price *
         coins[portfolio_editor->selected_portfolio_indexes[i]].amount;
 
     tft->fillRect(map(current_total, 0, *total_value, 0, tft->width()), 24,
-                  1 + map(coin_total, 0, *total_value, 0, tft->width()), 5,
+                  1 + map(coin_total, 0, *total_value, 0, tft->width()), 3,
                   coins[portfolio_editor->selected_portfolio_indexes[i]]
                       .portfolio_colour);
 
     current_total += coin_total;
     i++;
   }
-
-  candle_graph->display();
 }
 
 // Moves the candles to the next time period
@@ -96,39 +100,24 @@ void ST7735_Portfolio::clearCandles() { candle_graph->reset(); }
 
 // Display the coin breakdown screen with bar proportional bar chart
 void ST7735_Portfolio::drawBarSummary(double *total_value) {
-  double coin_total = 0;
-  double current_total = 0;
-  int i = 0;
-
-  // Draw bar proportional to amount of coin owned
-  while (portfolio_editor->selected_portfolio_indexes[i] != -1) {
-    coin_total =
-        coins[portfolio_editor->selected_portfolio_indexes[i]].current_price *
-        coins[portfolio_editor->selected_portfolio_indexes[i]].amount;
-
-    tft->fillRect(map(current_total, 0, *total_value, 0, tft->width()), 24,
-                  1 + map(coin_total, 0, *total_value, 0, tft->width()), 5,
-                  coins[portfolio_editor->selected_portfolio_indexes[i]]
-                      .portfolio_colour);
-
-    current_total += coin_total;
-    i++;
-  }
+  drawPropBar(total_value);
 
   // Draw coin code, cost of owned, and % of portfolio
-  i = 0;
+  int i = 0;
+  double coin_total = 0;
+
   while (portfolio_editor->selected_portfolio_indexes[i] != -1) {
     coin_total =
         coins[portfolio_editor->selected_portfolio_indexes[i]].current_price *
         coins[portfolio_editor->selected_portfolio_indexes[i]].amount;
     tft->setTextSize(1);
-    tft->setCursor(7, 35 + i * 10);
-    tft->fillRect(2, 34 + i * 10, 2, 10,
+    tft->setCursor(7, 33 + i * 10);
+    tft->fillRect(2, 32 + i * 10, 2, 10,
                   coins[portfolio_editor->selected_portfolio_indexes[i]]
                       .portfolio_colour);
     tft -> print(
         coins[portfolio_editor->selected_portfolio_indexes[i]].coin_code);
-    tft->setCursor(52, 35 + i * 10);
+    tft->setCursor(52, 33 + i * 10);
     tft->setTextColor(WHITE);
     tft -> print(char(156));
 
@@ -140,7 +129,7 @@ void ST7735_Portfolio::drawBarSummary(double *total_value) {
       tft -> print(String(coin_total, 2));
     }
 
-    tft -> setCursor(123, 35 + i * 10);
+    tft -> setCursor(123, 33 + i * 10);
 
     if (coins[portfolio_editor->selected_portfolio_indexes[i]].current_change <
         0) {
@@ -197,13 +186,13 @@ void ST7735_Portfolio::drawPieSummary(double *total_value) {
         coins[portfolio_editor->selected_portfolio_indexes[i]].current_price *
         coins[portfolio_editor->selected_portfolio_indexes[i]].amount;
     tft -> setTextSize(1);
-    tft -> setCursor(7, 35 + i * 10);
-    tft -> fillRect(2, 34 + i * 10, 2, 10,
+    tft -> setCursor(7, 30 + i * 10);
+    tft -> fillRect(2, 29 + i * 10, 2, 10,
                   coins[portfolio_editor->selected_portfolio_indexes[i]]
                       .portfolio_colour);
     tft -> print(
         coins[portfolio_editor->selected_portfolio_indexes[i]].coin_code);
-    tft -> setCursor(50, 35 + i * 10);
+    tft -> setCursor(50, 30 + i * 10);
     tft -> setTextColor(WHITE);
     tft -> print(String(coin_total / (*total_value) * 100, 1));
     tft -> print('%');
@@ -217,7 +206,7 @@ void ST7735_Portfolio::drawPieSummary(double *total_value) {
         coins[portfolio_editor->selected_portfolio_indexes[i]].current_price *
         coins[portfolio_editor->selected_portfolio_indexes[i]].amount;
 
-    fillSegment(tft->width() / 2 + 40, tft->height() / 2 + 5,
+    fillSegment(tft->width() / 2 + 40, tft->height() / 2 + 12,
                 map(current_total, 0, *total_value, 0, 360),
                 map(coin_total, 0, *total_value, 0, 360), 35,
                 coins[portfolio_editor->selected_portfolio_indexes[i]]
@@ -230,7 +219,7 @@ void ST7735_Portfolio::drawPieSummary(double *total_value) {
 
 // Display the portfolio
 void ST7735_Portfolio::display() {
-  tft->fillRect(0, 0, tft->width(), tft->height() - 12, BLACK);
+  tft->fillRect(0, 0, tft->width(), tft->height(), BLACK);
 
   // If in portfolio mode, draw the portfolio upon update
   double total_value = 0;
@@ -240,9 +229,9 @@ void ST7735_Portfolio::display() {
   // Check that there are coins with non-zero values owned
   if (portfolio_editor->selected_portfolio_indexes[0] != -1) {
     int i = 0;
-    double coin_price_owned[8];
+    double coin_price_owned[MAX_COINS];
 
-    for (int i = 0; i < 8; i++){
+    for (int i = 0; i < MAX_COINS; i++){
       coin_price_owned[i] = 0;
     }
 
@@ -284,10 +273,10 @@ void ST7735_Portfolio::display() {
 // Refreshes the selected coins, adding any new coins that may have been added
 void ST7735_Portfolio::refreshSelectedCoins() {
   // Clear selected coins
-  for (int i = 0; i < 8; i++)
+  for (int i = 0; i < MAX_COINS; i++)
     portfolio_editor->selected_portfolio_indexes[i] = -1;
 
-  // Add up to 8 non-zero coins to selected in portfolio
+  // Add up to 9 non-zero coins to selected in portfolio
   int curr_selected_port_index = 0;
   for (int i = 0; i < COIN_COUNT; i++) {
     if (coins[i].amount > 0) {
@@ -295,7 +284,7 @@ void ST7735_Portfolio::refreshSelectedCoins() {
           i;
       curr_selected_port_index++;
 
-      if (curr_selected_port_index == 8)
+      if (curr_selected_port_index == MAX_COINS+1)
         break;
     }
   }
