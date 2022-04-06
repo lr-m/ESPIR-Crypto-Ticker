@@ -7,7 +7,7 @@ ESP8266 NodeMCU powered Crypto Ticker that uses an ST7735 TFT screen to display 
 
 ## IMPORTANT
 
-To use, put the ST7735_Crypto_Ticker directory in your Arduino libraries directory. Also, you need to add the thumbprint from your browser to the Arduino sketch (line 59 of ticker.ino)
+To use, put the ST7735_Crypto_Ticker directory in your Arduino libraries directory. Also, you need to add the thumbprint from your browser to the Arduino sketch (line 59 of ticker.ino). In the event the display is not properly aligned (edges of pixels with random colour) or the colours are inverted, look at the Display Fix section.
 
 To get the thumbprint (on Chrome):
 
@@ -35,6 +35,15 @@ Becomes:
 
 (Invalid example fingerprint used above, do not copy)
 
+### Display Fix
+
+There are 2 types of ST7735 screens, black tab and green tab. Although if the screen has a green tab, is sometimes acts like a black tag in my experience so this classification isn't 100% correct. If the display is working, but is misaligned and the colours are inverted, you will need to swap which type of screen the sketch is configured with, this involves modification of 2 files:
+
+- In the Arduino library, ST7735_Crypto_Ticker, the colours.h file needs to be edited to comment out the set colours that are not currently commented out, and to comment out the current set colours. 
+
+- In the arduino sketch itself, comment out line 133, and uncomment line 134. This will configure the device with the black tab settings.
+
+These modifications should fix the problem.
 
 ## Components
 - NodeMCU ESP8266 WiFi Microcontroller CP2102
