@@ -7,7 +7,7 @@ ESP8266 NodeMCU powered Crypto Ticker that uses an ST7735 TFT screen to display 
 
 ## IMPORTANT
 
-To use, put the ST7735_Crypto_Ticker directory in your Arduino libraries directory. Also, you need to add the thumbprint from your browser to the Arduino sketch (line 59 of ticker.ino). In the event the display is not properly aligned (edges of pixels with random colour) or the colours are inverted, look at the Display Fix section.
+To use, put the ST7735_Crypto_Ticker directory in your Arduino libraries directory. Also, you need to add the thumbprint from your browser to the Arduino sketch (line 84 of ticker.ino). In the event the display is not properly aligned (edges of pixels with random colour) or the colours are inverted, look at the Display Fix section.
 
 To get the thumbprint (on Chrome):
 
@@ -27,7 +27,7 @@ To get the thumbprint (on Chrome):
 
 7. Replace line 84 of ticker.ino with the copied fingerprint, for example:
 
-```const char *fingerprint = "*YOUR FINGERPRINT HERE (TUTORIAL IN INSTRUCTIONS)";```
+```const char *fingerprint = "*YOUR FINGERPRINT HERE";```
 
 Becomes:
 
