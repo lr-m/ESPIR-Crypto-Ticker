@@ -43,12 +43,12 @@ extern unsigned char epd_bitmap_bat[];
 extern unsigned char epd_bitmap_uniswap[];
 
 // Define PIN config
-#define TFT_CS D3
-#define TFT_RST D4
-#define TFT_DC D2
-#define TFT_SCLK D5
-#define TFT_MOSI D7
-#define RECV_PIN D1
+#define TFT_SCL   D1
+#define TFT_SDA   D2
+#define TFT_RES   D3
+#define RECV_PIN  D4
+#define TFT_DC    D5
+#define TFT_CS    D6
 
 #define MAX_SELECTED_COINS 9
 
@@ -57,7 +57,7 @@ extern unsigned char epd_bitmap_uniswap[];
 
 // For ST7735-based displays, we will use this call
 Adafruit_ST7735 tft =
-    Adafruit_ST7735(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST);
+    Adafruit_ST7735(TFT_CS, TFT_DC, TFT_SDA, TFT_SCL, TFT_RES);
 
 // For interface
 int selected_coins_count = 1;   // Current number of coins selected
