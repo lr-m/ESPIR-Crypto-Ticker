@@ -51,7 +51,7 @@ These modifications should fix the problem.
 - ST7735 1.77" display (Will support different sizes when I can get some more displays to play with)
 
 ### Configuration
-<img src="https://user-images.githubusercontent.com/47477832/140657043-b1d6ede4-3b15-4b09-be88-481e7d5b064b.png" width="500">
+<img src="https://user-images.githubusercontent.com/47477832/164561761-e92a895c-4aa3-46f4-a08d-b6ffae2523e9.png" width="500">
 
 ## Libraries
 - In Arduino Boards Manager - ESP8266 Boards (2.7.4)
