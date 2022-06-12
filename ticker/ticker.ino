@@ -553,10 +553,7 @@ int getData(int app_mode) {
 
         selected_coins[i] -> current_price = current[currency_options_lower[coin_menu -> getButtons()[0].selectors[2].getSelected()[0]]];
         selected_coins[i] -> current_change = current[currency_options_changes[coin_menu -> getButtons()[0].selectors[2].getSelected()[0]]];
-
-        // selected_coins[i] -> candles ->
-        // addPrice(incrementForGraph(current["gbp"]));
-        selected_coins[i]->candles->addPrice(current["gbp"]);
+        selected_coins[i] -> candles -> addPrice(current[currency_options_lower[coin_menu -> getButtons()[0].selectors[2].getSelected()[0]]]);
       }
     } else if (app_mode == 2) {
       int j = 0;
