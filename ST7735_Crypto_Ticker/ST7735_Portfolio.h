@@ -20,7 +20,7 @@
 class ST7735_Portfolio {
 public:
   ST7735_Portfolio(Adafruit_ST7735 *, ST7735_Portfolio_Editor *, COIN *);
-  void display();
+  void display(int);
   void getTotalValue(double *);
   float getFloatValue();
   ST7735_Portfolio_Editor *portfolio_editor;
@@ -38,10 +38,10 @@ public:
 
 private:
   Adafruit_ST7735 *tft;
-  void drawValue(double *);
-  void drawBarSummary(double *);
+  void drawValue(double *, int);
+  void drawBarSummary(double *, int);
   void drawPieSummary(double *);
-  void drawCandleChart(double *);
+  void drawCandleChart(double *, int);
   int fillSegment(int, int, int, int, int, unsigned int);
 };
 

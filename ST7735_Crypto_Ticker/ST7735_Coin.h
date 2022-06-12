@@ -43,9 +43,9 @@ public:
   void freeCandles();
   void initCandles(Adafruit_ST7735 *);
 
-  void display(Adafruit_ST7735 *);
+  void display(Adafruit_ST7735 *, int currency);
   void drawPercentageChange(Adafruit_ST7735 *);
-  void drawPrice(Adafruit_ST7735 *);
+  void drawPrice(Adafruit_ST7735 *, int currency);
   void drawName(Adafruit_ST7735 *);
   void drawBitmap(Adafruit_ST7735 *, int16_t, int16_t, const uint8_t *, int16_t,
                   int16_t, uint16_t);

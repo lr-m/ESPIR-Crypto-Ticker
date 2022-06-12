@@ -28,12 +28,19 @@ ST7735_Portfolio::ST7735_Portfolio(Adafruit_ST7735 *display,
 }
 
 // Draw the current value of the portfolio
-void ST7735_Portfolio::drawValue(double *total_value) {
+void ST7735_Portfolio::drawValue(double *total_value, int currency) {
   tft->setTextSize(2);
   tft->setTextColor(WHITE);
   tft->setCursor(5, 4);
 
-  tft -> print(char(156));
+  if (currency == 0){ // GBP
+    tft->print(char(156));
+  } else if (currency == 1){ // USD
+    tft->print(char(36));
+  } else if (currency == 2){ // EUR
+    tft->print(char(237));
+  }
+
   if (*total_value >= 100000000) {
     tft -> print(String(*total_value, 0));
   } else {
@@ -56,10 +63,10 @@ void ST7735_Portfolio::previousMode() {
 }
 
 // Draws the candle chart
-void ST7735_Portfolio::drawCandleChart(double *total_value) {
+void ST7735_Portfolio::drawCandleChart(double *total_value, int currency) {
   // drawPropBar(total_value);
 
-  candle_graph->display();
+  candle_graph->display(currency);
 }
 
 void ST7735_Portfolio::drawPropBar(double *total_value) {
@@ -99,7 +106,7 @@ void ST7735_Portfolio::addPriceToCandles() {
 void ST7735_Portfolio::clearCandles() { candle_graph->reset(); }
 
 // Display the coin breakdown screen with bar proportional bar chart
-void ST7735_Portfolio::drawBarSummary(double *total_value) {
+void ST7735_Portfolio::drawBarSummary(double *total_value, int currency) {
   drawPropBar(total_value);
 
   // Draw coin code, cost of owned, and % of portfolio
@@ -119,7 +126,14 @@ void ST7735_Portfolio::drawBarSummary(double *total_value) {
         coins[portfolio_editor->selected_portfolio_indexes[i]].coin_code);
     tft->setCursor(52, 33 + i * 10);
     tft->setTextColor(WHITE);
-    tft -> print(char(156));
+
+    if (currency == 0){ // GBP
+      tft->print(char(156));
+    } else if (currency == 1){ // USD
+      tft->print(char(36));
+    } else if (currency == 2){ // EUR
+      tft->print(char(237));
+    }
 
     if (coin_total >= 100000000) {
       tft -> print(String(coin_total, 0));
@@ -218,13 +232,13 @@ void ST7735_Portfolio::drawPieSummary(double *total_value) {
 }
 
 // Display the portfolio
-void ST7735_Portfolio::display() {
+void ST7735_Portfolio::display(int currency) {
   tft->fillRect(0, 0, tft->width(), tft->height(), BLACK);
 
   // If in portfolio mode, draw the portfolio upon update
   double total_value = 0;
   getTotalValue(&total_value);
-  drawValue(&total_value);
+  drawValue(&total_value, currency);
 
   // Check that there are coins with non-zero values owned
   if (portfolio_editor->selected_portfolio_indexes[0] != -1) {
@@ -261,11 +275,11 @@ void ST7735_Portfolio::display() {
     }
 
     if (display_mode == 0) {
-      drawBarSummary(&total_value);
+      drawBarSummary(&total_value, currency);
     } else if (display_mode == 1) {
       drawPieSummary(&total_value);
     } else if (display_mode == 2) {
-      drawCandleChart(&total_value);
+      drawCandleChart(&total_value, currency);
     }
   }
 }

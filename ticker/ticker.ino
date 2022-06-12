@@ -43,12 +43,18 @@ extern unsigned char epd_bitmap_bat[];
 extern unsigned char epd_bitmap_uniswap[];
 
 // Define PIN config
-#define TFT_SCL   D1
-#define TFT_SDA   D2
-#define TFT_RES   D3
-#define RECV_PIN  D4
-#define TFT_DC    D5
-#define TFT_CS    D6
+//#define TFT_SCL   D1
+//#define TFT_SDA   D2
+//#define TFT_RES   D3
+//#define RECV_PIN  D4
+//#define TFT_DC    D5
+//#define TFT_CS    D6
+#define TFT_CS D3
+#define TFT_RST D4
+#define TFT_DC D2
+#define TFT_SCLK D5
+#define TFT_MOSI D7
+#define RECV_PIN D1
 
 #define MAX_SELECTED_COINS 9
 
@@ -56,8 +62,10 @@ extern unsigned char epd_bitmap_uniswap[];
 #define PORTFOLIO_MENU_BUTTON_COUNT 4
 
 // For ST7735-based displays, we will use this call
+//Adafruit_ST7735 tft =
+//    Adafruit_ST7735(TFT_CS, TFT_DC, TFT_SDA, TFT_SCL, TFT_RES);
 Adafruit_ST7735 tft =
-    Adafruit_ST7735(TFT_CS, TFT_DC, TFT_SDA, TFT_SCL, TFT_RES);
+    Adafruit_ST7735(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST);
 
 // For interface
 int selected_coins_count = 1;   // Current number of coins selected
@@ -81,9 +89,9 @@ int portfolio_time_slot_moved =
 // For HTTP connection
 WiFiClientSecure client;
 HTTPClient http;
-const char *fingerprint = "YOUR FINGERPRINT HERE";
+const char *fingerprint = "33c57b69e63b765c393df1193b1768b81b0a1fd9";
 char *url_start = "https://api.coingecko.com/api/v3/simple/price?ids=";
-char *url_end = "&vs_currencies=gbp&include_24hr_change=true";
+char *url_end = "&include_24hr_change=true&vs_currencies=";
 
 // For time retrieval
 WiFiUDP ntpUDP;
@@ -105,6 +113,9 @@ ST7735_Menu *portfolio_menu;
 char **coin_menu_button_functions;
 char **portfolio_menu_button_functions;
 char *coin_change_times[5] = {"5", "10", "15", "30", "60"};
+char *currency_options[3] = {"GBP", "USD", "EUR"};
+char *currency_options_lower[3] = {"gbp", "usd", "eur"};
+char *currency_options_changes[3] = {"gbp_24h_change", "usd_24h_change", "eur_24h_change"};
 
 // Instantiate components of Portfolio
 ST7735_Portfolio_Editor *portfolio_editor;
@@ -122,6 +133,7 @@ int last_portfolio_candle_update_delay =
     5; // To detect changes in candle update time
 
 int mode = 1; // Coin or portfolio mode
+int last_currency = 0; // Checks for currency changes
 
 COIN *coins;           // List of coins that can be selected
 COIN **selected_coins; // List of pointers to coins currently selected
@@ -201,6 +213,8 @@ void setup(void) {
       "Coin duration (secs):", coin_change_times, 5, 1, 5);
   coin_menu->getButtons()[0].addSelector(
       "Candle duration (mins):", coin_change_times, 5, 1, 5);
+  coin_menu->getButtons()[0].addSelector(
+      "Currency:", currency_options, 3, 1, 3);
   coin_menu->getButtons()[1].addSelector("Select up to 9 coins:", coin_list, 3,
                                          MAX_SELECTED_COINS, COIN_COUNT);
 
@@ -373,7 +387,7 @@ void loop() {
           if (mode == 1) {
             displayNextCoin();
           } else {
-            portfolio->display();
+            portfolio->display(coin_menu->getButtons()[0].selectors[2].getSelected()[0]);
           }
 
           break;
@@ -393,10 +407,10 @@ void loop() {
         } else if (mode == 2) {
           if (irrecv.decodedIRData.decodedRawData == 0xF708FF00) {
             portfolio->previousMode();
-            portfolio->display();
+            portfolio->display(coin_menu->getButtons()[0].selectors[2].getSelected()[0]);
           } else if (irrecv.decodedIRData.decodedRawData == 0xA55AFF00) {
             portfolio->nextMode();
-            portfolio->display();
+            portfolio->display(coin_menu->getButtons()[0].selectors[2].getSelected()[0]);
           }
         }
 
@@ -442,7 +456,7 @@ void loop() {
       portfolio->addPriceToCandles();
 
       if (mode == 2)
-        portfolio->display();
+        portfolio->display(coin_menu->getButtons()[0].selectors[2].getSelected()[0]);
     }
 
     // Move to next coin every *selected* seconds if in crypto mode
@@ -459,7 +473,7 @@ void displayNextCoin(){
   if (current_coin == selected_coins_count)
     current_coin = 0;
 
-  selected_coins[current_coin]->display(&tft);
+  selected_coins[current_coin]->display(&tft, coin_menu->getButtons()[0].selectors[2].getSelected()[0]);
 
   incrementCoinCycleDelay();
 }
@@ -470,7 +484,7 @@ void displayPreviousCoin(){
 
   current_coin--;
 
-  selected_coins[current_coin]->display(&tft);
+  selected_coins[current_coin]->display(&tft, coin_menu->getButtons()[0].selectors[2].getSelected()[0]);
 
   incrementCoinCycleDelay();
 }
@@ -512,7 +526,6 @@ void drawIntroAnimation() {
  */
 void forceGetData(int app_mode) {
   while (getData(app_mode) == 0) {
-    //Serial.println("Failed to get data, retrying...");
     delay(5000);
   }
 }
@@ -545,8 +558,9 @@ int getData(int app_mode) {
     if (app_mode == 1) {
       for (int i = 0; i < selected_coins_count; i++) {
         current = doc[selected_coins[i]->coin_id];
-        selected_coins[i]->current_price = current["gbp"];
-        selected_coins[i]->current_change = current["gbp_24h_change"];
+
+        selected_coins[i] -> current_price = current[currency_options_lower[coin_menu -> getButtons()[0].selectors[2].getSelected()[0]]];
+        selected_coins[i] -> current_change = current[currency_options_changes[coin_menu -> getButtons()[0].selectors[2].getSelected()[0]]];
 
         // selected_coins[i] -> candles ->
         // addPrice(incrementForGraph(current["gbp"]));
@@ -558,9 +572,9 @@ int getData(int app_mode) {
         current =
             doc[coins[portfolio_editor->selected_portfolio_indexes[j]].coin_id];
         coins[portfolio_editor->selected_portfolio_indexes[j]].current_price =
-            current["gbp"];
+            current[currency_options_lower[coin_menu -> getButtons()[0].selectors[2].getSelected()[0]]];
         coins[portfolio_editor->selected_portfolio_indexes[j]].current_change =
-            current["gbp_24h_change"];
+            current[currency_options_changes[coin_menu -> getButtons()[0].selectors[2].getSelected()[0]]];
         j++;
       }
     }
@@ -664,6 +678,13 @@ void constructURL(int app_mode, char* url_buffer) {
     curr_url_pos++;
     i++;
   }
+    
+  for (int j = 0; j < 3; j++){
+    url_buffer[curr_url_pos] = currency_options
+      [coin_menu->getButtons()[0].selectors[2].getSelected()[0]][j];
+    curr_url_pos++;
+  }
+
   url_buffer[curr_url_pos] = 0;
 }
 
@@ -695,6 +716,13 @@ void constructURL(char *coin_id, char* url_buffer) {
     curr_url_pos++;
     i++;
   }
+  
+  for (int j = 0; j < 3; j++){
+    url_buffer[curr_url_pos] = currency_options
+      [coin_menu->getButtons()[0].selectors[2].getSelected()[0]][j];
+    curr_url_pos++;
+  }
+
   url_buffer[curr_url_pos] = 0;
 }
 
@@ -856,7 +884,6 @@ void loadCredsFromEEPROM(char *ssid, char *pass) {
 int checkForCredsClear() {
   if (irrecv.decode()) {
     if (irrecv.decodedIRData.decodedRawData == 0xE916FF00) {
-      //Serial.println("Cleared EEPROM Stored Credentials");
       clearEEPROM();
       return 1;
     }
@@ -926,7 +953,7 @@ void interactWithMenu() {
           portfolio->refreshSelectedCoins(); // Add any new coins to selected
           forceGetData(2);                   // Get data
           portfolio->addPriceToCandles();
-          portfolio->display(); // Now display the portfolio
+          portfolio->display(coin_menu->getButtons()[0].selectors[2].getSelected()[0]); // Now display the portfolio
         }
 
         if (button_action == "Portfolio Settings") {
@@ -1000,6 +1027,19 @@ void interactWithSettings() {
       if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00) {
         char *action = coin_menu->getButtons()[0].pressSubMenu();
         if (action == "Return") {
+          // If currency changes, reset coins and portfolio candles
+          if (last_currency != coin_menu -> getButtons()[0].selectors[2].getSelected()[0]){
+            // Reset the coins for the new currency (clear candles etc)
+            resetCoins();
+
+            // Reset portfolio candles and data
+            portfolio->clearCandles();
+            forceGetData(2);                   // Get data
+            portfolio->addPriceToCandles();
+            
+            last_currency = coin_menu -> getButtons()[0].selectors[2].getSelected()[0];
+          }
+          
           String str = coin_change_times
               [coin_menu->getButtons()[0].selectors[0].getSelected()[0]];
           coin_cycle_delay = str.toInt();

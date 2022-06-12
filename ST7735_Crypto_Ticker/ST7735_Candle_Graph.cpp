@@ -63,7 +63,7 @@ void Candle_Graph::freeCandles() {
 }
 
 // Sets the Portfolio Editor to be in a selected state
-void Candle_Graph::display() {
+void Candle_Graph::display(int currency) {
   double max_val = -1;
   double min_val = std::numeric_limits<double>::max();
 
@@ -79,11 +79,27 @@ void Candle_Graph::display() {
     tft->setTextSize(1);
     tft->setTextColor(ST77XX_GREEN);
     tft->setCursor(0, top - 10);
-    tft->print(char(156));
+    
+    if (currency == 0){ // GBP
+      tft->print(char(156));
+    } else if (currency == 1){ // USD
+      tft->print(char(36));
+    } else if (currency == 2){ // EUR
+      tft->print(char(237));
+    }
+
     tft->print(max_val);
     tft->setTextColor(RED);
     tft->setCursor(0, bottom + 2);
-    tft->print(char(156));
+    
+    if (currency == 0){ // GBP
+      tft->print(char(156));
+    } else if (currency == 1){ // USD
+      tft->print(char(36));
+    } else if (currency == 2){ // EUR
+      tft->print(char(237));
+    }
+
     tft->print(min_val);
     tft->setTextColor(WHITE);
   }

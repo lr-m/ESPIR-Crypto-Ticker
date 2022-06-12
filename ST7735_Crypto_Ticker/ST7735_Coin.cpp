@@ -75,7 +75,7 @@ void COIN::initCandles(Adafruit_ST7735 *display) {
 }
 
 // Display properties of coin on display
-void COIN::display(Adafruit_ST7735 *display) {
+void COIN::display(Adafruit_ST7735 *display, int currency) {
   display->setTextColor(WHITE);
   display->fillRect(0, 0, display->width(), display->height(), BLACK);
 
@@ -87,7 +87,7 @@ void COIN::display(Adafruit_ST7735 *display) {
   }
 
   drawName(display);
-  drawPrice(display);
+  drawPrice(display, currency);
   drawPercentageChange(display);
   candles->display();
 }
@@ -142,7 +142,7 @@ void COIN::drawPercentageChange(Adafruit_ST7735 *display) {
 }
 
 // Draws the current price of coin on the screen.
-void COIN::drawPrice(Adafruit_ST7735 *display) {
+void COIN::drawPrice(Adafruit_ST7735 *display, int currency) {
   display->setCursor(PRICE_START_X, PRICE_START_Y);
 
   String print_price;
@@ -159,7 +159,14 @@ void COIN::drawPrice(Adafruit_ST7735 *display) {
     print_price = String(current_price, 5);
   }
 
-  display->print(char(156));
+  if (currency == 0){ // GBP
+    display->print(char(156));
+  } else if (currency == 1){ // USD
+    display->print(char(36));
+  } else if (currency == 2){ // EUR
+    display->print(char(237));
+  }
+  
   display->print(print_price);
 }
 
