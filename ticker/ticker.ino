@@ -9,13 +9,13 @@
 #include <NTPClient.h>
 #include <SPI.h>
 #include <ST7735_Candle_Graph.h>
-#include <ST7735_Coin.h>
 #include <ST7735_Coin_Changer.h>
 #include <ST7735_Keyboard.h>
 #include <ST7735_Menu.h>
 #include <ST7735_Portfolio.h>
 #include <ST7735_Portfolio_Editor.h>
 #include <WiFiUdp.h>
+//#include <ST7735_Value_Drawer.h>
 
 extern unsigned char epd_bitmap_name[];
 extern unsigned char epd_bitmap_logo[];
@@ -56,8 +56,8 @@ extern unsigned char epd_bitmap_uniswap[];
 #define PORTFOLIO_MENU_BUTTON_COUNT 4
 
 // For ST7735-based displays, we will use this call
-Adafruit_ST7735 tft =
-   Adafruit_ST7735(TFT_CS, TFT_DC, TFT_SDA, TFT_SCL, TFT_RES);
+//Adafruit_ST7735 tft =
+//    Adafruit_ST7735(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST);
 
 // For interface
 int selected_coins_count = 1;   // Current number of coins selected
@@ -81,7 +81,7 @@ int portfolio_time_slot_moved =
 // For HTTP connection
 WiFiClientSecure client;
 HTTPClient http;
-const char *fingerprint = "*FINGERPRINT*";
+const char *fingerprint = "*YOUR FINGERPRINT HERE";
 char *url_start = "https://api.coingecko.com/api/v3/simple/price?ids=";
 char *url_end = "&include_24hr_change=true&vs_currencies=";
 
@@ -105,6 +105,7 @@ ST7735_Menu *portfolio_menu;
 char **coin_menu_button_functions;
 char **portfolio_menu_button_functions;
 char *coin_change_times[5] = {"5", "10", "15", "30", "60"};
+int coin_change_times_values[5] = {5, 10, 15, 30, 60};
 char *currency_options[3] = {"GBP", "USD", "EUR"};
 char *currency_options_lower[3] = {"gbp", "usd", "eur"};
 char *currency_options_changes[3] = {"gbp_24h_change", "usd_24h_change", "eur_24h_change"};
@@ -113,6 +114,8 @@ char *currency_options_changes[3] = {"gbp_24h_change", "usd_24h_change", "eur_24
 ST7735_Portfolio_Editor *portfolio_editor;
 ST7735_Portfolio *portfolio;
 ST7735_Coin_Changer *coin_changer;
+
+ST7735_Value_Drawer *value_drawer;
 
 char **coin_list;             // List of all coin codes
 int coin_cycle_delay;         // Delay between coin changes
@@ -133,9 +136,11 @@ COIN **selected_coins; // List of pointers to coins currently selected
 void setup(void) {
   irrecv.enableIRIn(); // Enable IR reciever
 
+  Serial.begin(9600);
+
   // Initialise display
-  tft.initR(INITR_GREENTAB); // Init ST7735S chip
-  //tft.initR(INITR_BLACKTAB); // Init ST7735S chip
+  //tft.initR(INITR_GREENTAB); // Init ST7735S chip
+  tft.initR(INITR_BLACKTAB); // Init ST7735S chip
   tft.setRotation(1);
 
   // Initialise keyboard
@@ -166,39 +171,43 @@ void setup(void) {
   *portfolio_menu = ST7735_Menu(&tft, PORTFOLIO_MENU_BUTTON_COUNT,
                                 portfolio_menu_button_functions);
 
+  // For drawing prices and percentage changes
+  value_drawer = (ST7735_Value_Drawer *)malloc(sizeof(ST7735_Value_Drawer));
+  *value_drawer = ST7735_Value_Drawer(&tft);
+
   // Create coin array
   coins = (COIN *)malloc(sizeof(COIN) * COIN_COUNT);
   selected_coins = (COIN **)malloc(sizeof(COIN *) * MAX_SELECTED_COINS);
 
   coin_list = (char **)malloc(sizeof(char *) * COIN_COUNT);
 
-  coins[0] = COIN("BTC", "bitcoin", epd_bitmap_bitcoin, GOLD, WHITE, GOLD, 0);
-  coins[1] = COIN("ETH", "ethereum", epd_bitmap_ethereum, WHITE, GRAY, GRAY, 0);
+  coins[0] = COIN("BTC", "bitcoin", epd_bitmap_bitcoin, GOLD, WHITE, GOLD, 0, value_drawer);
+  coins[1] = COIN("ETH", "ethereum", epd_bitmap_ethereum, WHITE, GRAY, GRAY, 0, value_drawer);
   coins[2] =
-      COIN("LTC", "litecoin", epd_bitmap_litecoin, GRAY, WHITE, DARK_GREY, 0);
+      COIN("LTC", "litecoin", epd_bitmap_litecoin, GRAY, WHITE, DARK_GREY, 0, value_drawer);
   coins[3] =
-      COIN("ADA", "cardano", epd_bitmap_cardano, LIGHT_BLUE, WHITE, LIGHT_BLUE, 0);
-  coins[4] = COIN("BNB", "binancecoin", epd_bitmap_binance, WHITE, GOLD, GOLD, 0);
-  coins[5] = COIN("USDT", "tether", epd_bitmap_tether, GREEN, WHITE, GREEN, 0);
-  coins[6] = COIN("XRP", "ripple", epd_bitmap_xrp, DARK_GREY, WHITE, DARK_GREY, 0);
-  coins[7] = COIN("DOGE", "dogecoin", epd_bitmap_dogecoin, GOLD, WHITE, GOLD, 0);
-  coins[8] = COIN("DOT", "polkadot", epd_bitmap_dot, WHITE, BLACK, WHITE, 0);
+      COIN("ADA", "cardano", epd_bitmap_cardano, LIGHT_BLUE, WHITE, LIGHT_BLUE, 0, value_drawer);
+  coins[4] = COIN("BNB", "binancecoin", epd_bitmap_binance, WHITE, GOLD, GOLD, 0, value_drawer);
+  coins[5] = COIN("USDT", "tether", epd_bitmap_tether, GREEN, WHITE, GREEN, 0, value_drawer);
+  coins[6] = COIN("XRP", "ripple", epd_bitmap_xrp, DARK_GREY, WHITE, DARK_GREY, 0, value_drawer);
+  coins[7] = COIN("DOGE", "dogecoin", epd_bitmap_dogecoin, GOLD, WHITE, GOLD, 0, value_drawer);
+  coins[8] = COIN("DOT", "polkadot", epd_bitmap_dot, WHITE, BLACK, WHITE, 0, value_drawer);
   coins[9] =
-      COIN("SOL", "solana", epd_bitmap_solana, PINK, LIGHTNING_BLUE, PINK, 0);
+      COIN("SOL", "solana", epd_bitmap_solana, PINK, LIGHTNING_BLUE, PINK, 0, value_drawer);
   coins[10] = COIN("LUNA", "terra-luna", epd_bitmap_terra, NIGHT_BLUE,
-                   MOON_YELLOW, MOON_YELLOW, 0);
+                   MOON_YELLOW, MOON_YELLOW, 0, value_drawer);
   coins[11] =
-      COIN("ALGO", "algorand", epd_bitmap_algorand, WHITE, BLACK, WHITE, 0);
+      COIN("ALGO", "algorand", epd_bitmap_algorand, WHITE, BLACK, WHITE, 0, value_drawer);
   coins[12] =
-      COIN("LINK", "chainlink", epd_bitmap_link, DARK_BLUE, WHITE, DARK_BLUE, 0);
+      COIN("LINK", "chainlink", epd_bitmap_link, DARK_BLUE, WHITE, DARK_BLUE, 0, value_drawer);
   coins[13] =
-      COIN("MATIC", "matic-network", epd_bitmap_matic, PURPLE, WHITE, PURPLE, 0);
-  coins[14] = COIN("TRX", "tron", epd_bitmap_tron, RED, WHITE, RED, 0);
+      COIN("MATIC", "matic-network", epd_bitmap_matic, PURPLE, WHITE, PURPLE, 0, value_drawer);
+  coins[14] = COIN("TRX", "tron", epd_bitmap_tron, RED, WHITE, RED, 0, value_drawer);
   coins[15] = COIN("BAT", "basic-attention-token", epd_bitmap_bat, WHITE,
-                   SALMON, SALMON, 0);
-  coins[16] = COIN("AVAX", "avalanche-2", epd_bitmap_avax, RED, WHITE, RED, 0);
+                   SALMON, SALMON, 0, value_drawer);
+  coins[16] = COIN("AVAX", "avalanche-2", epd_bitmap_avax, RED, WHITE, RED, 0, value_drawer);
   coins[17] =
-      COIN("UNI", "uniswap", epd_bitmap_uniswap, WHITE, HOT_PINK, HOT_PINK, 0);
+      COIN("UNI", "uniswap", epd_bitmap_uniswap, WHITE, HOT_PINK, HOT_PINK, 0, value_drawer);
 
   // Add selectors to respective submenus
   coin_menu->getButtons()[0].addSelector(
@@ -222,22 +231,20 @@ void setup(void) {
   *portfolio_editor = ST7735_Portfolio_Editor(&tft, coins);
 
   portfolio = (ST7735_Portfolio *)malloc(sizeof(ST7735_Portfolio));
-  *portfolio = ST7735_Portfolio(&tft, portfolio_editor, coins);
+  *portfolio = ST7735_Portfolio(&tft, portfolio_editor, coins, value_drawer);
 
   coin_changer = (ST7735_Coin_Changer *)malloc(sizeof(ST7735_Coin_Changer));
   *coin_changer = ST7735_Coin_Changer(&tft, coin_list, coins, keyboard,
                                       epd_bitmap_logo_cropped);
 
   // Get default coin delay time from selector
-  String str = coin_change_times
-      [coin_menu->getButtons()[0].selectors[0].getSelected()[0]];
-  coin_cycle_delay = str.toInt();
+  coin_cycle_delay = coin_change_times_values[coin_menu->getButtons()[0].selectors[0].getSelected()[0]];
 
   // Get default update time from selector
-  str = coin_change_times
+  coin_candle_update_delay = coin_change_times_values
       [coin_menu->getButtons()[0].selectors[0].getSelected()[0]];
-  coin_candle_update_delay = str.toInt();
-  portfolio_candle_update_delay = str.toInt();
+  portfolio_candle_update_delay = coin_change_times_values
+      [coin_menu->getButtons()[0].selectors[0].getSelected()[0]];
 
   // Try to read network credentials from EEPROM if they exist
   EEPROM.begin(512);
@@ -357,6 +364,11 @@ void loop() {
     interactWithMenu();
   } else { // Display crypto interface
     updateTime();
+    Serial.print("FREE HEAP: ");
+    Serial.println(ESP.getFreeHeap());
+    Serial.print("MAX FREE BLOCK SIZE: ");
+    Serial.println(ESP.getMaxFreeBlockSize());
+    Serial.println();
     
     for (int i = 0; i < 10; i++) {
       delay(50);
@@ -675,6 +687,8 @@ void constructURL(int app_mode, char* url_buffer) {
   }
 
   url_buffer[curr_url_pos] = 0;
+
+  Serial.println(url_buffer);
 }
 
 void constructURL(char *coin_id, char* url_buffer) {
@@ -713,6 +727,8 @@ void constructURL(char *coin_id, char* url_buffer) {
   }
 
   url_buffer[curr_url_pos] = 0;
+
+  Serial.println(url_buffer);
 }
 
 /**
@@ -725,18 +741,30 @@ void initialiseNetwork(char *ssid, char *password) {
   tft.setCursor(0, 10);
   tft.println(" SSID: ");
   tft.setTextColor(RED);
-  tft.println(" " + String(ssid));
+  tft.print(" ");
+  tft.println(ssid);
   tft.setTextColor(WHITE);
   tft.println("\n Password: ");
   tft.setTextColor(RED);
-  tft.println(" " + String(password));
+  tft.print(" ");
+  tft.println(password);
   tft.setTextColor(WHITE);
   WiFi.begin(ssid, password);
   tft.print("\n ");
 
+  int i = 0;
   while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    tft.print(".");
+    delay(500);
+    i++;
+    if (i < 20){
+      tft.fillRect(5 + ((i-1) * (tft.width()-10)/30), 58, (tft.width()-10)/30, 8, WHITE);
+    } else {
+      tft.fillRect(5 + ((i-1) * (tft.width()-10)/30), 58, (tft.width()-10)/30, 8, RED);
+    }
+
+    if (i == 30){
+      ESP.restart();
+    }
   }
 
   tft.print("\n ");
@@ -1029,13 +1057,9 @@ void interactWithSettings() {
             last_currency = coin_menu -> getButtons()[0].selectors[2].getSelected()[0];
           }
           
-          String str = coin_change_times
-              [coin_menu->getButtons()[0].selectors[0].getSelected()[0]];
-          coin_cycle_delay = str.toInt();
+          coin_cycle_delay = coin_change_times_values[coin_menu->getButtons()[0].selectors[0].getSelected()[0]];
 
-          str = coin_change_times
-              [coin_menu->getButtons()[0].selectors[1].getSelected()[0]];
-          coin_candle_update_delay = str.toInt();
+          coin_candle_update_delay = coin_change_times_values[coin_menu->getButtons()[0].selectors[1].getSelected()[0]];
 
           if (coin_candle_update_delay != last_coin_candle_update_delay)
             resetCoins();
@@ -1068,9 +1092,8 @@ void interactWithSettings() {
       if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00) {
         char *action = portfolio_menu->getButtons()[0].pressSubMenu();
         if (action == "Return") {
-          String str = coin_change_times
+          portfolio_candle_update_delay = coin_change_times_values
               [portfolio_menu->getButtons()[0].selectors[0].getSelected()[0]];
-          portfolio_candle_update_delay = str.toInt();
 
           if (portfolio_candle_update_delay !=
               last_portfolio_candle_update_delay)

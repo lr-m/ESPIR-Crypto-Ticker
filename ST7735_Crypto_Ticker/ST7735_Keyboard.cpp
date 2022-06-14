@@ -7,7 +7,6 @@
 #include "HardwareSerial.h"
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
-#include <String.h>  // String manipulation
 #include <Colours.h>
 
 // Constructor for Keyboard
@@ -311,7 +310,7 @@ void ST7735_Keyboard::setMode(int new_mode){
 }
 
 // Displays the given prompt above the keyboard
-void ST7735_Keyboard::displayPrompt(String prompt)
+void ST7735_Keyboard::displayPrompt(char* prompt)
 {
 	tft -> fillRect(0, 0, tft -> width(), tft -> height() / 2, PROMPT_BACKGROUND);
 	tft -> setTextColor(PROMPT_COLOUR);

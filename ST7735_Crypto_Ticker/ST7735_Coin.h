@@ -6,7 +6,7 @@
 #include "ST7735_Candle_Graph.h"
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
-#include <String.h>
+#include "ST7735_Value_Drawer.h"
 
 // ensure this library description is only included once
 #ifndef ST7735_Coin_h
@@ -24,8 +24,8 @@
 // For storing coins
 class COIN {
 public:
-  COIN(char *, char *, const unsigned char *, uint16_t, uint16_t, uint16_t, double);
-  COIN(char *, char *, uint16_t, const unsigned char *, double);
+  COIN(char *, char *, const unsigned char *, uint16_t, uint16_t, uint16_t, double, ST7735_Value_Drawer*);
+  COIN(char *, char *, uint16_t, const unsigned char *, double, ST7735_Value_Drawer*);
 
   char coin_code[10];
   char coin_id[30];
@@ -40,12 +40,13 @@ public:
   int bitmap_present;
   int candles_init;
 
+  ST7735_Value_Drawer* value_drawer;
+
   void freeCandles();
   void initCandles(Adafruit_ST7735 *);
 
   void display(Adafruit_ST7735 *, int currency);
   void drawPercentageChange(Adafruit_ST7735 *);
-  void drawPrice(Adafruit_ST7735 *, int currency);
   void drawName(Adafruit_ST7735 *);
   void drawBitmap(Adafruit_ST7735 *, int16_t, int16_t, const uint8_t *, int16_t,
                   int16_t, uint16_t);

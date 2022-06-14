@@ -6,7 +6,6 @@
 #include "ST7735_Coin.h"
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
-#include <String.h>
 
 // ensure this library description is only included once
 #ifndef ST7735_Portfolio_Editor_h

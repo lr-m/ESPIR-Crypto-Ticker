@@ -8,7 +8,7 @@
 #include <ST7735_Candle_Graph.h>
 #include <ST7735_Coin.h>
 #include <ST7735_Portfolio_Editor.h>
-#include <String.h>
+//#include "ST7735_Value_Drawer.h"
 
 #define DEG2RAD 0.0174532925
 #define MODE_COUNT 3
@@ -19,7 +19,7 @@
 
 class ST7735_Portfolio {
 public:
-  ST7735_Portfolio(Adafruit_ST7735 *, ST7735_Portfolio_Editor *, COIN *);
+  ST7735_Portfolio(Adafruit_ST7735 *, ST7735_Portfolio_Editor *, COIN *, ST7735_Value_Drawer*);
   void display(int);
   void getTotalValue(double *);
   float getFloatValue();
@@ -35,6 +35,8 @@ public:
   void previousMode();
   void nextMode();
   void drawPropBar(double *);
+
+  ST7735_Value_Drawer* value_drawer;
 
 private:
   Adafruit_ST7735 *tft;

@@ -9,7 +9,6 @@
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
 #include <Colours.h>
-#include <limits>
 
 // Constructor for Portfolio Editor
 Candle_Graph::Candle_Graph(Adafruit_ST7735 *display, int candle_count,

@@ -6,7 +6,7 @@
 
 // Constructor for Coin with bitmap
 COIN::COIN(char* code, char *id, const unsigned char* bm, uint16_t circle_col,
-           uint16_t bm_col, uint16_t portfolio_col, double coin_amount) {
+           uint16_t bm_col, uint16_t portfolio_col, double coin_amount, ST7735_Value_Drawer* drawer) {
 
   int i = 0;
   while(code[i] != 0){
@@ -30,11 +30,13 @@ COIN::COIN(char* code, char *id, const unsigned char* bm, uint16_t circle_col,
   candles_init = 0;
 
   bitmap_present = 1;
+
+  value_drawer = drawer;
 }
 
 // Constructor for coin without bitmap
 COIN::COIN(char *code, char *id, uint16_t portfolio_col,
-           const unsigned char *bm, double coin_amount) {
+           const unsigned char *bm, double coin_amount, ST7735_Value_Drawer* drawer) {
   int i = 0;
   while(code[i] != 0){
     coin_code[i] = code[i];
@@ -53,6 +55,8 @@ COIN::COIN(char *code, char *id, uint16_t portfolio_col,
   amount = coin_amount;
   bitmap = bm;
   bitmap_present = 0;
+
+  value_drawer = drawer;
 }
 
 // Free the candles
@@ -87,7 +91,14 @@ void COIN::display(Adafruit_ST7735 *display, int currency) {
   }
 
   drawName(display);
-  drawPrice(display, currency);
+
+  display->setCursor(PRICE_START_X, PRICE_START_Y);
+  if (current_price > 1){
+    value_drawer->drawPrice(current_price, 7, 2, currency, 2);
+  } else {
+    value_drawer->drawPrice(current_price, 7, 2, currency);
+  }
+
   drawPercentageChange(display);
   candles->display();
 }
@@ -122,52 +133,8 @@ void COIN::drawPercentageChange(Adafruit_ST7735 *display) {
   display->setCursor(CHANGE_START_X, CHANGE_START_Y);
   display->setTextSize(1);
   display->print("24 Hour: ");
-  if (current_change < 0) {
-    display->setTextColor(RED);
-  } else {
-    display->setTextColor(ST77XX_GREEN);
-    display->print('+');
-  }
 
-  if (abs(current_change) > 1000) {
-    display->print(String(current_change, 0));
-  } else if (abs(current_change) > 100) {
-    display->print(String(current_change, 1));
-  } else {
-    display->print(String(current_change, 2));
-  }
-
-  display->print('%');
-  display->setTextColor(WHITE);
-}
-
-// Draws the current price of coin on the screen.
-void COIN::drawPrice(Adafruit_ST7735 *display, int currency) {
-  display->setCursor(PRICE_START_X, PRICE_START_Y);
-
-  String print_price;
-
-  if (current_price / 10000 >= 1) {
-    print_price = String(current_price, 1);
-  } else if (current_price / 1000 >= 1) {
-    print_price = String(current_price, 2);
-  } else if (current_price / 100 >= 1) {
-    print_price = String(current_price, 3);
-  } else if (current_price / 10 >= 1) {
-    print_price = String(current_price, 4);
-  } else {
-    print_price = String(current_price, 5);
-  }
-
-  if (currency == 0){ // GBP
-    display->print(char(156));
-  } else if (currency == 1){ // USD
-    display->print(char(36));
-  } else if (currency == 2){ // EUR
-    display->print(char(237));
-  }
-  
-  display->print(print_price);
+  value_drawer->drawPercentageChange(current_change, 4, 1);
 }
 
 // Draws a passed bitmap on the screen at the given position with the given

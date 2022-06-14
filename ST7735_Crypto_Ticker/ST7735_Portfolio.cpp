@@ -14,7 +14,7 @@
 // Constructor for Portfolio Editor
 ST7735_Portfolio::ST7735_Portfolio(Adafruit_ST7735 *display,
                                    ST7735_Portfolio_Editor *editor,
-                                   COIN *coin_arr) {
+                                   COIN *coin_arr, ST7735_Value_Drawer* drawer) {
   tft = display;
   portfolio_editor = editor;
   coins = coin_arr;
@@ -25,27 +25,16 @@ ST7735_Portfolio::ST7735_Portfolio(Adafruit_ST7735 *display,
   display_mode = 0;
 
   current_value = 0;
+
+  value_drawer = drawer;
 }
 
 // Draw the current value of the portfolio
 void ST7735_Portfolio::drawValue(double *total_value, int currency) {
-  tft->setTextSize(2);
   tft->setTextColor(WHITE);
   tft->setCursor(5, 4);
 
-  if (currency == 0){ // GBP
-    tft->print(char(156));
-  } else if (currency == 1){ // USD
-    tft->print(char(36));
-  } else if (currency == 2){ // EUR
-    tft->print(char(237));
-  }
-
-  if (*total_value >= 100000000) {
-    tft -> print(String(*total_value, 0));
-  } else {
-    tft -> print(*total_value);
-  }
+  value_drawer->drawPrice(*total_value, 11, 2, currency, 2, 1);
 }
 
 // Moves to the next display mode
@@ -64,8 +53,6 @@ void ST7735_Portfolio::previousMode() {
 
 // Draws the candle chart
 void ST7735_Portfolio::drawCandleChart(double *total_value, int currency) {
-  // drawPropBar(total_value);
-
   candle_graph->display(currency);
 }
 
@@ -80,8 +67,8 @@ void ST7735_Portfolio::drawPropBar(double *total_value) {
         coins[portfolio_editor->selected_portfolio_indexes[i]].current_price *
         coins[portfolio_editor->selected_portfolio_indexes[i]].amount;
 
-    tft->fillRect(map(current_total, 0, *total_value, 0, tft->width()), 24,
-                  1 + map(coin_total, 0, *total_value, 0, tft->width()), 3,
+    tft->fillRect((current_total * (tft->width() / *total_value)), 24,
+                  1+(coin_total * (tft->width() / *total_value)), 3,
                   coins[portfolio_editor->selected_portfolio_indexes[i]]
                       .portfolio_colour);
 
@@ -105,6 +92,7 @@ void ST7735_Portfolio::addPriceToCandles() {
 // Clears the candles
 void ST7735_Portfolio::clearCandles() { candle_graph->reset(); }
 
+
 // Display the coin breakdown screen with bar proportional bar chart
 void ST7735_Portfolio::drawBarSummary(double *total_value, int currency) {
   drawPropBar(total_value);
@@ -127,62 +115,13 @@ void ST7735_Portfolio::drawBarSummary(double *total_value, int currency) {
     tft->setCursor(52, 33 + i * 10);
     tft->setTextColor(WHITE);
 
-    if (currency == 0){ // GBP
-      tft->print(char(156));
-    } else if (currency == 1){ // USD
-      tft->print(char(36));
-    } else if (currency == 2){ // EUR
-      tft->print(char(237));
-    }
-
-    if (coin_total >= 100000000) {
-      tft -> print(String(coin_total, 0));
-    } else if (coin_total >= 10000000) {
-      tft -> print(String(coin_total, 1));
-    } else {
-      tft -> print(String(coin_total, 2));
-    }
+    value_drawer->drawPrice(coin_total, 10, 1, currency, 2, 1);
 
     tft -> setCursor(123, 33 + i * 10);
 
-    if (coins[portfolio_editor->selected_portfolio_indexes[i]].current_change <
-        0) {
-      tft->setTextColor(RED);
-    } else {
-      tft->setTextColor(ST77XX_GREEN);
-    }
+    value_drawer->drawPercentageChange(
+      coins[portfolio_editor->selected_portfolio_indexes[i]].current_change, 4, 1);
 
-    if (coin_total < 10000000000) {
-      if (coins[portfolio_editor->selected_portfolio_indexes[i]]
-              .current_change > 0) {
-        tft -> print('+');
-      }
-
-      if (abs(coins[portfolio_editor->selected_portfolio_indexes[i]]
-                  .current_change) >= 1000) {
-        tft -> print(String(coins[portfolio_editor->selected_portfolio_indexes[i]]
-                              .current_change,
-                          0));
-      } else if (abs(coins[portfolio_editor->selected_portfolio_indexes[i]]
-                         .current_change) >= 100) {
-        tft -> print(String(coins[portfolio_editor->selected_portfolio_indexes[i]]
-                              .current_change,
-                          0));
-      } else if (abs(coins[portfolio_editor->selected_portfolio_indexes[i]]
-                         .current_change) >= 10) {
-        tft -> print(String(coins[portfolio_editor->selected_portfolio_indexes[i]]
-                              .current_change,
-                          1));
-      } else if (abs(coins[portfolio_editor->selected_portfolio_indexes[i]]
-                         .current_change) >= 0) {
-        tft -> print(String(coins[portfolio_editor->selected_portfolio_indexes[i]]
-                              .current_change,
-                          2));
-      }
-
-      tft -> print('%');
-      tft->setTextColor(WHITE);
-    }
     i++;
   }
 }
@@ -208,7 +147,7 @@ void ST7735_Portfolio::drawPieSummary(double *total_value) {
         coins[portfolio_editor->selected_portfolio_indexes[i]].coin_code);
     tft -> setCursor(50, 30 + i * 10);
     tft -> setTextColor(WHITE);
-    tft -> print(String(coin_total / (*total_value) * 100, 1));
+    tft -> print((int) round(coin_total / (*total_value) * 100));
     tft -> print('%');
     i++;
   }
@@ -221,8 +160,8 @@ void ST7735_Portfolio::drawPieSummary(double *total_value) {
         coins[portfolio_editor->selected_portfolio_indexes[i]].amount;
 
     fillSegment(tft->width() / 2 + 40, tft->height() / 2 + 12,
-                map(current_total, 0, *total_value, 0, 360),
-                map(coin_total, 0, *total_value, 0, 360), 35,
+                (current_total * (360 / *total_value)),
+                (coin_total * (360 / *total_value)), 35,
                 coins[portfolio_editor->selected_portfolio_indexes[i]]
                     .portfolio_colour);
 

@@ -5,7 +5,6 @@
 
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
-#include <String.h>  
 
 // ensure this library description is only included once
 #ifndef ST7735_Keyboard_h
@@ -52,7 +51,7 @@ class ST7735_Keyboard
 	void press();
 	void displayCurrentString();
     void display();
-	void displayPrompt(String prompt);
+	void displayPrompt(char* prompt);
 	void moveRight();
 	void moveLeft();
 	void moveUp();

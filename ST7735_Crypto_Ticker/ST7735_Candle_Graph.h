@@ -5,7 +5,6 @@
 
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
-#include <String.h>
 
 #define CANDLE_WIDTH 3
 #define CANDLE_COUNT 26
