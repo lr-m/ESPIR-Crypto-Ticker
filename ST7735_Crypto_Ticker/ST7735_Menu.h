@@ -39,6 +39,7 @@ public:
   void cycleButtons();
   void press();
   int *getSelected();
+  void setSelected(int, int);
   void selectIndex(int);
   void unselectIndex(int);
   void drawItem(int);

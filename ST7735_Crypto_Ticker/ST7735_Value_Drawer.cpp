@@ -10,8 +10,6 @@ void ST7735_Value_Drawer::drawPrice(double price, int space, int size, int curre
   double maximum = pow(10, space);
   double minimum = 1/pow(10, space-3);
 
-  Serial.println(price);
-
   display->setTextSize(size);
   display->setTextColor(WHITE);
 
@@ -116,8 +114,6 @@ void ST7735_Value_Drawer::drawPercentageChange(double change, int space, int siz
   }
 
   double change_val = sqrt(change*change);
-  Serial.println(change);
-  Serial.println(change_val);
 
   // Get minimum and maximum possible display values
   double maximum = pow(10, space);

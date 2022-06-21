@@ -98,10 +98,10 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
     stage = 0;
     active = 0;
     verified_id = 0;
-    current_replacing_index = 0;
     selected_picker = 0;
     keyboard->reset();
-    return 0;
+    current_replacing_index = 0;
+    return -3;
   }
 
   if (stage == 0) { // Select coin to replace
@@ -163,7 +163,7 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
 
       keyboard->reset();
 
-      return 1;
+      return -2;
     }
   } else if (stage == 2) { // Enter coin code
     keyboard->interact(ir_data);
@@ -188,10 +188,9 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
       stage = 0;
       active = 0;
       verified_id = 0;
-      current_replacing_index = 0;
       selected_picker = 0;
       keyboard->end();
-      return 0;
+      return current_replacing_index;
     }
 
     // left
@@ -250,7 +249,7 @@ void ST7735_Coin_Changer::loadIntoSelectedCoin() {
   if (coins[current_replacing_index].candles_init == 1)
     coins[current_replacing_index].candles->reset();
 
-  coin_code_list[current_replacing_index] = loaded_code;
+  coin_code_list[current_replacing_index] = coins[current_replacing_index].coin_code;
 }
 
 // Display the coin changer interface on screen
