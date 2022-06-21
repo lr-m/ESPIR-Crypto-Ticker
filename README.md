@@ -1,39 +1,16 @@
-# CryptoNugget
-ESP8266 NodeMCU powered Crypto Ticker that uses an ST7735 TFT screen to display statistics and the candle chart for various cryptocurrencies, also utilising an IR remote for configuration and user input. Also has functionality that allows the user to add their own portfolio.
+# ESPIR Crypto
+ESP8266 NodeMCU powered Crypto Ticker that uses an ST7735 TFT screen to display statistics and the candle chart for various cryptocurrencies, also utilising an IR remote for configuration and user input. Also has functionality that allows the user to add their own portfolio. This device is powered by the CoinGecko API.
 
-<img src="https://user-images.githubusercontent.com/47477832/161318551-55cef6e2-5b4a-4e39-bbb0-8781566d7513.png" width="500">
+<img src="https://user-images.githubusercontent.com/47477832/174843170-61d2b933-98b9-4687-ba08-1a4094de4f7b.jpg" width="500">
+
 
 **NOTE: If you are using this and would like any more features or modifications to be made please let me know by opening an issue, with the title beginning as 'Feature Request - '.**
 
 ## IMPORTANT
 
-To use, put the ST7735_Crypto_Ticker directory in your Arduino libraries directory. Also, you need to add the thumbprint from your browser to the Arduino sketch (line 84 of ticker.ino). In the event the display is not properly aligned (edges of pixels with random colour) or the colours are inverted, look at the Display Fix section.
-
-To get the thumbprint (on Chrome):
-
-1. Visit https://www.coingecko.com/api/documentations/v3#/
-2. Click the lock next to the URL/Search Bar
-<img src="https://user-images.githubusercontent.com/47477832/141087977-d66bf865-c321-4be8-a7fc-5842b174abb6.png" width="200">
-
-3. In the menu, click 'Connection is Secure'
-<img src="https://user-images.githubusercontent.com/47477832/141087990-272294f7-a46d-4fca-abb0-e3807b0af890.png" width="150">
-
-4. Then click 'Certificate Is Valid'
-<img src="https://user-images.githubusercontent.com/47477832/141088004-75575b7c-f048-4956-ba34-611ce81b0ee0.png" width="150">
-
-5. Click on the 'details' tab that appears
-6. Scroll down to the 'thumbprint' field, click this and copy the thumbprint
-<img src="https://user-images.githubusercontent.com/47477832/141088030-66d95251-5cf8-4dd5-860b-816f506b50da.png" width="250">
-
-7. Replace line 84 of ticker.ino with the copied fingerprint, for example:
-
-```const char *fingerprint = "*YOUR FINGERPRINT HERE";```
-
-Becomes:
-
-```const char *fingerprint = "4j3krnm34k53j6n4k3kj5n6kl3l54n5k4m532";```
-
-(Invalid example fingerprint used above, do not copy)
+- To use, put the ST7735_Crypto_Ticker directory in your Arduino libraries directory, dependencies will also need to be installed. 
+- If the display is not properly aligned (edges of pixels with random colour) or the colours are inverted, look at the Display Fix section.
+- If you have used a previous version of this software then you may have issues with the EEPROM storage, to resolve any issues, press '#' during the initial boot screen (with the logo) to completely clear the EEPROM, you will need to re-enter your WiFi credentials but everything will work fine after.
 
 ### Display Fix
 
@@ -41,23 +18,23 @@ There are 2 types of ST7735 screens, black tab and green tab. Although if the sc
 
 - In the Arduino library, ST7735_Crypto_Ticker, the colours.h file needs to be edited to comment out the set colours that are not currently commented out, and to comment out the current set colours. 
 
-- In the arduino sketch itself, comment out line 133, and uncomment line 134. This will configure the device with the black tab settings.
+- In the arduino sketch itself, comment out line 158 (//), and uncomment line 157. This will configure the device with the green tab settings.
 
-These modifications should fix the problem.
-
-## Components
-- NodeMCU ESP8266 WiFi Microcontroller CP2102
-- IR Reciever / Remote
-- ST7735 1.77" display (Will support different sizes when I can get some more displays to play with)
-
-### Configuration
-<img src="https://user-images.githubusercontent.com/47477832/164561761-e92a895c-4aa3-46f4-a08d-b6ffae2523e9.png" width="500">
+These modifications should fix the problem, if there are still issues, try and modify only 1 of them.
 
 ## Libraries
 - In Arduino Boards Manager - ESP8266 Boards (2.7.4)
 - IRremote v3.3.0
 - Adafruit_GFX_library (for Adafruit_GFX.h)
 - Adafruit_ST7735_and_ST7789_Library (for Adafruit_ST7735.h)
+
+## Components
+- NodeMCU ESP8266 WiFi Microcontroller CP2102
+- IR Reciever / Remote
+- ST7735 1.77" display
+
+### Configuration
+<img src="https://user-images.githubusercontent.com/47477832/164561761-e92a895c-4aa3-46f4-a08d-b6ffae2523e9.png" width="500">
 
 ## Initialisation/Network Config
 When the device is plugged in, it displays the logo/name and gives the user the opportunity to clear any existing WiFi credentials from the EEPROM memory if needed (e.g. changed router SSID).
@@ -70,8 +47,7 @@ If the device detects that there are no network credentials stored in the EEPROM
 
 This screen displays characteristics of coins selected by the user in the menu, it shows the current price, 24hr change, as well as a candle chart of the coin (which fills up over time). Up to 8 coins can be selected, and the coins are cycled through at a rate that can be selected by the user in the menu.
 
-<img src="https://user-images.githubusercontent.com/47477832/139539473-5c04ddb7-ac7f-4104-9e64-166611e64a84.jpg" width="350">
-<img src="https://user-images.githubusercontent.com/47477832/139539466-6838b78b-e29e-4d7e-8318-47401f1934f9.jpg" width="350">
+<img src="https://user-images.githubusercontent.com/47477832/174843491-02c85839-9401-4210-b025-e5a2e95687bc.jpg" width="350">
 
 ### Controller Navigation
 - '#' - This opens the Crypto menu that allows configuration and coin selection.
@@ -81,14 +57,16 @@ This screen displays characteristics of coins selected by the user in the menu, 
 - '&#8595;' - Moves to the previous screen (Portfolio/Coin).
 
 ## Crypto Menu
-
 This is where the user can configure some of the aspects of the crypto interface display. The options that can be configured are:
 - Coin list - What coins are being updated and displayed.
 - Add new coin - Here is where users can add any coin that is available on CoinGecko
 - Candle delay - How long the time frame of each candle in the chart is.
 - Coin cycle delay - The duration between automatic cycling of coins.
+- Currency - USD/GBP/EUR
 
-<img src="https://user-images.githubusercontent.com/47477832/138352726-f378f234-b823-466a-8eec-8e7c0f87b6b7.jpg" width="350">
+WiFi credentials and added coins (both currently added and stored in the EEPROM) can be removed with the *Clear WiFi Credentials* and *Reset Coins (Restart)* options respectively. When the coins are reset, the device will restart, this is expected.
+
+<img src="https://user-images.githubusercontent.com/47477832/174843700-1f6f471d-a297-47a6-be3a-393fe8167a3e.jpg" width="350">
 
 ### Controller Navigation
 
@@ -102,13 +80,13 @@ To add a new coin, you need to know a few things, the api ID, the code, and the 
 #### Step 1 - Select coin to replace
 - Need to replace a coin in the existing coins with the new coin, so select a coin to replace (navigating with arrows and selecting with 'OK').
 
-<img src="https://user-images.githubusercontent.com/47477832/139539178-94739a21-270e-48e3-8fa8-addb168e3221.jpg" width="350">
+<img src="https://user-images.githubusercontent.com/47477832/174847262-a57a7ee5-2ea3-4f97-b95c-472557f5414f.jpg" width="350">
 
 #### Step 2 - Enter ID and Code of token
 - To find the ID of the token, find it on CoinGecko and look for the API key, this is what you need. For example, for the coin Monero (XMR), you would navigate to https://www.coingecko.com/en/coins/monero to find the api ID, which in this case is 'monero'. The code can also be found here. Use the keyboard to enter the values and hit enter when completed.
 - There is a check in place that ensures the provided id is valid.
 
-<img src="https://user-images.githubusercontent.com/47477832/139539189-ba87a33e-c34f-428f-9506-14d2eeea6cf2.jpg" width="350">
+<img src="https://user-images.githubusercontent.com/47477832/174847283-075955b1-b701-48e7-9e15-9c3f62bd7301.jpg" width="500">
 
 #### Step 3 - Enter the colour you want to represent the coin
 - Need to select a colour to represent the coin in the portfolio and coin interfaces, using the rgb value found earlier, enter these into their respective entry point using the up and down arrows to adjust them (+-10 each time). Then hit enter when this is completed.
@@ -117,7 +95,7 @@ To add a new coin, you need to know a few things, the api ID, the code, and the 
 
 #### Now the coin has been added
 
-<img src="https://user-images.githubusercontent.com/47477832/139539217-48aa2375-cc52-4f42-af42-204172f71bde.jpg" width="350">
+<img src="https://user-images.githubusercontent.com/47477832/174847318-a65be34d-1488-4f36-804f-d08e9ae60a30.jpg" width="350">
 
 ## Portfolio Example (Random Coins and Amounts)
 
@@ -127,19 +105,19 @@ On this screen, properties of the users portfolio can be displayed. The user has
 
 This section displays properties of the coins that make up the users portfolio, such as name, current price, and 24 hour change.
 
-<img src="https://user-images.githubusercontent.com/47477832/137373359-00ccda17-8f93-40ca-89bd-db0e0d09f09f.jpg" width="350">
+<img src="https://user-images.githubusercontent.com/47477832/174843891-8b0a30cd-67ef-4d7f-8005-7ae4dcf17c91.jpg" width="350">
 
 ### Section 2 - Portfolio Proportions
 
 This section displays the propertions of your portfolio, both graphically as a pie chart, and also a simple list of the percentage of the portfolio each coin is.
 
-<img src="https://user-images.githubusercontent.com/47477832/137373354-35c3d439-3129-4abf-86ca-88a0efb7dda7.jpg" width="350">
+<img src="https://user-images.githubusercontent.com/47477832/174843909-5f97843c-9816-47bb-9a5c-3ae1cceb4cb1.jpg" width="350">
 
 ### Section 3 - Portfolio Candles
 
 This section displays the candle graph of the portfolio, similarly to the coin interface it takes time to fill up. Also displays the proportional bar seen in the first section.
 
-<img src="https://user-images.githubusercontent.com/47477832/138352170-c8b0ba11-bc68-4fd0-9fd1-a115281a0272.jpg" width="350">
+<img src="https://user-images.githubusercontent.com/47477832/174843930-71b3227b-bacc-47ee-a94d-cbf76ac2c978.jpg" width="350">
 
 ### Controller Navigation
 
@@ -153,7 +131,7 @@ This section displays the candle graph of the portfolio, similarly to the coin i
 
 This is where the user can configure the settings of the Portfolio screen, and also access the Portfolio Editor.
 
-<img src="https://user-images.githubusercontent.com/47477832/138352360-5580b8b8-b8d9-427f-88a4-bff018310c92.jpg" width="350">
+<img src="https://user-images.githubusercontent.com/47477832/174844074-63426e36-a9ba-497f-99cd-5ef2ec519f03.jpg" width="350">
 
 ### Controller Navigation
 - '&#8593;' - Selects the menu item above the currently selected item.
@@ -163,7 +141,7 @@ This is where the user can configure the settings of the Portfolio screen, and a
 
 This is where the user can configure their Portfolio, selecting amounts of coins that they own.
 
-<img src="https://user-images.githubusercontent.com/47477832/137286628-f72da208-2558-4e68-b25a-122f7477f625.jpg" width="350">
+<img src="https://user-images.githubusercontent.com/47477832/174848638-8013ba08-5941-4e55-90f7-51cbc87c75d4.jpg" width="350">
 
 ### Controller Navigation
 #### Coin Not Selected
