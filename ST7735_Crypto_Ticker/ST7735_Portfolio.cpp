@@ -147,7 +147,11 @@ void ST7735_Portfolio::drawPieSummary(double *total_value) {
         coins[portfolio_editor->selected_portfolio_indexes[i]].coin_code);
     tft -> setCursor(50, 30 + i * 10);
     tft -> setTextColor(WHITE);
-    tft -> print((int) round(coin_total / (*total_value) * 100));
+
+    int to_draw = round(coin_total / (*total_value) * 1000);
+    tft -> print(to_draw/10);
+    tft -> print('.');
+    tft -> print(to_draw%10);
     tft -> print('%');
     i++;
   }
@@ -159,7 +163,7 @@ void ST7735_Portfolio::drawPieSummary(double *total_value) {
         coins[portfolio_editor->selected_portfolio_indexes[i]].current_price *
         coins[portfolio_editor->selected_portfolio_indexes[i]].amount;
 
-    fillSegment(tft->width() / 2 + 40, tft->height() / 2 + 12,
+    fillSegment(tft->width() / 2 + 42, tft->height() / 2 + 12,
                 (current_total * (360 / *total_value)),
                 (coin_total * (360 / *total_value)), 35,
                 coins[portfolio_editor->selected_portfolio_indexes[i]]
@@ -272,14 +276,30 @@ int ST7735_Portfolio::fillSegment(int x, int y, int startAngle, int subAngle,
                                   int r, unsigned int colour) {
   float sx = cos((startAngle - 90) * DEG2RAD);
   float sy = sin((startAngle - 90) * DEG2RAD);
-  uint16_t x1 = sx * r + x;
-  uint16_t y1 = sy * r + y;
 
-  for (int i = startAngle; i < startAngle + subAngle; i++) {
-    int x2 = cos((i + 1 - 90) * DEG2RAD) * r + x;
-    int y2 = sin((i + 1 - 90) * DEG2RAD) * r + y;
-    tft->fillTriangle(x1, y1, x2, y2, x, y, colour);
-    x1 = x2;
-    y1 = y2;
+  uint16_t x1_outer = sx * r + x;
+  uint16_t y1_outer = sy * r + y;
+  uint16_t x1_inner = sx * (2*r/3) + x;
+  uint16_t y1_inner = sy * (2*r/3) + y;
+
+  float i = startAngle;
+
+  while(i < startAngle + subAngle) {
+    float incr = 0.075 + (1 + sin(2 * i * DEG2RAD + 1.571));
+
+    int x2_outer = cos((i + incr - 90) * DEG2RAD) * r + x;
+    int y2_outer = sin((i + incr - 90) * DEG2RAD) * r + y;
+    int x2_inner = cos((i + incr - 90) * DEG2RAD) * (2*r/3) + x;
+    int y2_inner = sin((i + incr - 90) * DEG2RAD) * (2*r/3) + y;
+
+    tft->fillTriangle(x1_outer, y1_outer, x2_outer, y2_outer, x1_inner, y1_inner, colour);
+    tft->fillTriangle(x1_outer, y1_outer, x2_inner, y2_inner, x1_inner, y1_inner, colour);
+
+    x1_outer = x2_outer;
+    y1_outer = y2_outer;
+    x1_inner = x2_inner;
+    y1_inner = y2_inner;
+    
+    i+=incr;
   }
 }
