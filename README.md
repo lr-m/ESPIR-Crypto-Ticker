@@ -157,3 +157,21 @@ This is where the user can configure their Portfolio, selecting amounts of coins
 - '&#8595;' - Subtracts the current amount to add to the coin amount.
 - '#' - Go back to Portfolio Menu.
 - 'OK' - Exit the amount changer for the currently selected coin and return to coin selection.
+
+## EEPROM Properties
+
+### WiFi credentials
+- WiFi credentials are stored and displayed in *plaintext*, make sure you clear the EEPROM if you are not going to use the device anymore
+- WiFi credentials are also displayed in *plaintext* during network initialisation (makes things easier to debug), so also be aware of that
+
+### Settings
+- There can be up to 9 selected coins at any given time, these are stored in the EEPROM and are loaded back during initialisation
+- There are flags that indicate what settings have been selected in the menus
+
+### Added coins
+- Up to 5 coins can be manually added (low number due to memory constraints)
+- Once 5 have been added, any extra will overwrite the first added coin
+
+### Portfolio
+- Amounts in portfolio are stored, up to 9 coin amounts can be stored and reloaded (this is the maximum that can be displayed on the screen)
+- Can be cleared with the menu option
