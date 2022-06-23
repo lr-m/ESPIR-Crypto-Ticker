@@ -39,6 +39,14 @@ extern unsigned char epd_bitmap_tether[];
 extern unsigned char epd_bitmap_bat[];
 extern unsigned char epd_bitmap_uniswap[];
 
+// Define PIN config
+#define TFT_SCL   D1
+#define TFT_SDA   D2
+#define TFT_RES   D3
+#define RECV_PIN  D4
+#define TFT_DC    D5
+#define TFT_CS    D6
+
 #define MAX_SELECTED_COINS 9
 
 #define COIN_MENU_BUTTON_COUNT 6
@@ -57,14 +65,6 @@ extern unsigned char epd_bitmap_uniswap[];
 #define PORTFOLIO_LIMIT 9
 
 #define EEPROM_SIZE 512
-
-// Define PIN config
-#define TFT_SCL   D1
-#define TFT_SDA   D2
-#define TFT_RES   D3
-#define RECV_PIN  D4
-#define TFT_DC    D5
-#define TFT_CS    D6
 
 // For ST7735-based displays, we will use this call
 Adafruit_ST7735 tft =
@@ -117,6 +117,7 @@ ST7735_Menu *portfolio_menu;
 char **coin_menu_button_functions;
 char **portfolio_menu_button_functions;
 char *coin_change_times[5] = {"5", "10", "15", "30", "60"};
+char *bitmap_toggle[2] = {"Enabled", "Disabled"};
 int coin_change_times_values[5] = {5, 10, 15, 30, 60};
 char *currency_options[3] = {"GBP", "USD", "EUR"};
 char *currency_options_lower[3] = {"gbp", "usd", "eur"};
@@ -138,6 +139,7 @@ int last_coin_candle_update_delay =
 int portfolio_candle_update_delay; // How often candles are pushed along (mins)
 int last_portfolio_candle_update_delay =
     5; // To detect changes in candle update time
+int last_bitmap_toggle = 0;
 
 int mode = 1; // Coin or portfolio mode
 int last_currency = 0; // Checks for currency changes
@@ -150,7 +152,7 @@ StaticJsonDocument<1000> doc;
 
 void setup(void) {
   irrecv.enableIRIn(); // Enable IR reciever
-  
+
   request_url = (char*) malloc(sizeof(char) * 300);
 
   // Initialise display
@@ -233,7 +235,10 @@ void setup(void) {
       "Candle duration (mins):", coin_change_times, 5, 1, 5);
   coin_menu->getButtons()[0].addSelector(
       "Currency:", currency_options, 3, 1, 3);
-  coin_menu->getButtons()[1].addSelector("Select up to 8 coins:", coin_list, 3,
+  coin_menu->getButtons()[0].addSelector(
+      "Toggle Bitmaps:", bitmap_toggle, 2, 1, 2);
+      
+  coin_menu->getButtons()[1].addSelector("Select up to 9 coins:", coin_list, 3,
                                          MAX_SELECTED_COINS, COIN_COUNT);
 
   portfolio_menu->getButtons()[0].addSelector(
@@ -287,6 +292,14 @@ void setup(void) {
   portfolio_candle_update_delay = coin_change_times_values
       [portfolio_menu->getButtons()[0].selectors[0].getSelected()[0]];
   last_portfolio_candle_update_delay = portfolio_candle_update_delay;
+
+  last_bitmap_toggle = coin_menu -> getButtons()[0].selectors[3].getSelected()[0];
+
+  if (last_bitmap_toggle == 1){
+    for (int i = 0; i < COIN_COUNT; i++){
+      coins[i].toggleBitmap();
+    }
+  }
   
   readCoinsFromEEPROM();
   loadPortfolioFromEEPROM();
@@ -341,9 +354,9 @@ void loop() {
       selected_coins_count++;
     }
 
-    forceGetData(1); // Get data for coin
+    getData(1); // Get data for coin
     delay(1000);
-    forceGetData(2); // Get data for portfolio
+    getData(2); // Get data for portfolio
     network_initialised = 1; // Indicate successful network init
   } else if (in_menu == 1) { // Do menu operations
     if (in_coinlist == 1) {  // Interact with coin list submenu
@@ -476,12 +489,12 @@ void loop() {
     // Update coin and portfolio data every 60 seconds
     if (current_second <= 5 && refreshed == 0) {
       // Get individual coin data
-      forceGetData(1);
+      getData(1);
       delay(1000);
       
       // Get data for portfolio coins
       portfolio->refreshSelectedCoins(); // Add any new coins to selected
-      forceGetData(2);                   // Get data
+      getData(2);                   // Get data
       portfolio->addPriceToCandles();
 
       refreshed = 1;
@@ -547,7 +560,7 @@ void drawIntroAnimation() {
   drawBitmap(0, 0, epd_bitmap_logo_with_name, 160, 58, WHITE);
 
   tft.setTextColor(ST77XX_GREEN);
-  tft.setCursor(10, tft.height() - 70);
+  tft.setCursor(8, tft.height() - 67);
   tft.write("Powered by CoinGecko API");
 
   tft.setTextColor(WHITE);
@@ -578,35 +591,10 @@ void drawIntroAnimation() {
 // Data Retrieval
 
 /**
- * Attempts to get data from the coingecko api until it successfully gets it.
- */
-void forceGetData(int app_mode) {
-  // If WiFi becomes disconnected, load credentials and reconnect
-  if (WiFi.status() != WL_CONNECTED){
-    char loaded_ssid[30];
-    char loaded_password[30];
-
-    loadCredsFromEEPROM(loaded_ssid, loaded_password);
-
-    WiFi.disconnect();
-    WiFi.begin(loaded_ssid, loaded_password);
-
-    while (WiFi.status() != WL_CONNECTED){
-      delay(500);
-    }
-  }
-
-  // Now get the data
-  while (getData(app_mode) == 0) {
-    delay(5000);
-  }
-}
-
-/**
  * Retrieves the current price, and 24hr change of the currently selected coins,
  * uses CoinGecko API.
  */
-int getData(int app_mode) {
+void getData(int app_mode) { 
   // Instanciate Secure HTTP communication
   client.setInsecure();
 
@@ -620,7 +608,7 @@ int getData(int app_mode) {
     DeserializationError error = deserializeJson(doc, http.getString());
     if (error) {
       http.end(); // Close connection
-      return 0;
+      return;
     }
 
     int selected_currency = coin_menu -> getButtons()[0].selectors[2].getSelected()[0];
@@ -641,12 +629,22 @@ int getData(int app_mode) {
         j++;
       }
     }
-
-    http.end(); // Close connection
-    return 1;
+    http.end();
   } else {
     http.end();
-    return 0;
+    
+    // If WiFi becomes disconnected, load credentials and reconnect
+    char loaded_ssid[30];
+    char loaded_password[30];
+
+    loadCredsFromEEPROM(loaded_ssid, loaded_password);
+
+    WiFi.disconnect();
+    WiFi.begin(loaded_ssid, loaded_password);
+
+    while (WiFi.status() != WL_CONNECTED){
+      delay(500);
+    }
   }
 }
 
@@ -868,7 +866,7 @@ void resetCoins() {
     selected_coins[i]->initCandles(&tft);
   }
 
-  forceGetData(1);
+  getData(1);
 }
 
 
@@ -946,7 +944,7 @@ void writeCoinToEEPROM(COIN* coin, char index){
   // Indicate that block is now filled 
   EEPROM.write(write_address, 1);
   write_address++;
-  
+
   // Write index char to memory
   EEPROM.write(write_address, index);
   write_address++;
@@ -959,7 +957,7 @@ void writeCoinToEEPROM(COIN* coin, char index){
   } while (coin->coin_code[i] != 0 && i < 9);
   EEPROM.write(write_address+i, 0);
   write_address+=10;
-  
+
   // Write tag to eeprom
   i = 0;
   do {
@@ -969,12 +967,14 @@ void writeCoinToEEPROM(COIN* coin, char index){
   EEPROM.write(write_address+i, 0);
   write_address+=30;
 
-  // Write the colour
+  // Write the colour  
   EEPROM.write(write_address, (byte) coin_changer->pickers[0].getValue());
   EEPROM.write(write_address+1, (byte) coin_changer->pickers[1].getValue());
   EEPROM.write(write_address+2, (byte) coin_changer->pickers[2].getValue());
 
   EEPROM.commit();
+
+  printEEPROM();
 }
 
 void readCoinsFromEEPROM(){
@@ -1091,7 +1091,7 @@ void writeSettingsToEEPROM(){
   }
   
   // Crypto display settings
-  for (int i = 0; i < 3; i++){
+  for (int i = 0; i < 4; i++){
     EEPROM.write(write_address, (byte) coin_menu->getButtons()[0].selectors[i].getSelected()[0]);
     write_address++;
   }
@@ -1124,7 +1124,7 @@ void loadSettingsFromEEPROM(){
   }
   
   // Crypto display settings
-  for (int i = 0; i < 3; i++){
+  for (int i = 0; i < 4; i++){
     coin_menu -> getButtons()[0].selectors[i].setSelected(0, (int) EEPROM.read(read_address));
     read_address++;
   }
@@ -1260,7 +1260,7 @@ void interactWithMenu() {
 
         if (button_action == "Exit Menu") {
           in_menu = 0;
-          forceGetData(1); 
+          getData(1); 
           writeSettingsToEEPROM();
 
           displayNextCoin();
@@ -1291,7 +1291,7 @@ void interactWithMenu() {
           writeSettingsToEEPROM();
           
           portfolio->refreshSelectedCoins(); // Add any new coins to selected
-          forceGetData(2);                   // Get data
+          getData(2);                   // Get data
           portfolio->addPriceToCandles();
           portfolio->display(coin_menu->getButtons()[0].selectors[2].getSelected()[0]); // Now display the portfolio
         }
@@ -1382,10 +1382,18 @@ void interactWithSettings() {
 
             // Reset portfolio candles and data
             portfolio->clearCandles();
-            forceGetData(2);                   // Get data
+            getData(2);                   // Get data
             portfolio->addPriceToCandles();
             
             last_currency = coin_menu -> getButtons()[0].selectors[2].getSelected()[0];
+          }
+
+          if (last_bitmap_toggle != coin_menu -> getButtons()[0].selectors[3].getSelected()[0]){
+            for (int i = 0; i < COIN_COUNT; i++){
+              coins[i].toggleBitmap();
+            }
+
+            last_bitmap_toggle = coin_menu -> getButtons()[0].selectors[3].getSelected()[0];
           }
           
           coin_cycle_delay = coin_change_times_values[coin_menu->getButtons()[0].selectors[0].getSelected()[0]];

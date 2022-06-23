@@ -111,7 +111,7 @@ void Button::addSelector(char* prompt, char** options,
 	if (selector_count < MAX_SELECTORS){
 		selector_count++;
 		selectors[selector_count - 1] = Selector(tft, 0, 
-			((selector_count) * 32) - 10, prompt, options, window_size, max, vals);
+			((selector_count) * 28) - 10, prompt, options, window_size, max, vals);
 	}
 }
 
@@ -208,7 +208,6 @@ Selector::Selector(Adafruit_ST7735* display, int x_pos, int y_pos,
 
 	for (int i = 1; i < max; i++)
 		selected_indexes[i] = -1;
-
 }
 
 // Redraw the buttons of the selector

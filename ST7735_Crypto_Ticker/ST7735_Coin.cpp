@@ -30,6 +30,7 @@ COIN::COIN(char* code, char *id, const unsigned char* bm, uint16_t circle_col,
   candles_init = 0;
 
   bitmap_present = 1;
+  bitmap_enabled = 1;
 
   value_drawer = drawer;
 }
@@ -83,16 +84,23 @@ void COIN::display(Adafruit_ST7735 *display, int currency) {
   display->setTextColor(WHITE);
   display->fillRect(0, 0, display->width(), display->height(), BLACK);
 
-  if (bitmap_present == 1) {
-    display->fillCircle(12, 12, 44, circle_colour);
-    drawBitmap(display, 4, 4, bitmap, 40, 40, bm_colour);
-  } else {
-    drawBitmap(display, 0, 0, bitmap, 56, 56, portfolio_colour);
+  if (bitmap_enabled == 1){
+    if (bitmap_present == 1) {
+      display->fillCircle(12, 12, 44, circle_colour);
+      drawBitmap(display, 4, 4, bitmap, 40, 40, bm_colour);
+    } else {
+      drawBitmap(display, 0, 0, bitmap, 56, 56, portfolio_colour);
+    }
   }
 
   drawName(display);
 
-  display->setCursor(PRICE_START_X, PRICE_START_Y);
+  if (bitmap_enabled == 1){
+    display->setCursor(BM_PRICE_START_X, PRICE_START_Y);
+  } else {
+    display->setCursor(NO_BM_PRICE_START_X, PRICE_START_Y);
+  }
+  
   if (current_price > 1){
     value_drawer->drawPrice(current_price, 7, 2, currency, 2);
   } else {
@@ -113,24 +121,37 @@ void COIN::drawName(Adafruit_ST7735 *display) {
       break;
   }
 
-  if (len & 2 == 0) {
+  if (bitmap_enabled == 1) {
     display->setCursor(
-        PRICE_START_X +
-            (((display->width() - PRICE_START_X) / 8) * (8 - len)) / 2,
+        BM_PRICE_START_X +
+            (((display->width() - BM_PRICE_START_X) / 8) * (8 - len)) / 2,
         6);
   } else {
     display->setCursor(
-        PRICE_START_X +
-            (((display->width() - PRICE_START_X) / 8) * (8 - len)) / 2,
+        NO_BM_PRICE_START_X +
+            (((display->width() - 2*NO_BM_PRICE_START_X) / 8) * (8 - len)) / 2,
         6);
   }
 
   display->print(coin_code);
 }
 
+void COIN::toggleBitmap(){
+  if (bitmap_enabled == 1){
+    bitmap_enabled = 0;
+  } else {
+    bitmap_enabled = 1;
+  }
+}
+
 // Draws the percentage change on the screen.
 void COIN::drawPercentageChange(Adafruit_ST7735 *display) {
-  display->setCursor(CHANGE_START_X, CHANGE_START_Y);
+  if (bitmap_enabled == 1){
+    display->setCursor(BM_CHANGE_START_X, CHANGE_START_Y);
+  } else {
+    display->setCursor(NO_BM_CHANGE_START_X, CHANGE_START_Y);
+  }
+  
   display->setTextSize(1);
   display->print("24 Hour: ");
 

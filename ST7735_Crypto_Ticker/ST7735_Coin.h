@@ -15,10 +15,12 @@
 #define COIN_COUNT 18
 
 // Positional constants
-#define PRICE_START_X 60
+#define BM_PRICE_START_X 60
+#define NO_BM_PRICE_START_X 32
 #define PRICE_START_Y 28
 
-#define CHANGE_START_X 60
+#define BM_CHANGE_START_X 60
+#define NO_BM_CHANGE_START_X 35
 #define CHANGE_START_Y 50
 
 // For storing coins
@@ -38,6 +40,7 @@ public:
   uint16_t bm_colour;
   uint16_t portfolio_colour;
   int bitmap_present;
+  int bitmap_enabled;
   int candles_init;
 
   ST7735_Value_Drawer* value_drawer;
@@ -50,6 +53,7 @@ public:
   void drawName(Adafruit_ST7735 *);
   void drawBitmap(Adafruit_ST7735 *, int16_t, int16_t, const uint8_t *, int16_t,
                   int16_t, uint16_t);
+  void toggleBitmap();
 };
 
 #endif
