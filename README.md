@@ -3,8 +3,7 @@ ESP8266 NodeMCU powered Crypto Ticker that uses an ST7735 TFT screen to display 
 
 <img src="https://user-images.githubusercontent.com/47477832/174843170-61d2b933-98b9-4687-ba08-1a4094de4f7b.jpg" width="500">
 
-
-**NOTE: If you are using this and would like any more features or modifications to be made please let me know by opening an issue, with the title beginning as 'Feature Request - '.**
+**NOTE: If you are using this and would like any more features or modifications to be made please let me know by opening an issue, with the title beginning with 'Feature Request'.**
 
 ## IMPORTANT
 
@@ -49,6 +48,8 @@ This screen displays characteristics of coins selected by the user in the menu, 
 
 <img src="https://user-images.githubusercontent.com/47477832/174843491-02c85839-9401-4210-b025-e5a2e95687bc.jpg" width="350">
 
+<img src="https://user-images.githubusercontent.com/47477832/175394447-7b83730b-44e7-455b-a5e8-592797f1f080.jpg" width="350">
+
 ### Controller Navigation
 - '#' - This opens the Crypto menu that allows configuration and coin selection.
 - '&#8594;' - Moves the display along to the next coin.
@@ -57,16 +58,24 @@ This screen displays characteristics of coins selected by the user in the menu, 
 - '&#8595;' - Moves to the previous screen (Portfolio/Coin).
 
 ## Crypto Menu
+
+<img src="https://user-images.githubusercontent.com/47477832/174843700-1f6f471d-a297-47a6-be3a-393fe8167a3e.jpg" width="350">
+
 This is where the user can configure some of the aspects of the crypto interface display. The options that can be configured are:
-- Coin list - What coins are being updated and displayed.
+- Edit coin list - What coins are being updated and displayed.
 - Add new coin - Here is where users can add any coin that is available on CoinGecko
+- Settings - Sub menu where user can change properties of the coin element of the device
+- Clear WiFi credentials - This simply removes the saved WiFi credentials for the device EEPROM memory
+- Reset coins (restart) - This clears any added coins and restores the initial bitmaps and states for all coins (will cause a restart of the device)
+
+### Coin Display Settings
+
+<img src="https://user-images.githubusercontent.com/47477832/175394585-607c79a0-c6bc-47cb-89d7-eb4cfada27e0.jpg" width="350">
+
 - Candle delay - How long the time frame of each candle in the chart is.
 - Coin cycle delay - The duration between automatic cycling of coins.
 - Currency - USD/GBP/EUR
-
-WiFi credentials and added coins (both currently added and stored in the EEPROM) can be removed with the *Clear WiFi Credentials* and *Reset Coins (Restart)* options respectively. When the coins are reset, the device will restart, this is expected.
-
-<img src="https://user-images.githubusercontent.com/47477832/174843700-1f6f471d-a297-47a6-be3a-393fe8167a3e.jpg" width="350">
+- Toggle bitmaps - Enables/disables the bitmaps in the top left corner of the display for all coins
 
 ### Controller Navigation
 
@@ -109,9 +118,9 @@ This section displays properties of the coins that make up the users portfolio, 
 
 ### Section 2 - Portfolio Proportions
 
-This section displays the propertions of your portfolio, both graphically as a pie chart, and also a simple list of the percentage of the portfolio each coin is.
+This section displays the propertions of your portfolio, both graphically as a ring/pie chart, also a simple list of the percentage of the portfolio each coin is.
 
-<img src="https://user-images.githubusercontent.com/47477832/174843909-5f97843c-9816-47bb-9a5c-3ae1cceb4cb1.jpg" width="350">
+<img src="https://user-images.githubusercontent.com/47477832/175395894-3cbcee95-3976-483b-9391-0a1856508b51.jpg" width="350">
 
 ### Section 3 - Portfolio Candles
 
