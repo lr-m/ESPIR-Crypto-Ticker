@@ -113,17 +113,24 @@ void ST7735_Value_Drawer::drawPercentageChange(double change, int space, int siz
     display->print('+');
   }
 
-  double change_val = sqrt(change*change);
+  double change_val;
+  if (change < 0){
+  	change_val = -change;
+  } else {
+  	change_val = change;
+  }
 
   // Get minimum and maximum possible display values
   double maximum = pow(10, space);
-  double minimum = 1/pow(10, space-3);
+  double minimum = 1/pow(10, space-2);
 
-  if ((int) (change_val * 100000) == 0){
+  if (change_val == 0){
     display->print('0');
-  } else if (change_val > minimum && change_val < maximum){
+  } else if (change_val >= minimum && round(change_val) < maximum){
       int div = 1;
       int digits = 0;
+      
+      change_val = round(change_val * 100)/100;
 
       // Get number of integers
       while(change_val/div >= 1){
@@ -136,13 +143,13 @@ void ST7735_Value_Drawer::drawPercentageChange(double change, int space, int siz
           int i = 0;
           while(change_val/div < change_val){
               div/=10;
-              display->print((int) std::fmod(change_val/div, 10));
+              display->print((int) (std::fmod(change_val/div, 10)));
               i++;        
           }
 
           // Add decimal point
           if (digits < space-1){
-              display->print('.');       
+              display->print('.');
           }
           
       } else {
@@ -153,14 +160,20 @@ void ST7735_Value_Drawer::drawPercentageChange(double change, int space, int siz
       // Fill in space after decimal point
       int mult = 10;
       for (int i = digits + 1; i < space; i++){
+      	  if (i == space-1){
+      	  	display->print((int) round(std::fmod(change_val*mult, 10)));
+      	  	break;
+      	  }
           display->print((int) std::fmod(change_val*mult, 10));
           mult *= 10;
       }
-  } else if (change_val >= maximum) {
+  } else if (round(change_val) >= maximum) {
       long int div = 10;
       int e_val = 1;
+      
+      change_val = round(change_val);
 
-      while (change_val/div >= pow(10, space-2)){
+      while (round(change_val/div) >= pow(10, space-2)){
           div*=10;
           e_val++;
       }
@@ -172,14 +185,9 @@ void ST7735_Value_Drawer::drawPercentageChange(double change, int space, int siz
       long int mul = 10;
       int e_val = -1;
 
-      while (change_val*mul < pow(10, space-4)){
+      while (round(change_val*mul) <= 0.1){
           mul *= 10;
           e_val--;
-      }
-
-      if (e_val <= -10){
-          e_val++;
-          mul/=10;
       }
 
       display->print((int) round(change_val*mul));
