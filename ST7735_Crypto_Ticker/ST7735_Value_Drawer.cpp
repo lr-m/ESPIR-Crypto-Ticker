@@ -1,111 +1,180 @@
 #include "ST7735_Value_Drawer.h"
+#include <cmath>
+
+ #define max(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; })
+ 
+ #define min(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
 
 ST7735_Value_Drawer::ST7735_Value_Drawer(Adafruit_ST7735* tft)
 {
 	display = tft;
 }
 
-void ST7735_Value_Drawer::drawPrice(double price, int space, int size, int currency, int decimal_places, int cut_flag){
-  // Get minimum and maximum possible display values
-  double maximum = pow(10, space);
-  double minimum = 1/pow(10, space-3);
+void ST7735_Value_Drawer::drawPrice(double available_space, double price, double max_precision, int size, int currency){
+    display->setTextSize(size);
+    display->setTextColor(WHITE);
 
-  display->setTextSize(size);
-  display->setTextColor(WHITE);
+    if (currency == 0){ // GBP
+        display->print(char(156));
+    } else if (currency == 1){ // USD
+        display->print(char(36));
+    } else if (currency == 2){ // EUR
+        display->print(char(237));
+    }
 
-  if (currency == 0){ // GBP
-    display->print(char(156));
-  } else if (currency == 1){ // USD
-    display->print(char(36));
-  } else if (currency == 2){ // EUR
-    display->print(char(237));
-  }
+    // Calculate the minimum and maximum values that can fit in the space
+    double max = pow(10, available_space) - 1;
+    double min = pow(0.1, available_space - 2) - 5*pow(0.1, available_space);
 
-  if (price == 0){
-    display->print("0.00");
-  } else if (price > minimum && price < maximum){
-      int div = 1;
-      int digits = 0;
+    int counter = 0; // Counts current number of digits
+    int int_buffer = 0; // Buffer for the value before decimal point
+    int dec_buffer = 0; // Buffer for the value after decimal point
 
-      // Get number of integers
-      while(price/div >= 1){
-          digits++;
-          div *= 10;
-      }
+    int dec_zeros = 0;
 
-      // Populate the to_display array with the integer digits
-      if (digits > 0){
-          int i = 0;
-          while(price/div < price){
-              div/=10;
-              display->print((int) std::fmod(price/div, 10));
-              i++;        
-          }
+    // Represent number normally, but limit occupied space
+    if (price == 0){
+        display->print("0.");
 
-          // Add decimal point
-          if (digits < space - 1){
-              display->print('.');       
-          }
-      } else {
-          display->print("0.");
-          digits ++;
-      }
-
-      // Fill in space after decimal point
-      int mult = 10;
-
-      int iter_val = space;
-      if (cut_flag == 1) {
-        iter_val = min(digits + decimal_places + 1, space);
-      }
-
-      for (int i = digits + 1; i < iter_val; i++){
-        if (i == digits + decimal_places){
-            display->print((int) std::fmod(round(price*mult), 10));
-        } else if (i < digits + decimal_places) {
-            display->print((int) std::fmod(price*mult, 10));
-        } else {
+        for (int i = 0; i < available_space-2; i++){
             display->print('0');
         }
-        mult *= 10;
-      }
-  } else if (price >= maximum) {
-      long int div = 10;
-      int e_val = 1;
+    } else if (price < min){
+        double mul = 10;
+        int e_val = -1;
 
-      while (price/div >= pow(10, space-2)){
-          div*=10;
-          e_val++;
-      }
+        while (price*mul < pow(10, available_space - 4)){
+            mul *= 10;
+            e_val--;
+        }
 
-      display->print((int) round(price/div));
-      display->print('e');
-      display->print(e_val);
-  } else if (price <= minimum){
-      long int mul = 10;
-      int e_val = -1;
+        if ((int) round(price*mul) == (int) pow(10, available_space - 3)){
+            mul/=10;
+            e_val++;
+        }
 
-      while (price*mul < pow(10, space-4)){
-          mul *= 10;
-          e_val--;
-      }
+        display->print((int) round(price*mul));
+        display->print('e');
+        display->print(e_val);
+    } else if (price >= max) {
+        double div = 10;
+        int e_val = 1;
 
-      if (e_val <= -10){
-          e_val++;
-          mul/=10;
-      }
+        while (price/div >= pow(10, available_space - 2)){
+            div *= 10;
+            e_val++;
+        }
 
-      display->print((int) round(price*mul));
-      display->print('e');
-      display->print(e_val);
-  }
+        if ((int) round(price/div) == (int) pow(10, available_space - 2)){
+            div*=10;
+            e_val++;
+        }
+
+        display->print((int) round(price/div));
+        display->print('e');
+        display->print(e_val);
+    } else {
+        if (floor(price) > 0){
+            // Print integers if there are any
+            int integer_digits = (int) log10(floor(price))+1;
+
+            // If decimal values won't be drawn, then round the value
+            if (integer_digits >= available_space-1){
+                price = round(price);
+                integer_digits = (int) log10(floor(price))+1;
+
+                if ((int) log10(floor(price)) > integer_digits){
+                    drawPrice(available_space, price, max_precision, size, currency);
+                    return;
+                }
+
+                display->print(price);
+                return;
+            } else {
+                // Draw the integer digits
+                for (int i = 1; i <= integer_digits; i++){
+                    int_buffer *= 10;
+                    int_buffer += fmod(floor(floor(price)/pow(10, integer_digits - i)), 10);
+                    counter++;
+                }
+
+                // Increment counter to accomodate the decimal point
+                if (counter < available_space-1){
+                    counter++;
+                }
+            }
+        } else if (floor(price) == 0){
+            // If no integer digits, < 0
+            int_buffer = 0;
+            counter+=2; // Accomodates the 0. part
+        }
+
+        // Print the decimal component
+        if (fmod(price, 1) != 0){
+            // Get integer representation of the decimal component
+            int size = min(max_precision, available_space - counter);
+            double decimal_comp = (price - floor(price)) * pow(10, size);
+
+            // If rounding the decimal component results in more digits (i.e. 9.99 -> 10.0), handle
+            if (!std::isinf(log10((int) floor(decimal_comp))) && !std::isinf(log10((int) round(decimal_comp))) &&
+                    floor(log10((int) floor(decimal_comp))) < floor(log10((int) round(decimal_comp))) && !(floor(log10((int) floor(decimal_comp))) == 0 && round(log10((int) round(decimal_comp))) == 1)){
+                int_buffer+=1;
+                decimal_comp = 0;
+
+                if ((int) log10(floor(price)) < (int) log10(floor((double) int_buffer))){
+
+                    drawPrice(available_space, (double) int_buffer, max_precision, size, currency);
+                    return;
+                }
+            } else if (counter <= available_space-1) {
+                // Print like integer in the remaining space
+                for (int i = 1; i <= size; i++){
+                    dec_buffer *= 10;
+                    dec_buffer += fmod(floor(round(decimal_comp)/pow(10, size-i)), 10);
+                    counter++;
+
+                    if (dec_buffer == 0 && dec_zeros < max_precision){
+                        dec_zeros++;
+                    }
+                }
+            }
+        }
+
+        display->print(int_buffer);
+        display->print('.');
+
+        if (dec_zeros != 0){
+            for (int i = 0; i < dec_zeros; i++){
+                display->print('0');
+            }
+
+            if (dec_buffer != 0){
+                display->print(dec_buffer);
+            }
+        } else {
+            display->print(dec_buffer);
+        }
+
+        // Fix if extra zeros needed 
+        // for (int i = counter; i < available_space-1 && i < ; i++){
+        //     display->print('0');
+        // }
+    }
+
+    display->setTextColor(WHITE);
 }
 
 // Draws the percentage change on the screen.
-void ST7735_Value_Drawer::drawPercentageChange(double change, int space, int size) {
+void ST7735_Value_Drawer::drawPercentageChange(double available_space, double value, double max_precision, int size) {
   display->setTextSize(size);
   
-  if (change < 0) {
+  if (value < 0) {
     display->setTextColor(RED);
     display->print('-');
   } else {
@@ -114,87 +183,156 @@ void ST7735_Value_Drawer::drawPercentageChange(double change, int space, int siz
   }
 
   double change_val;
-  if (change < 0){
-  	change_val = -change;
+  if (value < 0){
+  	change_val = -value;
   } else {
-  	change_val = change;
+  	change_val = value;
   }
 
-  // Get minimum and maximum possible display values
-  double maximum = pow(10, space);
-  double minimum = 1/pow(10, space-2);
+  // Calculate the minimum and maximum values that can fit in the space
+    double max = pow(10, available_space) - 1;
+    double min = pow(0.1, available_space - 2) - 5*pow(0.1, available_space);
 
-  if (change_val == 0){
-    display->print('0');
-  } else if (change_val >= minimum && round(change_val) < maximum){
-      int div = 1;
-      int digits = 0;
-      
-      change_val = round(change_val * 100)/100;
+    int counter = 0; // Counts current number of digits
+    int int_buffer = 0; // Buffer for the value before decimal point
+    int dec_buffer = 0; // Buffer for the value after decimal point
 
-      // Get number of integers
-      while(change_val/div >= 1){
-          digits++;
-          div *= 10;
-      }
+    int dec_zeros = 0;
 
-      // Populate the to_display array with the integer digits
-      if (digits > 0){
-          int i = 0;
-          while(change_val/div < change_val){
-              div/=10;
-              display->print((int) (std::fmod(change_val/div, 10)));
-              i++;        
-          }
+    // Represent number normally, but limit occupied space
+    if (change_val == 0){
+        display->print("0.");
 
-          // Add decimal point
-          if (digits < space-1){
-              display->print('.');
-          }
-          
-      } else {
-          display->print("0.");
-          digits ++;
-      }
+        for (int i = 0; i < available_space-2; i++){
+            display->print('0');
+        }
 
-      // Fill in space after decimal point
-      int mult = 10;
-      for (int i = digits + 1; i < space; i++){
-      	  if (i == space-1){
-      	  	display->print((int) round(std::fmod(change_val*mult, 10)));
-      	  	break;
-      	  }
-          display->print((int) std::fmod(change_val*mult, 10));
-          mult *= 10;
-      }
-  } else if (round(change_val) >= maximum) {
-      long int div = 10;
-      int e_val = 1;
-      
-      change_val = round(change_val);
+        display->print('%');
+    } else if (change_val < min){
+        double mul = 10;
+        int e_val = -1;
 
-      while (round(change_val/div) >= pow(10, space-2)){
-          div*=10;
-          e_val++;
-      }
+        while (change_val*mul < pow(10, available_space - 4)){
+            mul *= 10;
+            e_val--;
+        }
 
-      display->print((int) round(change_val/div));
-      display->print('e');
-      display->print(e_val);
-  } else if (change_val <= minimum){
-      long int mul = 10;
-      int e_val = -1;
+        if ((int) round(change_val*mul) == (int) pow(10, available_space - 3)){
+            mul/=10;
+            e_val++;
+        }
 
-      while (round(change_val*mul) <= 0.1){
-          mul *= 10;
-          e_val--;
-      }
+        display->print((int) round(change_val*mul));
+        display->print('e');
+        display->print(e_val);
+        display->print('%');
+    } else if (change_val >= max) {
+        double div = 10;
+        int e_val = 1;
 
-      display->print((int) round(change_val*mul));
-      display->print('e');
-      display->print(e_val);
-  }
+        while (change_val/div >= pow(10, available_space - 2)){
+            div *= 10;
+            e_val++;
+        }
 
-  display->print('%');
-  display->setTextColor(WHITE);
+        if ((int) round(change_val/div) == (int) pow(10, available_space - 2)){
+        div*=10;
+        e_val++;
+        }
+
+        display->print((int) round(change_val/div));
+        display->print('e');
+        display->print(e_val);
+        display->print('%');
+    } else {
+        if (floor(change_val) > 0){
+            // Print integers if there are any
+            int integer_digits = (int) log10(floor(change_val))+1;
+
+            // If decimal values won't be drawn, then round the value
+            if (integer_digits >= available_space-1){
+                change_val = round(change_val);
+                integer_digits = (int) log10(floor(change_val))+1;
+
+                if ((int) log10(floor(change_val)) > integer_digits){
+                    drawPercentageChange(available_space, change_val, max_precision, size);
+                    return;
+                }
+
+                display->print(change_val);
+                display->print('%');
+                return;
+            } else {
+                // Draw the integer digits
+                for (int i = 1; i <= integer_digits; i++){
+                    int_buffer *= 10;
+                    int_buffer += fmod(floor(floor(change_val)/pow(10, integer_digits - i)), 10);
+                    counter++;
+                }
+
+                // Increment counter to accomodate the decimal point
+                if (counter < available_space-1){
+                    counter++;
+                }
+            }
+        } else if (floor(change_val) == 0){
+            // If no integer digits, < 0
+            int_buffer = 0;
+            counter+=2; // Accomodates the 0. part
+        }
+
+        // Print the decimal component
+        if (fmod(change_val, 1) != 0){
+            // Get integer representation of the decimal component
+            int size = min(max_precision, available_space - counter);
+            double decimal_comp = (change_val - floor(change_val)) * pow(10, size);
+
+            // If rounding the decimal component results in more digits (i.e. 9.99 -> 10.0), handle
+            if (!std::isinf(log10((int) floor(decimal_comp))) && !std::isinf(log10((int) round(decimal_comp))) &&
+                    floor(log10((int) floor(decimal_comp))) < floor(log10((int) round(decimal_comp))) && !(floor(log10((int) floor(decimal_comp))) == 0 && round(log10((int) round(decimal_comp))) == 1)){
+                int_buffer+=1;
+                decimal_comp = 0;
+
+                if ((int) log10(floor(change_val)) < (int) log10(floor((double) int_buffer))){
+
+                    drawPercentageChange(available_space, (double) int_buffer, max_precision, size);
+                    return;
+                }
+            } else if (counter <= available_space-1) {
+                // Print like integer in the remaining space
+                for (int i = 1; i <= size; i++){
+                    dec_buffer *= 10;
+                    dec_buffer += fmod(floor(round(decimal_comp)/pow(10, size-i)), 10);
+                    counter++;
+
+                    if (dec_buffer == 0 && dec_zeros < max_precision){
+                        dec_zeros++;
+                    }
+                }
+            }
+        }
+
+        display->print(int_buffer);
+        display->print('.');
+
+        if (dec_zeros != 0){
+            for (int i = 0; i < dec_zeros; i++){
+                display->print('0');
+            }
+
+            if (dec_buffer != 0){
+                display->print(dec_buffer);
+            }
+        } else {
+            display->print(dec_buffer);
+        }
+
+        for (int i = counter; i < available_space-1; i++){
+            display->print('0');
+        }
+        
+        display->print('%');
+    }
+
+    display->setTextColor(WHITE);
 }

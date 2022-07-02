@@ -34,7 +34,7 @@ void ST7735_Portfolio::drawValue(double *total_value, int currency) {
   tft->setTextColor(WHITE);
   tft->setCursor(5, 4);
 
-  value_drawer->drawPrice(*total_value, 11, 2, currency, 2, 1);
+  value_drawer->drawPrice(11, *total_value, 2, 2, currency);
 }
 
 // Moves to the next display mode
@@ -115,12 +115,12 @@ void ST7735_Portfolio::drawBarSummary(double *total_value, int currency) {
     tft->setCursor(52, 33 + i * 10);
     tft->setTextColor(WHITE);
 
-    value_drawer->drawPrice(coin_total, 10, 1, currency, 2, 1);
+    value_drawer->drawPrice(10, coin_total, 2, 1, currency);
 
     tft -> setCursor(123, 33 + i * 10);
 
-    value_drawer->drawPercentageChange(
-      coins[portfolio_editor->selected_portfolio_indexes[i]].current_change, 4, 1);
+    value_drawer->drawPercentageChange(4,
+      coins[portfolio_editor->selected_portfolio_indexes[i]].current_change, 2, 1);
 
     i++;
   }

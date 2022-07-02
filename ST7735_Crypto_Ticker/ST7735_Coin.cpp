@@ -100,12 +100,8 @@ void COIN::display(Adafruit_ST7735 *display, int currency) {
   } else {
     display->setCursor(NO_BM_PRICE_START_X, PRICE_START_Y);
   }
-  
-  if (current_price > 1){
-    value_drawer->drawPrice(current_price, 7, 2, currency, 2);
-  } else {
-    value_drawer->drawPrice(current_price, 7, 2, currency);
-  }
+
+  value_drawer->drawPrice(7, current_price, 7, 2, currency);
 
   drawPercentageChange(display);
   candles->display();
@@ -155,7 +151,7 @@ void COIN::drawPercentageChange(Adafruit_ST7735 *display) {
   display->setTextSize(1);
   display->print("24 Hour: ");
 
-  value_drawer->drawPercentageChange(current_change, 4, 1);
+  value_drawer->drawPercentageChange(4, current_change, 2, 1);
 }
 
 // Draws a passed bitmap on the screen at the given position with the given
