@@ -61,7 +61,50 @@ void Candle_Graph::freeCandles() {
   }
 }
 
-// Sets the Portfolio Editor to be in a selected state
+void Candle_Graph::displaySmall(int x, int w, int top, int bottom, int upflag){
+  double max_val = -1;
+  double min_val = std::numeric_limits<double>::max();
+
+  if (current_candles <= 1){
+    return;
+  }
+
+  for (int i = count - current_candles; i < count; i++) {
+    if (candles[i].high > max_val)
+      max_val = candles[i].high;
+
+    if (candles[i].low < min_val && candles[i].low >= 0)
+      min_val = candles[i].low;
+  }
+
+  int last_y = ((candles[count - current_candles].high + candles[count - current_candles].low)/2 - min_val) * 
+    ((double)top - (double)bottom) / (max_val - min_val) + (double)bottom;
+
+  if (max_val - min_val == 0) last_y = (top+bottom)/2;
+
+  for (int i = count - current_candles + 1; i < count; i++) {
+    int point_y;
+
+    if (min_val != max_val) {
+      point_y = ((candles[i].high + candles[i].low)/2 - min_val) * ((double)top - (double)bottom) /
+        (max_val - min_val) + (double)bottom;
+    } else {
+      point_y = (top + bottom) / 2;
+    }
+    
+    if (candles[i].low < 0) continue;
+
+    if (point_y <= last_y){
+      tft->drawLine(map(i-1, 0, count, x, x + w), last_y, map(i, 0, count, x, x + w), point_y, ST77XX_GREEN);
+    } else {
+      tft->drawLine(map(i-1, 0, count, x, x + w), last_y, map(i, 0, count, x, x + w), point_y, RED);
+    }
+
+    last_y = point_y;
+  }
+}
+
+// Sets the Portfolio Editor to be in a selected state (full width of screen)
 void Candle_Graph::display(int currency) {
   double max_val = -1;
   double min_val = std::numeric_limits<double>::max();

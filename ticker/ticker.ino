@@ -87,7 +87,7 @@ int in_menu = 0;             // Indicates if currently in the menu
 int in_settings = 0;         // Indicates if currently in settings submenu
 int in_coinlist = 0;         // Indicates if currently in coin list submenu
 int in_portfolio_editor = 0;
-int coin_time_slot_moved = 0; // Indicates if coin candles have been moved along
+int coin_time_slot_moved = 1; // Indicates if coin candles have been moved along
 int portfolio_time_slot_moved =
     0; // Indicates if portfolio candles have been moved along
 int refreshed = 0;
@@ -143,6 +143,8 @@ int last_bitmap_toggle = 0;
 
 int mode = 1; // Coin or portfolio mode
 int last_currency = 0; // Checks for currency changes
+
+int display_all_start_index = 0;
 
 COIN *coins;           // List of coins that can be selected
 COIN **selected_coins; // List of pointers to coins currently selected
@@ -286,9 +288,11 @@ void setup(void) {
   coin_cycle_delay = coin_change_times_values[coin_menu->getButtons()[0].selectors[0].getSelected()[0]];
   last_coin_candle_update_delay = coin_cycle_delay;
 
-  // Get default update time from selector
+  // Get default update times from selector
   coin_candle_update_delay = coin_change_times_values
-      [coin_menu->getButtons()[0].selectors[0].getSelected()[0]];
+      [coin_menu->getButtons()[0].selectors[1].getSelected()[0]];
+  last_coin_candle_update_delay = portfolio_candle_update_delay;
+  
   portfolio_candle_update_delay = coin_change_times_values
       [portfolio_menu->getButtons()[0].selectors[0].getSelected()[0]];
   last_portfolio_candle_update_delay = portfolio_candle_update_delay;
@@ -307,6 +311,7 @@ void setup(void) {
 
 void loop() {
   updateTime();
+
   if (ssid_entered == 0) { // Get network name
     if (keyboard->enterPressed() == 1) {
       // Indicate SSID and pwd loaded into EEPROM
@@ -422,13 +427,31 @@ void loop() {
         // Change mode to opposite if up or down pressed
         if (irrecv.decodedIRData.decodedRawData == 0xE718FF00 ||
             irrecv.decodedIRData.decodedRawData == 0xAD52FF00) {
-          mode = mode == 1 ? 2 : 1;
+
+          // Increase mode 
+          if (irrecv.decodedIRData.decodedRawData == 0xE718FF00){
+            mode++;
+            if (mode > 3){
+              mode = 1;
+            }
+          }
+
+          // Decrease mode
+          if (irrecv.decodedIRData.decodedRawData == 0xAD52FF00){
+            mode--;
+            if (mode < 1){
+              mode = 3;
+            }
+          }
+          
           irrecv.resume();
 
           if (mode == 1) {
             displayNextCoin();
-          } else {
+          } else if (mode == 2) {
             portfolio->display(coin_menu->getButtons()[0].selectors[2].getSelected()[0]);
+          } else {
+            displayAllCoins();
           }
 
           break;
@@ -452,6 +475,22 @@ void loop() {
           } else if (irrecv.decodedIRData.decodedRawData == 0xA55AFF00) {
             portfolio->nextMode();
             portfolio->display(coin_menu->getButtons()[0].selectors[2].getSelected()[0]);
+          }
+        } else if (mode == 3 && selected_coins_count > 5){
+          if (irrecv.decodedIRData.decodedRawData == 0xF708FF00) {
+            display_all_start_index += 5;
+            if (display_all_start_index > MAX_SELECTED_COINS){
+              display_all_start_index = 0;
+            }
+            displayAllCoins();
+          }
+
+          if (irrecv.decodedIRData.decodedRawData == 0xA55AFF00) {
+            display_all_start_index -= 5;
+            if (display_all_start_index < 0){
+              display_all_start_index = MAX_SELECTED_COINS - MAX_SELECTED_COINS%5;
+            }
+            displayAllCoins();
           }
         }
 
@@ -501,6 +540,9 @@ void loop() {
 
       if (mode == 2)
         portfolio->display(coin_menu->getButtons()[0].selectors[2].getSelected()[0]);
+
+      if (mode == 3)
+        displayAllCoins();
     } else if (current_second > 5) {
       refreshed = 0;
     }
@@ -543,6 +585,37 @@ void displayPreviousCoin(){
   selected_coins[current_coin]->display(&tft, coin_menu->getButtons()[0].selectors[2].getSelected()[0]);
 
   incrementCoinCycleDelay();
+}
+
+void displayAllCoins(){
+  tft.fillScreen(BLACK);
+  int height = tft.height()/5;
+  tft.setTextColor(ST77XX_WHITE);
+  
+  for (int i = display_all_start_index; i < min(selected_coins_count, display_all_start_index + 5); i++){
+    tft.setTextSize(1);
+    tft.setCursor(7, (i-display_all_start_index) * height);
+    tft.fillRect(2, (i-display_all_start_index) * height, 2, height,
+                  selected_coins[i]->portfolio_colour);
+
+    tft.setCursor(7, (i-display_all_start_index) * height + (height/2 - 5));
+    tft.print(selected_coins[i]->coin_code);
+    
+    tft.setCursor(52, (i-display_all_start_index) * height + (height-20)/2);
+    tft.setTextColor(WHITE);
+    value_drawer->drawPrice(7, selected_coins[i]->current_price, 2, 1, 
+      coin_menu -> getButtons()[0].selectors[2].getSelected()[0]); // Currency
+
+    tft.setCursor(52,  (i-display_all_start_index) * height + height/2);
+    value_drawer->drawPercentageChange(4,
+      selected_coins[i]->current_change, 2, 1);
+
+    if (selected_coins[i]->current_change > 0){
+      selected_coins[i]->candles->displaySmall(103, tft.width()-103, (i-display_all_start_index) * height, (i-display_all_start_index) * height + height, 1);
+    } else {
+      selected_coins[i]->candles->displaySmall(103, tft.width()-103, (i-display_all_start_index) * height, (i-display_all_start_index) * height + height, 0);
+    }
+  }
 }
 
 void incrementCoinCycleDelay(){
@@ -1230,7 +1303,7 @@ void loadCredsFromEEPROM(char *ssid, char *pass) {
 void interactWithMenu() {
   if (irrecv.decode()) {
     // If in crypto display mode
-    if (mode == 1) {
+    if (mode == 1 || mode == 3) {
       // Down key pressed, select next element in menu
       if (irrecv.decodedIRData.decodedRawData == 0xAD52FF00)
         coin_menu->moveDown();
@@ -1263,7 +1336,8 @@ void interactWithMenu() {
           getData(1); 
           writeSettingsToEEPROM();
 
-          displayNextCoin();
+          if (mode == 1) displayNextCoin();
+          if (mode == 3) displayAllCoins();
         }
 
         if (button_action == "Clear WiFi Credentials")
@@ -1324,7 +1398,7 @@ void interactWithMenu() {
 }
 
 void drawMenu() {
-  if (mode == 1) {
+  if (mode == 1 || mode == 3) {
     coin_menu->display();
   } else if (mode == 2) {
     portfolio_menu->display();
@@ -1369,7 +1443,7 @@ void interactWithCoinList() {
  * corresponding menu actions.
  */
 void interactWithSettings() {
-  if (mode == 1) {
+  if (mode == 1 || mode == 3) {
     coin_menu->getButtons()[0].flashSelectedSelector();
     if (irrecv.decode()) {
       if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00) {

@@ -11,6 +11,7 @@ class ST7735_Value_Drawer
         ST7735_Value_Drawer(Adafruit_ST7735*);
         void drawPercentageChange(double, double, double, int);
         void drawPrice(double, double, double, int, int);
+        void drawSign(double);
 
     private:
         Adafruit_ST7735* display;

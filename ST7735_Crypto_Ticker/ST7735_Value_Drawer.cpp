@@ -170,17 +170,19 @@ void ST7735_Value_Drawer::drawPrice(double available_space, double price, double
     display->setTextColor(WHITE);
 }
 
+void ST7735_Value_Drawer::drawSign(double value){
+    if (value < 0) {
+        display->setTextColor(RED);
+        display->print('-');
+    } else {
+        display->setTextColor(ST77XX_GREEN);
+        display->print('+');
+    }
+}
+
 // Draws the percentage change on the screen.
 void ST7735_Value_Drawer::drawPercentageChange(double available_space, double value, double max_precision, int size) {
-  display->setTextSize(size);
-  
-  if (value < 0) {
-    display->setTextColor(RED);
-    display->print('-');
-  } else {
-    display->setTextColor(ST77XX_GREEN);
-    display->print('+');
-  }
+  display->setTextSize(1);
 
   double change_val;
   if (value < 0){
@@ -201,6 +203,8 @@ void ST7735_Value_Drawer::drawPercentageChange(double available_space, double va
 
     // Represent number normally, but limit occupied space
     if (change_val == 0){
+        drawSign(value);
+
         display->print("0.");
 
         for (int i = 0; i < available_space-2; i++){
@@ -222,6 +226,7 @@ void ST7735_Value_Drawer::drawPercentageChange(double available_space, double va
             e_val++;
         }
 
+        drawSign(value);
         display->print((int) round(change_val*mul));
         display->print('e');
         display->print(e_val);
@@ -236,10 +241,11 @@ void ST7735_Value_Drawer::drawPercentageChange(double available_space, double va
         }
 
         if ((int) round(change_val/div) == (int) pow(10, available_space - 2)){
-        div*=10;
-        e_val++;
+            div*=10;
+            e_val++;
         }
 
+        drawSign(value);
         display->print((int) round(change_val/div));
         display->print('e');
         display->print(e_val);
@@ -259,6 +265,7 @@ void ST7735_Value_Drawer::drawPercentageChange(double available_space, double va
                     return;
                 }
 
+                drawSign(value);
                 display->print(change_val);
                 display->print('%');
                 return;
@@ -312,6 +319,7 @@ void ST7735_Value_Drawer::drawPercentageChange(double available_space, double va
             }
         }
 
+        drawSign(value);
         display->print(int_buffer);
         display->print('.');
 
