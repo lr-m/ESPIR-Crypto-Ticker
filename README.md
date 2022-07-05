@@ -1,7 +1,7 @@
 # ESPIR Crypto
 ESP8266 NodeMCU powered Crypto Ticker that uses an ST7735 TFT screen to display statistics and the candle chart for various cryptocurrencies, also utilising an IR remote for configuration and user input. Also has functionality that allows the user to add their own portfolio. This device is powered by the CoinGecko API.
 
-<img src="https://user-images.githubusercontent.com/47477832/174843170-61d2b933-98b9-4687-ba08-1a4094de4f7b.jpg" width="500">
+![Picture1-min](https://user-images.githubusercontent.com/47477832/177369521-61dd770e-b6c1-48b3-a355-2782ca483f29.png)
 
 **NOTE: If you are using this and would like any more features or modifications to be made please let me know by opening an issue, with the title beginning with 'Feature Request'.**
 
