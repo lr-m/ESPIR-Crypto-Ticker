@@ -61,6 +61,7 @@ void Candle_Graph::freeCandles() {
   }
 }
 
+// Display line chart version
 void Candle_Graph::displaySmall(int x, int w, int top, int bottom, int upflag){
   double max_val = -1;
   double min_val = std::numeric_limits<double>::max();

@@ -27,7 +27,7 @@ ST7735_Keyboard::ST7735_Keyboard(Adafruit_ST7735* display)
 	selected_index = 0;
 	mode = 0;
 	current_input_length = 0;
-	current_string = (char*) malloc(sizeof(char) * (MAX_INPUT_LENGTH + 1));
+	current_string = (char*) malloc(sizeof(char) * (length_limit + 1));
 	current_string[0] = 0;
 	enter_pressed = 0;
 	
@@ -162,15 +162,19 @@ void ST7735_Keyboard::reset(){
 	this -> exitTabs();
 	current_input_length = 0;
 	free(current_string);
-	current_string = (char*) malloc(sizeof(char) * (MAX_INPUT_LENGTH + 1));
+	current_string = (char*) malloc(sizeof(char) * (length_limit + 1));
 	current_string[0] = 0;
 	enter_pressed = 0;
+}
+
+void ST7735_Keyboard::setInputLengthLimit(int limit){
+	this->length_limit = limit;
 }
 
 void ST7735_Keyboard::end(){
 	current_input_length = 0;
 	free(current_string);
-	current_string = (char*) malloc(sizeof(char) * (MAX_INPUT_LENGTH + 1));
+	current_string = (char*) malloc(sizeof(char) * (length_limit + 1));
 	current_string[0] = 0;
 	enter_pressed = 0;
 	setModeClear(last_mode, last_key);
@@ -181,10 +185,16 @@ char* ST7735_Keyboard::getCurrentInput(){
 	return current_string;
 }
 
+// Returns length of current input
+int ST7735_Keyboard::getCurrentInputLength(){
+	return current_input_length;
+}
+
+
 // Performs the action of the currently selected key
 void ST7735_Keyboard::press(){
 	if (selected -> action == "Space"){
-		if (current_input_length < MAX_INPUT_LENGTH){
+		if (current_input_length < length_limit){
 			// Add space to current string
 			current_string[current_input_length + 1] = 0;
 			current_string[current_input_length] = ' ';
@@ -201,7 +211,7 @@ void ST7735_Keyboard::press(){
 		if (current_string[0] != 0)
 			enter_pressed = 1;
 	} else {
-		if (current_input_length < MAX_INPUT_LENGTH){
+		if (current_input_length < length_limit){
 			// Add pressed key to current string
 			current_string[current_input_length + 1] = 0;
 			if (mode == 1){

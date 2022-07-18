@@ -146,10 +146,12 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
     // ok
     if (*ir_data == 0xE31CFF00) {
       stage++;
+      keyboard->setInputLengthLimit(29); // Limit id size to 29
       display();
     }
   } else if (stage == 1) { // Search for coin id
     keyboard->interact(ir_data);
+
     if (keyboard->enterPressed() == 1) {
       // Indicate SSID and pwd loaded into EEPROM
       int i = 0;
@@ -162,6 +164,7 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
       loaded_id[i] = 0;
 
       keyboard->reset();
+      keyboard->setInputLengthLimit(7); // Limit id size to 29
 
       return -2;
     }
@@ -306,8 +309,8 @@ int ST7735_Coin_Changer::rgb_to_bgr(unsigned char r, unsigned char g,
   unsigned char green = g >> 2;
   unsigned char blue = b >> 3;
 
-  int result = (blue << (5 + 6)) | (green << 5) | red;
-  //int result = (red << (5 + 6)) | (green << 5) | blue;
+  //int result = (blue << (5 + 6)) | (green << 5) | red;
+  int result = (red << (5 + 6)) | (green << 5) | blue;
 
   return result;
 }

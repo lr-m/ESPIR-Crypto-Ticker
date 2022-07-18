@@ -43,19 +43,19 @@ extern unsigned char epd_bitmap_uniswap[];
 #define TFT_SCL   D1
 #define TFT_SDA   D2
 #define TFT_RES   D3
-#define RECV_PIN  D4
-#define TFT_DC    D5
+#define TFT_DC    D4
+#define RECV_PIN  D5
 #define TFT_CS    D6
 
-#define MAX_SELECTED_COINS 9
+#define MAX_SELECTED_COINS 10
 
 #define COIN_MENU_BUTTON_COUNT 6
 #define PORTFOLIO_MENU_BUTTON_COUNT 5
 
 #define SETTINGS_START_ADDRESS 64
 
-#define COIN_COUNT_ADDRESS 79
-#define COIN_START_ADDRESS 80
+#define COIN_COUNT_ADDRESS 80
+#define COIN_START_ADDRESS 81
 #define COIN_BLOCK_SIZE 45
 #define ADDED_COINS_LIMIT 5
 
@@ -127,7 +127,6 @@ char *currency_options_changes[3] = {"gbp_24h_change", "usd_24h_change", "eur_24
 ST7735_Portfolio_Editor *portfolio_editor;
 ST7735_Portfolio *portfolio;
 ST7735_Coin_Changer *coin_changer;
-
 ST7735_Value_Drawer *value_drawer;
 
 char **coin_list;             // List of all coin codes
@@ -240,7 +239,7 @@ void setup(void) {
   coin_menu->getButtons()[0].addSelector(
       "Toggle Bitmaps:", bitmap_toggle, 2, 1, 2);
       
-  coin_menu->getButtons()[1].addSelector("Select up to 9 coins:", coin_list, 3,
+  coin_menu->getButtons()[1].addSelector("Select up to 10 coins:", coin_list, 3,
                                          MAX_SELECTED_COINS, COIN_COUNT);
 
   portfolio_menu->getButtons()[0].addSelector(
@@ -479,7 +478,7 @@ void loop() {
         } else if (mode == 3 && selected_coins_count > 5){
           if (irrecv.decodedIRData.decodedRawData == 0xF708FF00) {
             display_all_start_index += 5;
-            if (display_all_start_index > MAX_SELECTED_COINS){
+            if (display_all_start_index >= MAX_SELECTED_COINS){
               display_all_start_index = 0;
             }
             displayAllCoins();
@@ -488,7 +487,12 @@ void loop() {
           if (irrecv.decodedIRData.decodedRawData == 0xA55AFF00) {
             display_all_start_index -= 5;
             if (display_all_start_index < 0){
-              display_all_start_index = MAX_SELECTED_COINS - MAX_SELECTED_COINS%5;
+              if (MAX_SELECTED_COINS%5 == 0){
+                display_all_start_index = MAX_SELECTED_COINS - 5;
+              } else {
+                display_all_start_index = MAX_SELECTED_COINS - MAX_SELECTED_COINS%5;
+              }
+              
             }
             displayAllCoins();
           }
@@ -1046,13 +1050,9 @@ void writeCoinToEEPROM(COIN* coin, char index){
   EEPROM.write(write_address+2, (byte) coin_changer->pickers[2].getValue());
 
   EEPROM.commit();
-
-  printEEPROM();
 }
 
 void readCoinsFromEEPROM(){
-  // Iterate over all coin blocks and fill coins array with coins at specified index
-
   // Get the current stored coin count so that it is known how many coins to load
   byte count = EEPROM.read(COIN_COUNT_ADDRESS);
 
@@ -1062,12 +1062,14 @@ void readCoinsFromEEPROM(){
       write_address++;
       byte index = EEPROM.read(write_address);
       write_address++;
- 
+
+      // Read coin code
       for (int i = 0; i < 10; i++){
         coins[index].coin_code[i] = (char) EEPROM.read(write_address+i);
       }
       write_address+=10;
-      
+
+      // Read coin id
       char id[30];
       for (int i = 0; i < 30; i++){
         coins[index].coin_id[i] = EEPROM.read(write_address+i);
@@ -1076,9 +1078,9 @@ void readCoinsFromEEPROM(){
 
       coins[index].bitmap_present = 0;
 
+      // Read coin colour
       coins[index].portfolio_colour = coin_changer->rgb_to_bgr(
         int(EEPROM.read(write_address)), int(EEPROM.read(write_address+1)), int(EEPROM.read(write_address+2)));
-
       write_address+=3;
 
       coins[index].bitmap = coin_changer->default_bitmap;
@@ -1130,6 +1132,7 @@ void loadPortfolioFromEEPROM(){
   int write_address;
   char dub[18];
 
+  // Load portfolio from EEPROM
   for (byte i = 0; i < count; i++){
     write_address = block_address;
     int index = EEPROM.read(write_address);

@@ -22,7 +22,6 @@
 #define PROMPT_BACKGROUND 0x0000
 #define SELECTED_LETTER_COLOUR 0x0000
 #define UNSELECTED_LETTER_COLOUR 0xFFFF
-#define MAX_INPUT_LENGTH 32
 
 class Key
 {
@@ -65,10 +64,10 @@ class ST7735_Keyboard
 	char* getCurrentInput();
 	void end();
 	void setModeClear(int, int);
-	
 	void interact(uint32_t*);
-	
 	void displayInstructions();
+	int getCurrentInputLength();
+	void setInputLengthLimit(int);
 
   // library-accessible "private" interface
   private:
@@ -86,6 +85,7 @@ class ST7735_Keyboard
 	int enter_pressed; // Indicate if enter pressed
 	int last_mode; // Mode to return to when exiting tabs
 	int last_key; // Key last selected when entering tabs
+	int length_limit = 29;
 };
 
 #endif
