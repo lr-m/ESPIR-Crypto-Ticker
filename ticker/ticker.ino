@@ -45,17 +45,9 @@ extern unsigned char epd_bitmap_dai[];
 #define TFT_SCL   D1
 #define TFT_SDA   D2
 #define TFT_RES   D3
-#define RECV_PIN  D4
-#define TFT_DC    D5
+#define TFT_DC    D4
+#define RECV_PIN  D5
 #define TFT_CS    D6
-
-// !!!!!!!!!!! TEMP !!!!!!!!!!!!!
-//#define TFT_SCL   D1
-//#define TFT_SDA   D2
-//#define TFT_RES   D3
-//#define TFT_DC    D4
-//#define RECV_PIN  D5
-//#define TFT_CS    D6
 
 #define MAX_SELECTED_COINS 10
 
