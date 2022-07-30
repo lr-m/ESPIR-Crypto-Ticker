@@ -33,7 +33,7 @@ These modifications should fix the problem, if there are still issues, try and m
 - ST7735 1.77" display
 
 ### Configuration
-<img src="https://user-images.githubusercontent.com/47477832/164561761-e92a895c-4aa3-46f4-a08d-b6ffae2523e9.png" width="500">
+<img src="https://user-images.githubusercontent.com/47477832/181909269-97a67ce6-c805-4d76-8e40-3429da166fd5.png" width="500">
 
 ## Initialisation/Network Config
 When the device is plugged in, it displays the logo/name and gives the user the opportunity to clear any existing WiFi credentials from the EEPROM memory if needed (e.g. changed router SSID).
