@@ -75,7 +75,7 @@ void COIN::initCandles(Adafruit_ST7735 *display) {
     candles_init = 1;
     candles = (Candle_Graph *)malloc(sizeof(Candle_Graph));
     *(candles) = Candle_Graph(display, 26, display->height() / 2,
-                              display->height() - 10, 0);
+                              display->height() - 6, 0);
   }
 }
 

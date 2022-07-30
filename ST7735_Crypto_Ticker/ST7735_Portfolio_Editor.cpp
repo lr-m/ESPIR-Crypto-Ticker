@@ -89,6 +89,13 @@ void ST7735_Portfolio_Editor::drawCoinUnselected(int index) {
 int ST7735_Portfolio_Editor::interact(uint32_t *ir_data) {
   if (*ir_data == 0xF20DFF00) {
     active = 0;
+    
+    if (changing_amount == 1){
+      coins[selected_portfolio_index].amount = selector->getValue();
+      selector->clear();
+      changing_amount = 0;
+    }
+    
     return 0;
   }
 
@@ -218,15 +225,15 @@ void Price_Selector::decreaseValueToAdd() {
 
 // Clears the area occupied by the selector
 void Price_Selector::clear() {
-  tft->fillRect(0, 78, tft->width(), 40, BLACK);
+  tft->fillRect(0, 98, tft->width(), 40, BLACK);
   tft->setTextSize(2);
 }
 
 // Redraws the value selected by the user
 void Price_Selector::redrawValue() {
-  tft->fillRect(0, 78, tft->width(), 15, BLACK);
+  tft->fillRect(0, 98, tft->width(), 15, BLACK);
   tft->setTextColor(WHITE);
-  tft->setCursor(2, 78);
+  tft->setCursor(2, 98);
   tft->setTextSize(2);
 
   if (value >= 1000000) {
@@ -239,8 +246,8 @@ void Price_Selector::redrawValue() {
 // Redraws the value change selected by the user
 void Price_Selector::redrawValueChange() {
   tft->setTextSize(1);
-  tft->fillRect(0, 100, tft->width(), 8, BLACK);
-  tft->setCursor(2, 100);
+  tft->fillRect(0, 116, tft->width(), 8, BLACK);
+  tft->setCursor(2, 116);
   tft->setTextColor(GREEN);
   tft->print('+');
   tft->setTextColor(RED);

@@ -24,13 +24,13 @@
 */
 
 // If INITR_BLACKTAB used, uncomment this (rgb, 5:6:5)
-#define GRAY 0xB5B6
+#define GRAY 0xE71C
 #define GOLD 0xD560
 #define RED 0xF800
 #define BLUE 0x001F
 #define LIGHT_BLUE 0x075D
 #define DARK_BLUE 0x033B
-#define DARK_GREY 0x6B4D
+#define DARK_GREY 0x3186
 #define PURPLE 0xB01B
 #define GREEN 0x05CA
 #define SALMON 0xED08
@@ -41,4 +41,7 @@
 #define NIGHT_BLUE 0x01D4
 #define MOON_YELLOW 0xD660
 #define HOT_PINK 0xF81A
+#define ORANGE 0xFBC0
+#define VIOLET 0x63FD
+#define LIGHT_GREEN 0x064A
 

@@ -12,7 +12,7 @@
 #ifndef ST7735_Coin_h
 #define ST7735_Coin_h
 
-#define COIN_COUNT 18
+#define COIN_COUNT 21
 
 // Positional constants
 #define BM_PRICE_START_X 60

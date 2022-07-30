@@ -28,24 +28,34 @@ extern unsigned char epd_bitmap_xrp[];
 extern unsigned char epd_bitmap_solana[];
 extern unsigned char epd_bitmap_dot[];
 extern unsigned char epd_bitmap_dogecoin[];
-extern unsigned char epd_bitmap_terra[];
 extern unsigned char epd_bitmap_litecoin[];
 extern unsigned char epd_bitmap_avax[];
 extern unsigned char epd_bitmap_algorand[];
-extern unsigned char epd_bitmap_link[];
+extern unsigned char epd_bitmap_xmr[];
 extern unsigned char epd_bitmap_matic[];
 extern unsigned char epd_bitmap_tron[];
-extern unsigned char epd_bitmap_tether[];
+extern unsigned char epd_bitmap_etc[];
 extern unsigned char epd_bitmap_bat[];
-extern unsigned char epd_bitmap_uniswap[];
+extern unsigned char epd_bitmap_usdc[];
+extern unsigned char epd_bitmap_busd[];
+extern unsigned char epd_bitmap_shib[];
+extern unsigned char epd_bitmap_dai[];
 
 // Define PIN config
 #define TFT_SCL   D1
 #define TFT_SDA   D2
 #define TFT_RES   D3
-#define TFT_DC    D4
-#define RECV_PIN  D5
+#define RECV_PIN  D4
+#define TFT_DC    D5
 #define TFT_CS    D6
+
+// !!!!!!!!!!! TEMP !!!!!!!!!!!!!
+//#define TFT_SCL   D1
+//#define TFT_SDA   D2
+//#define TFT_RES   D3
+//#define TFT_DC    D4
+//#define RECV_PIN  D5
+//#define TFT_CS    D6
 
 #define MAX_SELECTED_COINS 10
 
@@ -98,12 +108,6 @@ HTTPClient http;
 char *url_start = "https://api.coingecko.com/api/v3/simple/price?ids=";
 char *url_end = "&include_24hr_change=true&vs_currencies=";
 
-// For time retrieval
-WiFiUDP ntpUDP;
-const long utcOffsetInSeconds = 3600;
-char daysOfTheWeek[7][12] = {"Sunday",   "Monday", "Tuesday", "Wednesday",
-                             "Thursday", "Friday", "Saturday"};
-
 // IR remote
 IRrecv irrecv(RECV_PIN);
 decode_results results;
@@ -151,7 +155,7 @@ COIN **selected_coins; // List of pointers to coins currently selected
 char* request_url;
 StaticJsonDocument<1000> doc;
 
-void setup(void) {
+void setup(void) { 
   irrecv.enableIRIn(); // Enable IR reciever
 
   request_url = (char*) malloc(sizeof(char) * 300);
@@ -201,33 +205,49 @@ void setup(void) {
 
   coin_list = (char **)malloc(sizeof(char *) * COIN_COUNT);
 
-  coins[0] = COIN("BTC", "bitcoin", epd_bitmap_bitcoin, GOLD, WHITE, GOLD, 0, value_drawer);
-  coins[1] = COIN("ETH", "ethereum", epd_bitmap_ethereum, WHITE, GRAY, GRAY, 0, value_drawer);
+  // Background col, bitmap col, portfolio col
+  coins[0] = 
+    COIN("BTC", "bitcoin", epd_bitmap_bitcoin, GOLD, WHITE, GOLD, 0, value_drawer);
+  coins[1] = 
+    COIN("ETH", "ethereum", epd_bitmap_ethereum, VIOLET, GRAY, VIOLET, 0, value_drawer);
   coins[2] =
-      COIN("LTC", "litecoin", epd_bitmap_litecoin, GRAY, WHITE, DARK_GREY, 0, value_drawer);
+    COIN("USDT", "tether", epd_bitmap_tether, GREEN, WHITE, GREEN, 0, value_drawer);
   coins[3] =
-      COIN("ADA", "cardano", epd_bitmap_cardano, LIGHT_BLUE, WHITE, LIGHT_BLUE, 0, value_drawer);
-  coins[4] = COIN("BNB", "binancecoin", epd_bitmap_binance, WHITE, GOLD, GOLD, 0, value_drawer);
-  coins[5] = COIN("USDT", "tether", epd_bitmap_tether, GREEN, WHITE, GREEN, 0, value_drawer);
-  coins[6] = COIN("XRP", "ripple", epd_bitmap_xrp, DARK_GREY, WHITE, DARK_GREY, 0, value_drawer);
-  coins[7] = COIN("DOGE", "dogecoin", epd_bitmap_dogecoin, GOLD, WHITE, GOLD, 0, value_drawer);
-  coins[8] = COIN("DOT", "polkadot", epd_bitmap_dot, WHITE, BLACK, WHITE, 0, value_drawer);
-  coins[9] =
-      COIN("SOL", "solana", epd_bitmap_solana, PINK, LIGHTNING_BLUE, PINK, 0, value_drawer);
-  coins[10] = COIN("LUNA", "terra-luna", epd_bitmap_terra, NIGHT_BLUE,
-                   MOON_YELLOW, MOON_YELLOW, 0, value_drawer);
+    COIN("USDC", "usd-coin", epd_bitmap_usdc, DARK_BLUE, WHITE, DARK_BLUE, 0, value_drawer);
+  coins[4] = 
+    COIN("BNB", "binancecoin", epd_bitmap_binance, WHITE, GOLD, GOLD, 0, value_drawer);
+  coins[5] = 
+    COIN("XRP", "ripple", epd_bitmap_xrp, DARK_GREY, WHITE, DARK_GREY, 0, value_drawer);
+  coins[6] = 
+    COIN("ADA", "cardano", epd_bitmap_cardano, DARK_BLUE, WHITE, DARK_BLUE, 0, value_drawer);
+  coins[7] = 
+    COIN("BUSD", "binance-usd", epd_bitmap_busd, WHITE, GOLD, GOLD, 0, value_drawer);
+  coins[8] =
+    COIN("SOL", "solana", epd_bitmap_solana, PINK, LIGHTNING_BLUE, PINK, 0, value_drawer);
+  coins[9] = 
+    COIN("DOT", "polkadot", epd_bitmap_dot, WHITE, BLACK, WHITE, 0, value_drawer);
+  coins[10] = 
+    COIN("DOGE", "dogecoin", epd_bitmap_dogecoin, GOLD, WHITE, GOLD, 0, value_drawer);
   coins[11] =
-      COIN("ALGO", "algorand", epd_bitmap_algorand, WHITE, BLACK, WHITE, 0, value_drawer);
+    COIN("MATIC", "matic-network", epd_bitmap_matic, PURPLE, WHITE, PURPLE, 0, value_drawer);
   coins[12] =
-      COIN("LINK", "chainlink", epd_bitmap_link, DARK_BLUE, WHITE, DARK_BLUE, 0, value_drawer);
-  coins[13] =
-      COIN("MATIC", "matic-network", epd_bitmap_matic, PURPLE, WHITE, PURPLE, 0, value_drawer);
-  coins[14] = COIN("TRX", "tron", epd_bitmap_tron, RED, WHITE, RED, 0, value_drawer);
-  coins[15] = COIN("BAT", "basic-attention-token", epd_bitmap_bat, WHITE,
-                   SALMON, SALMON, 0, value_drawer);
-  coins[16] = COIN("AVAX", "avalanche-2", epd_bitmap_avax, RED, WHITE, RED, 0, value_drawer);
+    COIN("SHIB", "shiba-inu", epd_bitmap_shib, RED, ORANGE, ORANGE, 0, value_drawer);
+  coins[13] = 
+    COIN("AVAX", "avalanche-2", epd_bitmap_avax, RED, WHITE, RED, 0, value_drawer);
+  coins[14] = 
+    COIN("DAI", "dai", epd_bitmap_dai, GOLD, WHITE, GOLD, 0, value_drawer);
+  coins[15] = 
+    COIN("TRX", "tron", epd_bitmap_tron, RED, WHITE, RED, 0, value_drawer);
+  coins[16] = 
+    COIN("ETC", "ethereum-classic", epd_bitmap_etc, WHITE, LIGHT_GREEN, LIGHT_GREEN, 0, value_drawer);
   coins[17] =
-      COIN("UNI", "uniswap", epd_bitmap_uniswap, WHITE, HOT_PINK, HOT_PINK, 0, value_drawer);
+    COIN("LTC", "litecoin", epd_bitmap_litecoin, GRAY, WHITE, DARK_GREY, 0, value_drawer);
+  coins[18] =
+    COIN("XMR", "monero", epd_bitmap_xmr, ORANGE, DARK_GREY, ORANGE, 0, value_drawer);
+  coins[19] =
+    COIN("ALGO", "algorand", epd_bitmap_algorand, WHITE, BLACK, WHITE, 0, value_drawer);
+  coins[20] =
+    COIN("BAT", "basic-attention-token", epd_bitmap_bat, WHITE, SALMON, SALMON, 0, value_drawer);
 
   // Add selectors to respective submenus
   coin_menu->getButtons()[0].addSelector(
@@ -607,7 +627,7 @@ void displayAllCoins(){
     
     tft.setCursor(52, (i-display_all_start_index) * height + (height-20)/2);
     tft.setTextColor(WHITE);
-    value_drawer->drawPrice(7, selected_coins[i]->current_price, 2, 1, 
+    value_drawer->drawPrice(7, selected_coins[i]->current_price, 7, 1, 
       coin_menu -> getButtons()[0].selectors[2].getSelected()[0]); // Currency
 
     tft.setCursor(52,  (i-display_all_start_index) * height + height/2);

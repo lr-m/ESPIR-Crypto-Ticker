@@ -30,13 +30,16 @@ void ST7735_Value_Drawer::drawPrice(double available_space, double price, double
 
     // Calculate the minimum and maximum values that can fit in the space
     double max = pow(10, available_space) - 1;
-    double min = pow(0.1, available_space - 2) - 5*pow(0.1, available_space);
+    double min = (pow(0.1, available_space - 2) - 5*pow(0.1, available_space) )* 10; // * 10 for precision of at least 2
 
     int counter = 0; // Counts current number of digits
     int int_buffer = 0; // Buffer for the value before decimal point
     int dec_buffer = 0; // Buffer for the value after decimal point
 
     int dec_zeros = 0;
+    int decimal_comp_size = 0;
+
+    bool has_decimal_component = false;
 
     // Represent number normally, but limit occupied space
     if (price == 0){
@@ -107,19 +110,25 @@ void ST7735_Value_Drawer::drawPrice(double available_space, double price, double
                 // Increment counter to accomodate the decimal point
                 if (counter < available_space-1){
                     counter++;
+                    has_decimal_component = true;
                 }
             }
         } else if (floor(price) == 0){
             // If no integer digits, < 0
             int_buffer = 0;
             counter+=2; // Accomodates the 0. part
+            has_decimal_component = true;
         }
+
+        int size_cap = counter;
 
         // Print the decimal component
         if (fmod(price, 1) != 0){
             // Get integer representation of the decimal component
-            int size = min(max_precision, available_space - counter);
-            double decimal_comp = (price - floor(price)) * pow(10, size);
+            decimal_comp_size = min(max_precision, available_space - counter);
+            size_cap += decimal_comp_size;
+
+            double decimal_comp = (price - floor(price)) * pow(10, decimal_comp_size);
 
             // If rounding the decimal component results in more digits (i.e. 9.99 -> 10.0), handle
             if (!std::isinf(log10((int) floor(decimal_comp))) && !std::isinf(log10((int) round(decimal_comp))) &&
@@ -128,15 +137,14 @@ void ST7735_Value_Drawer::drawPrice(double available_space, double price, double
                 decimal_comp = 0;
 
                 if ((int) log10(floor(price)) < (int) log10(floor((double) int_buffer))){
-
                     drawPrice(available_space, (double) int_buffer, max_precision, size, currency);
                     return;
                 }
             } else if (counter <= available_space-1) {
                 // Print like integer in the remaining space
-                for (int i = 1; i <= size; i++){
+                for (int i = 1; i <= decimal_comp_size; i++){
                     dec_buffer *= 10;
-                    dec_buffer += fmod(floor(round(decimal_comp)/pow(10, size-i)), 10);
+                    dec_buffer += fmod(floor(round(decimal_comp)/pow(10, decimal_comp_size-i)), 10);
                     counter++;
 
                     if (dec_buffer == 0 && dec_zeros < max_precision){
@@ -144,10 +152,18 @@ void ST7735_Value_Drawer::drawPrice(double available_space, double price, double
                     }
                 }
             }
+        } else if (has_decimal_component){
+            for (int i = counter; i < available_space; i++){
+                dec_zeros++;
+            }
         }
 
         display->print(int_buffer);
         display->print('.');
+
+        if (dec_buffer == 0){
+            counter++;
+        }
 
         if (dec_zeros != 0){
             for (int i = 0; i < dec_zeros; i++){
@@ -162,9 +178,9 @@ void ST7735_Value_Drawer::drawPrice(double available_space, double price, double
         }
 
         // Fix if extra zeros needed 
-        // for (int i = counter; i < available_space-1 && i < ; i++){
-        //     display->print('0');
-        // }
+        for (int i = counter; i < size_cap; i++){
+            display->print('0');
+        }
     }
 
     display->setTextColor(WHITE);
