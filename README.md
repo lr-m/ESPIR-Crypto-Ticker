@@ -7,16 +7,15 @@ ESP8266 NodeMCU powered Crypto Ticker that uses an ST7735 TFT screen to display 
 
 ## IMPORTANT
 
-- To use, put the ST7735_Crypto_Ticker directory in your Arduino libraries directory, dependencies will also need to be installed. 
+- To use, put the ST7735_Crypto_Ticker directory in your Arduino libraries directory, dependencies will also need to be installed, see Libraries section. 
 - If the display is not properly aligned (edges of pixels with random colour) or the colours are inverted, look at the Display Fix section.
 - If you have used a previous version of this software then you may have issues with the EEPROM storage, to resolve any issues, press '#' during the initial boot screen (with the logo) to completely clear the EEPROM, you will need to re-enter your WiFi credentials but everything will work fine after.
 
 ### Display Fix
 
-There are 2 types of ST7735 screens, black tab and green tab. Although if the screen has a green tab, is sometimes acts like a black tag in my experience so this classification isn't 100% correct. If the display is working, but is misaligned and the colours are inverted, you will need to swap which type of screen the sketch is configured with, this involves modification of 2 files:
+There are 2 types of ST7735 screens, black tab and green tab. Although if the screen has a green tab, is sometimes acts like a black tab. If the display is working, but is misaligned and the colours are inverted, you will need to swap which type of screen the sketch is configured with, this involves modification of 2 files:
 
 - In the Arduino library, ST7735_Crypto_Ticker, the colours.h file needs to be edited to comment out the set colours that are not currently commented out, and to comment out the current set colours. 
-
 - In the arduino sketch itself, comment out line 158 (//), and uncomment line 157. This will configure the device with the green tab settings.
 
 These modifications should fix the problem, if there are still issues, try and modify only 1 of them.
@@ -26,6 +25,7 @@ These modifications should fix the problem, if there are still issues, try and m
 - IRremote v3.3.0
 - Adafruit_GFX_library (for Adafruit_GFX.h)
 - Adafruit_ST7735_and_ST7789_Library (for Adafruit_ST7735.h)
+- ArduinoJson v6.18.3
 
 ## Components
 - NodeMCU ESP8266 WiFi Microcontroller CP2102
@@ -52,10 +52,10 @@ This screen displays characteristics of coins selected by the user in the menu, 
 
 ### Controller Navigation
 - '#' - This opens the Crypto menu that allows configuration and coin selection.
-- '&#8594;' - Moves the display along to the next coin.
-- '&#8592;' - Moves the display to the previous coin.
-- '&#8593;' - Moves to the next screen (Portfolio/Coin).
-- '&#8595;' - Moves to the previous screen (Portfolio/Coin).
+- &#8594; - Moves the display along to the next coin.
+- &#8592; - Moves the display to the previous coin.
+- &#8593; - Moves to the next screen (Portfolio/Coin).
+- &#8595; - Moves to the previous screen (Portfolio/Coin).
 
 ## Crypto Menu
 
@@ -79,8 +79,8 @@ This is where the user can configure some of the aspects of the crypto interface
 
 ### Controller Navigation
 
-- '&#8593;' - Selects the menu item above the currently selected item.
-- '&#8595;' - Selects the menu item below the currently selected item.
+- &#8593; - Selects the menu item above the currently selected item.
+- &#8595; - Selects the menu item below the currently selected item.
 
 ## Add New Coin
 
@@ -131,10 +131,10 @@ This section displays the candle graph of the portfolio, similarly to the coin i
 ### Controller Navigation
 
 - '#' - Opens the menu.
-- '&#8594;' - Moves to the next section display.
-- '&#8592;' - Moves to the previous section display.
-- '&#8593;' - Moves to the next screen (Portfolio/Coin).
-- '&#8595;' - Moves to the previous screen (Portfolio/Coin).
+- &#8594; - Moves to the next section display.
+- &#8592; - Moves to the previous section display.
+- &#8593; - Moves to the next screen (Portfolio/Coin).
+- &#8595; - Moves to the previous screen (Portfolio/Coin).
 
 ## Portfolio Menu
 
@@ -143,8 +143,8 @@ This is where the user can configure the settings of the Portfolio screen, and a
 <img src="https://user-images.githubusercontent.com/47477832/174844074-63426e36-a9ba-497f-99cd-5ef2ec519f03.jpg" width="350">
 
 ### Controller Navigation
-- '&#8593;' - Selects the menu item above the currently selected item.
-- '&#8595;' - Selects the menu item below the currently selected item.
+- &#8593; - Selects the menu item above the currently selected item.
+- &#8595; - Selects the menu item below the currently selected item.
 
 ## Portfolio Editor
 
@@ -154,18 +154,18 @@ This is where the user can configure their Portfolio, selecting amounts of coins
 
 ### Controller Navigation
 #### Coin Not Selected
-- '&#8594;' - Moves to the next coin to select.
-- '&#8592;' - Moves to the previous coin to select.
+- &#8594; - Moves to the next coin to select.
+- &#8592; - Moves to the previous coin to select.
 - '#' - Go back to Portfolio Menu.
-- 'OK' - Enter the amount changer for the currently selected coin.
+- OK - Enter the amount changer for the currently selected coin.
 
 #### Coin Selected
-- '&#8594;' - Multiplies the amount to add by 10.
-- '&#8592;' - Divides the amount to add by 10.
-- '&#8593;' - Adds the current amount to add to the coin amount.
-- '&#8595;' - Subtracts the current amount to add to the coin amount.
+- &#8594; - Multiplies the amount to add by 10.
+- &#8592; - Divides the amount to add by 10.
+- &#8593; - Adds the current amount to add to the coin amount.
+- &#8595; - Subtracts the current amount to add to the coin amount.
 - '#' - Go back to Portfolio Menu.
-- 'OK' - Exit the amount changer for the currently selected coin and return to coin selection.
+- OK - Exit the amount changer for the currently selected coin and return to coin selection.
 
 ## EEPROM Properties
 
@@ -174,12 +174,13 @@ This is where the user can configure their Portfolio, selecting amounts of coins
 - WiFi credentials are also displayed in *plaintext* during network initialisation (makes things easier to debug), so also be aware of that
 
 ### Settings
-- There can be up to 9 selected coins at any given time, these are stored in the EEPROM and are loaded back during initialisation
+- There can be up to 10 selected coins at any given time, these are stored in the EEPROM and are loaded back during initialisation
 - There are flags that indicate what settings have been selected in the menus
 
 ### Added coins
-- Up to 5 coins can be manually added (low number due to memory constraints)
+- Up to 5 coins can be manually added
 - Once 5 have been added, any extra will overwrite the first added coin
+- Overwrite an added coin in EEPROM by just selecting the coin in the add coin functionality
 
 ### Portfolio
 - Amounts in portfolio are stored, up to 9 coin amounts can be stored and reloaded (this is the maximum that can be displayed on the screen)
