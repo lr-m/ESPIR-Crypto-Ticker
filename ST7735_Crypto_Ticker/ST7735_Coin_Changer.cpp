@@ -12,8 +12,7 @@
 // Constructor for Portfolio Editor
 ST7735_Coin_Changer::ST7735_Coin_Changer(Adafruit_ST7735 *display,
                                          char **code_list, COIN *coin_arr,
-                                         ST7735_Keyboard *keybrd,
-                                         const unsigned char *default_bit) {
+                                         ST7735_Keyboard *keybrd) {
   tft = display;
   stage = 0;
   coins = coin_arr;
@@ -22,7 +21,6 @@ ST7735_Coin_Changer::ST7735_Coin_Changer(Adafruit_ST7735 *display,
   keyboard = keybrd;
   verified_id = 0;
   coin_code_list = code_list;
-  default_bitmap = default_bit;
 
   selected_picker = 0;
 
@@ -247,7 +245,7 @@ void ST7735_Coin_Changer::loadIntoSelectedCoin() {
   coins[current_replacing_index].portfolio_colour = rgb_to_bgr(
       pickers[0].getValue(), pickers[1].getValue(), pickers[2].getValue());
 
-  coins[current_replacing_index].bitmap = default_bitmap;
+  coins[current_replacing_index].bitmap_present = 0;
 
   if (coins[current_replacing_index].candles_init == 1)
     coins[current_replacing_index].candles->reset();

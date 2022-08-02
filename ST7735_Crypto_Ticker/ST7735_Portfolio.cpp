@@ -32,9 +32,9 @@ ST7735_Portfolio::ST7735_Portfolio(Adafruit_ST7735 *display,
 // Draw the current value of the portfolio
 void ST7735_Portfolio::drawValue(double *total_value, int currency) {
   tft->setTextColor(WHITE);
-  tft->setCursor(5, 4);
+  tft->setCursor(3, 4);
 
-  value_drawer->drawPrice(11, *total_value, 2, 2, currency);
+  value_drawer->drawPrice(12, *total_value, 2, 2, currency);
 }
 
 // Moves to the next display mode

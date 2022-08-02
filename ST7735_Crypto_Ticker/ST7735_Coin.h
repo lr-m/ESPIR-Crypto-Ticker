@@ -27,7 +27,7 @@
 class COIN {
 public:
   COIN(char *, char *, const unsigned char *, uint16_t, uint16_t, uint16_t, double, ST7735_Value_Drawer*);
-  COIN(char *, char *, uint16_t, const unsigned char *, double, ST7735_Value_Drawer*);
+  COIN(char *, char *, uint16_t, double, ST7735_Value_Drawer*);
 
   char coin_code[10];
   char coin_id[30];

@@ -33,10 +33,9 @@ class Colour_Picker_Component
 class ST7735_Coin_Changer
 {
 	public:
-		ST7735_Coin_Changer(Adafruit_ST7735*, char**, COIN*, ST7735_Keyboard*, const unsigned char*);
+		ST7735_Coin_Changer(Adafruit_ST7735*, char**, COIN*, ST7735_Keyboard*);
 		void display();
 		COIN* coins;
-		const unsigned char* default_bitmap;
 		int stage;
 		int current_replacing_index;
 		int rgb_to_bgr(unsigned char, unsigned char, unsigned char);
@@ -49,6 +48,7 @@ class ST7735_Coin_Changer
 		char loaded_id[30];
 		char loaded_code[10];
 		int verified_id;
+		
 		void verificationSuccess();
 		void verificationFailed();
 		Colour_Picker_Component* pickers;

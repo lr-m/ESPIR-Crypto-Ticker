@@ -37,7 +37,7 @@ COIN::COIN(char* code, char *id, const unsigned char* bm, uint16_t circle_col,
 
 // Constructor for coin without bitmap
 COIN::COIN(char *code, char *id, uint16_t portfolio_col,
-           const unsigned char *bm, double coin_amount, ST7735_Value_Drawer* drawer) {
+           double coin_amount, ST7735_Value_Drawer* drawer) {
   int i = 0;
   while(code[i] != 0){
     coin_code[i] = code[i];
@@ -54,7 +54,7 @@ COIN::COIN(char *code, char *id, uint16_t portfolio_col,
 
   portfolio_colour = portfolio_col;
   amount = coin_amount;
-  bitmap = bm;
+  
   bitmap_present = 0;
 
   value_drawer = drawer;
@@ -84,18 +84,14 @@ void COIN::display(Adafruit_ST7735 *display, int currency) {
   display->setTextColor(WHITE);
   display->fillRect(0, 0, display->width(), display->height(), BLACK);
 
-  if (bitmap_enabled == 1){
-    if (bitmap_present == 1) {
+  if (bitmap_enabled == 1 && bitmap_present == 1) {
       display->fillCircle(12, 12, 44, circle_colour);
       drawBitmap(display, 4, 4, bitmap, 40, 40, bm_colour);
-    } else {
-      drawBitmap(display, 0, 0, bitmap, 56, 56, portfolio_colour);
-    }
   }
 
   drawName(display);
 
-  if (bitmap_enabled == 1){
+  if (bitmap_enabled == 1 && bitmap_present == 1){
     display->setCursor(BM_PRICE_START_X, PRICE_START_Y);
   } else {
     display->setCursor(NO_BM_PRICE_START_X, PRICE_START_Y);
@@ -117,7 +113,7 @@ void COIN::drawName(Adafruit_ST7735 *display) {
       break;
   }
 
-  if (bitmap_enabled == 1) {
+  if (bitmap_enabled == 1 && bitmap_present == 1) {
     display->setCursor(
         BM_PRICE_START_X +
             (((display->width() - BM_PRICE_START_X) / 8) * (8 - len)) / 2,
@@ -142,7 +138,7 @@ void COIN::toggleBitmap(){
 
 // Draws the percentage change on the screen.
 void COIN::drawPercentageChange(Adafruit_ST7735 *display) {
-  if (bitmap_enabled == 1){
+  if (bitmap_enabled == 1 && bitmap_present == 1){
     display->setCursor(BM_CHANGE_START_X, CHANGE_START_Y);
   } else {
     display->setCursor(NO_BM_CHANGE_START_X, CHANGE_START_Y);

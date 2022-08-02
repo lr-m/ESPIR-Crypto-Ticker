@@ -13,10 +13,10 @@
 #include <ST7735_Menu.h>
 #include <ST7735_Portfolio.h>
 #include <ST7735_Portfolio_Editor.h>
-#include <WiFiUdp.h>
 
 extern unsigned char epd_bitmap_logo_with_name[];
-extern unsigned char epd_bitmap_logo_cropped[];
+extern unsigned char epd_bitmap_logo_red[];
+extern unsigned char epd_bitmap_logo_green[];
 
 // Coin bitmaps
 extern unsigned char epd_bitmap_bitcoin[];
@@ -48,6 +48,8 @@ extern unsigned char epd_bitmap_dai[];
 #define TFT_DC    D4
 #define RECV_PIN  D5
 #define TFT_CS    D6
+
+#define UPDATE_INTERVAL 30 // Update every 30 seconds
 
 #define MAX_SELECTED_COINS 10
 
@@ -233,7 +235,7 @@ void setup(void) {
   coins[16] = 
     COIN("ETC", "ethereum-classic", epd_bitmap_etc, WHITE, LIGHT_GREEN, LIGHT_GREEN, 0, value_drawer);
   coins[17] =
-    COIN("LTC", "litecoin", epd_bitmap_litecoin, GRAY, WHITE, DARK_GREY, 0, value_drawer);
+    COIN("LTC", "litecoin", epd_bitmap_litecoin, DARK_GREY, WHITE, DARK_GREY, 0, value_drawer);
   coins[18] =
     COIN("XMR", "monero", epd_bitmap_xmr, ORANGE, DARK_GREY, ORANGE, 0, value_drawer);
   coins[19] =
@@ -269,8 +271,7 @@ void setup(void) {
   *portfolio = ST7735_Portfolio(&tft, portfolio_editor, coins, value_drawer);
 
   coin_changer = (ST7735_Coin_Changer *)malloc(sizeof(ST7735_Coin_Changer));
-  *coin_changer = ST7735_Coin_Changer(&tft, coin_list, coins, keyboard,
-                                      epd_bitmap_logo_cropped);
+  *coin_changer = ST7735_Coin_Changer(&tft, coin_list, coins, keyboard);
 
   // Try to read network credentials from EEPROM if they exist
   EEPROM.begin(EEPROM_SIZE);
@@ -541,8 +542,8 @@ void loop() {
       portfolio_time_slot_moved = 0;
     }
 
-    // Update coin and portfolio data every 60 seconds
-    if (current_second <= 5 && refreshed == 0) {
+    // Update coin and portfolio data every 30 seconds
+    if (current_second % UPDATE_INTERVAL <= 5 && refreshed == 0) {
       // Get individual coin data
       getData(1);
       delay(1000);
@@ -559,7 +560,7 @@ void loop() {
 
       if (mode == 3)
         displayAllCoins();
-    } else if (current_second > 5) {
+    } else if (current_second % UPDATE_INTERVAL > 5) {
       refreshed = 0;
     }
 
@@ -646,7 +647,8 @@ void drawIntroAnimation() {
 
   tft.fillScreen(BLACK);
   tft.setCursor(10, 5);
-  drawBitmap(0, 0, epd_bitmap_logo_with_name, 160, 58, WHITE);
+  drawBitmap(0, 0, epd_bitmap_logo_green, 160, 58, ST77XX_GREEN);
+  drawBitmap(0, 0, epd_bitmap_logo_red, 160, 58, ST77XX_RED);
 
   tft.setTextColor(ST77XX_GREEN);
   tft.setCursor(8, tft.height() - 67);
@@ -1094,8 +1096,6 @@ void readCoinsFromEEPROM(){
       coins[index].portfolio_colour = coin_changer->rgb_to_bgr(
         int(EEPROM.read(write_address)), int(EEPROM.read(write_address+1)), int(EEPROM.read(write_address+2)));
       write_address+=3;
-
-      coins[index].bitmap = coin_changer->default_bitmap;
 
       coin_list[index] = coins[index].coin_code;
     }
