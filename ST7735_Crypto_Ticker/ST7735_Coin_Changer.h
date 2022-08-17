@@ -51,6 +51,7 @@ class ST7735_Coin_Changer
 		
 		void verificationSuccess();
 		void verificationFailed();
+		void duplicateDetected();
 		Colour_Picker_Component* pickers;
 		int selected_picker;
 		void drawColour();

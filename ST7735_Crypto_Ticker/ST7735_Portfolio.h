@@ -28,7 +28,6 @@ public:
   int display_mode;
   void refreshSelectedCoins();
   Candle_Graph *candle_graph;
-  float current_value;
   void addPriceToCandles();
   void nextTimePeriod();
   void clearCandles();

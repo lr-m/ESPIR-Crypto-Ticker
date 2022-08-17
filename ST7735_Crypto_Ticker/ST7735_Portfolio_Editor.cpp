@@ -91,7 +91,19 @@ int ST7735_Portfolio_Editor::interact(uint32_t *ir_data) {
     active = 0;
     
     if (changing_amount == 1){
+      // Set the value
       coins[selected_portfolio_index].amount = selector->getValue();
+
+      // Make sure the portfolio limit has not been exceeded
+      int count = 0;
+      for (int i = 0; i < COIN_COUNT; i++){
+        if (coins[i].amount > 0)
+          count++;
+      }
+
+      if (count > MAX_COINS)
+        coins[selected_portfolio_index].amount = 0;
+
       selector->clear();
       changing_amount = 0;
     }
@@ -168,7 +180,20 @@ int ST7735_Portfolio_Editor::interact(uint32_t *ir_data) {
     // ok
     if (*ir_data == 0xE31CFF00) {
       changing_amount = 0;
+
+      // Set the value
       coins[selected_portfolio_index].amount = selector->getValue();
+
+      // Make sure the portfolio limit has not been exceeded
+      int count = 0;
+      for (int i = 0; i < COIN_COUNT; i++){
+        if (coins[i].amount > 0)
+          count++;
+      }
+
+      if (count > MAX_COINS)
+        coins[selected_portfolio_index].amount = 0;
+      
       selector->clear();
     }
   }
@@ -187,7 +212,7 @@ Price_Selector::Price_Selector(Adafruit_ST7735 *display) {
 
 // Adds the currently selected value
 void Price_Selector::addValue() {
-  value = value + value_to_add < 999999999999 ? value + value_to_add : value;
+  value = value + value_to_add < 99999999999 ? value + value_to_add : value;
   redrawValue();
 }
 

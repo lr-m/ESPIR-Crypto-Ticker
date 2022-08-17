@@ -25,7 +25,7 @@ class Candle_Graph {
 public:
   Candle_Graph(Adafruit_ST7735 *, int, int, int, int);
   void display(int currency = 0);
-  void displaySmall(int, int, int, int, int);
+  void displaySmall(int, int, int, int);
   G_CANDLE *candles;
   int count;
   int current_candles;

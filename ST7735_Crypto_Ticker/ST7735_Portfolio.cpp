@@ -24,8 +24,6 @@ ST7735_Portfolio::ST7735_Portfolio(Adafruit_ST7735 *display,
 
   display_mode = 0;
 
-  current_value = 0;
-
   value_drawer = drawer;
 }
 
@@ -139,20 +137,18 @@ void ST7735_Portfolio::drawPieSummary(double *total_value) {
         coins[portfolio_editor->selected_portfolio_indexes[i]].current_price *
         coins[portfolio_editor->selected_portfolio_indexes[i]].amount;
     tft -> setTextSize(1);
-    tft -> setCursor(7, 30 + i * 10);
-    tft -> fillRect(2, 29 + i * 10, 2, 10,
+    tft -> setCursor(7, 28 + i * 10);
+    tft -> fillRect(2, 27 + i * 10, 2, 10,
                   coins[portfolio_editor->selected_portfolio_indexes[i]]
                       .portfolio_colour);
     tft -> print(
         coins[portfolio_editor->selected_portfolio_indexes[i]].coin_code);
-    tft -> setCursor(50, 30 + i * 10);
+    tft -> setCursor(50, 28 + i * 10);
     tft -> setTextColor(WHITE);
 
-    int to_draw = round(coin_total / (*total_value) * 1000);
-    tft -> print(to_draw/10);
-    tft -> print('.');
-    tft -> print(to_draw%10);
+    tft->print(coin_total / (*total_value) * 100, 1);
     tft -> print('%');
+
     i++;
   }
 
@@ -163,9 +159,9 @@ void ST7735_Portfolio::drawPieSummary(double *total_value) {
         coins[portfolio_editor->selected_portfolio_indexes[i]].current_price *
         coins[portfolio_editor->selected_portfolio_indexes[i]].amount;
 
-    fillSegment(tft->width() / 2 + 42, tft->height() / 2 + 12,
+    fillSegment(tft->width() / 2 + 41, tft->height() / 2 + 5,
                 (current_total * (360 / *total_value)),
-                (coin_total * (360 / *total_value)), 35,
+                (coin_total * (360 / *total_value)), 32,
                 coins[portfolio_editor->selected_portfolio_indexes[i]]
                     .portfolio_colour);
 
@@ -193,7 +189,7 @@ void ST7735_Portfolio::display(int currency) {
     }
 
     // Store cost of each owned coin
-    while (portfolio_editor->selected_portfolio_indexes[i] != -1) {
+    while (portfolio_editor->selected_portfolio_indexes[i] != -1 && i < MAX_COINS) {
       coin_price_owned[i] =
           coins[portfolio_editor->selected_portfolio_indexes[i]].current_price *
           coins[portfolio_editor->selected_portfolio_indexes[i]].amount;
@@ -241,7 +237,7 @@ void ST7735_Portfolio::refreshSelectedCoins() {
           i;
       curr_selected_port_index++;
 
-      if (curr_selected_port_index == MAX_COINS+1)
+      if (curr_selected_port_index == MAX_COINS)
         break;
     }
   }

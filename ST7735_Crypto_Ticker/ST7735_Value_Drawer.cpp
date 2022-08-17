@@ -186,9 +186,6 @@ void ST7735_Value_Drawer::drawPercentageChange(double available_space, double va
         if (floor(change_val) > 0){
             int integer_digits = (int) log10(floor(change_val)) + 1;
 
-            Serial.println("INTEGER DIGITS:");
-            Serial.println(integer_digits);
-
             precision = min(max_precision, available_space - integer_digits - 1);
         } else {
             precision = min(max_precision, available_space-2); // For the 0.

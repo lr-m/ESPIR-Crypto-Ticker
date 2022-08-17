@@ -61,6 +61,16 @@ void ST7735_Coin_Changer::verificationFailed() {
   keyboard->displayPrompt("Enter coin id:");
 }
 
+// Indicate that the id is already present
+void ST7735_Coin_Changer::duplicateDetected() {
+  tft->setCursor(0, 30);
+  tft->setTextColor(RED);
+  tft->print("Duplicate ID Detected\nTry again");
+  delay(2000);
+  keyboard->reset();
+  keyboard->displayPrompt("Enter coin id:");
+}
+
 // Draw the square indicating the currently selected colour
 void ST7735_Coin_Changer::drawColour() {
   tft->fillRoundRect(50, 76, 60, 25, 4,
@@ -244,8 +254,6 @@ void ST7735_Coin_Changer::loadIntoSelectedCoin() {
 
   coins[current_replacing_index].portfolio_colour = rgb_to_bgr(
       pickers[0].getValue(), pickers[1].getValue(), pickers[2].getValue());
-
-  coins[current_replacing_index].bitmap_present = 0;
 
   if (coins[current_replacing_index].candles_init == 1)
     coins[current_replacing_index].candles->reset();

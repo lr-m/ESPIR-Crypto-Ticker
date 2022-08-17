@@ -21,7 +21,7 @@ ST7735_Menu::ST7735_Menu(Adafruit_ST7735* display, int btn_count,
 	buttons = (Button*) malloc(sizeof(Button) * button_count);
 
 	for (int i = 0; i < button_count; i++){
-		buttons[i] = Button(tft, 0, 4 + i * 18, tft -> width(), 16, 
+		buttons[i] = Button(tft, 0, 4 + i * 14, tft -> width(), 12, 
 			button_values[i], 1);
 	}
 	
@@ -358,7 +358,7 @@ void Selector::press() {
 		for (int i = 0; i < max_selected; i++){
 			if (selected_indexes[i] == current_changing_index){
 				// Make sure at least 1 thing pressed
-				if (i == 1 && selected_indexes[1] == -1)
+				if (i == 0 && selected_indexes[1] == -1)
 					return;
 				
 				for (int j = i; j < max_selected-1; j++)

@@ -33,6 +33,9 @@ COIN::COIN(char* code, char *id, const unsigned char* bm, uint16_t circle_col,
   bitmap_enabled = 1;
 
   value_drawer = drawer;
+
+  current_change = 0;
+  current_price = 0;
 }
 
 // Constructor for coin without bitmap
@@ -56,8 +59,12 @@ COIN::COIN(char *code, char *id, uint16_t portfolio_col,
   amount = coin_amount;
   
   bitmap_present = 0;
+  bitmap_enabled = 1;
 
   value_drawer = drawer;
+
+  current_change = 0;
+  current_price = 0;
 }
 
 // Free the candles

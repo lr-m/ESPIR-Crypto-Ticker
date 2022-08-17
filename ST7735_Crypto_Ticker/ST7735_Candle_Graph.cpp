@@ -62,7 +62,7 @@ void Candle_Graph::freeCandles() {
 }
 
 // Display line chart version
-void Candle_Graph::displaySmall(int x, int w, int top, int bottom, int upflag){
+void Candle_Graph::displaySmall(int x, int w, int top, int bottom){
   double max_val = -1;
   double min_val = std::numeric_limits<double>::max();
 
@@ -71,11 +71,8 @@ void Candle_Graph::displaySmall(int x, int w, int top, int bottom, int upflag){
   }
 
   for (int i = count - current_candles; i < count; i++) {
-    if (candles[i].high > max_val)
-      max_val = candles[i].high;
-
-    if (candles[i].low < min_val && candles[i].low >= 0)
-      min_val = candles[i].low;
+    max_val = max(max_val, (double) (candles[i].high + candles[i].low)/2);
+    min_val = min(min_val, (double) (candles[i].high + candles[i].low)/2);
   }
 
   int last_y = ((candles[count - current_candles].high + candles[count - current_candles].low)/2 - min_val) * 
