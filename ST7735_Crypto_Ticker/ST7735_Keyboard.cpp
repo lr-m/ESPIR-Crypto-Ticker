@@ -125,20 +125,28 @@ void ST7735_Keyboard::interact(uint32_t* ir_data){
     press();
 
   // 1
-  if (*ir_data == 0xBA45FF00)
-    setMode(0);
+  if (*ir_data == 0xBA45FF00){
+    setModeClear(0, 14);
+	this -> display();
+  }
 
   // 2
-  if (*ir_data == 0xB946FF00)
-    setMode(1);
+  if (*ir_data == 0xB946FF00){
+    setModeClear(1, 14);
+	this -> display();
+  }
 
   // 3
-  if (*ir_data == 0xB847FF00)
-    setMode(2);
+  if (*ir_data == 0xB847FF00){
+    setModeClear(2, 0);
+	this -> display();
+  }
 
   // 4
-  if (*ir_data == 0xBB44FF00)
-    setMode(3);
+  if (*ir_data == 0xBB44FF00){
+    setModeClear(3, 16);
+	this -> display();
+  }
 
   // DOWN
   if (*ir_data == 0xAD52FF00)
@@ -159,7 +167,6 @@ void ST7735_Keyboard::interact(uint32_t* ir_data){
 
 // Resets the keyboard between inputs
 void ST7735_Keyboard::reset(){
-	this -> exitTabs();
 	current_input_length = 0;
 	free(current_string);
 	current_string = (char*) malloc(sizeof(char) * (length_limit + 1));
@@ -169,15 +176,6 @@ void ST7735_Keyboard::reset(){
 
 void ST7735_Keyboard::setInputLengthLimit(int limit){
 	this->length_limit = limit;
-}
-
-void ST7735_Keyboard::end(){
-	current_input_length = 0;
-	free(current_string);
-	current_string = (char*) malloc(sizeof(char) * (length_limit + 1));
-	current_string[0] = 0;
-	enter_pressed = 0;
-	setModeClear(last_mode, last_key);
 }
 
 // Returns the current input
@@ -207,6 +205,8 @@ void ST7735_Keyboard::press(){
 			current_string[current_input_length] = 0;
 		}
 	} else if (selected -> action == "Enter"){
+		exitTabs();
+
 		// Signal that enter has been pressed
 		if (current_string[0] != 0)
 			enter_pressed = 1;
@@ -248,7 +248,7 @@ void ST7735_Keyboard::goToTabs(){
 void ST7735_Keyboard::exitTabs(){
 	if (mode == 4){
 		selected -> display(mode);
-		this -> setMode(last_mode, last_key);
+		this -> setModeClear(last_mode, last_key);
 	}
 }
 
@@ -256,7 +256,7 @@ void ST7735_Keyboard::exitTabs(){
 void ST7735_Keyboard::display()
 {
 	tft -> fillRect(0, tft -> height() / 2, tft -> width(), 
-		tft -> height() / 2, KEYBOARD_BG_COLOUR);
+		tft -> height() / 2, BLACK);
 	
 	if (mode == 0 || mode == 1){
 		for (int i = 0; i < 26; i++)
@@ -275,21 +275,7 @@ void ST7735_Keyboard::display()
 	selected -> displaySelected(mode);
 }
 
-// Set the mode of the keyboard i.e. which set of buttons are displayed/selectable
-void ST7735_Keyboard::setMode(int new_mode, int key_index){
-	mode = new_mode;
-	selected_index = key_index;
-	selected -> display(mode);
-	
-	if (mode == 0 || mode == 1){
-		selected = letters + key_index;
-	} else if (mode == 2){
-		selected = numbers + key_index;
-	} else {
-		selected = specials + key_index;
-	}
-}
-
+// Set the mode of the keyboard, and set selected key to passed value
 void ST7735_Keyboard::setModeClear(int new_mode, int key_index){
 	mode = new_mode;
 	selected_index = key_index;
@@ -303,35 +289,19 @@ void ST7735_Keyboard::setModeClear(int new_mode, int key_index){
 	}
 }
 
-// Overloaded set mode returns to the first key
-void ST7735_Keyboard::setMode(int new_mode){
-	mode = new_mode;
-	selected_index = 0;
-	
-	if (mode == 0 || mode == 1){
-		selected = letters;
-	} else if (mode == 2){
-		selected = numbers;
-	} else {
-		selected = specials;
-	}
-	
-	this -> display();
-}
-
 // Displays the given prompt above the keyboard
 void ST7735_Keyboard::displayPrompt(char* prompt)
 {
-	tft -> fillRect(0, 0, tft -> width(), tft -> height() / 2, PROMPT_BACKGROUND);
-	tft -> setTextColor(PROMPT_COLOUR);
+	tft -> fillRect(0, 0, tft -> width(), tft -> height() / 2, BLACK);
+	tft -> setTextColor(WHITE);
 	tft -> setCursor(0, 0);
 	tft -> print(prompt);
 }
 
 // Displays the current string that has been entered by the user
 void ST7735_Keyboard::displayCurrentString(){
-	tft -> fillRect(0, 10, tft -> width(), tft -> height() / 6, PROMPT_BACKGROUND);
-	tft -> setTextColor(INPUT_COLOUR);
+	tft -> fillRect(0, 10, tft -> width(), tft -> height() / 6, BLACK);
+	tft -> setTextColor(LIGHT_GREEN);
 	tft -> setCursor(0, 10);
 	tft -> print(current_string);
 }
@@ -478,7 +448,7 @@ void ST7735_Keyboard::displayInstructions(){
   tft -> setCursor(0, 0);
   tft -> setTextColor(WHITE);
   tft -> println("Keyboard Instructions");
-  tft -> setTextColor(RED);
+  tft -> setTextColor(LIGHT_RED);
   tft -> println("\n*To see again, unplug device and plug it back in*\n");
   tft -> setTextColor(WHITE);
   tft -> println("<-- : Select Key on Left");
@@ -508,9 +478,9 @@ Key::Key(Adafruit_ST7735* display, int x_pos, int y_pos, int width,
 
 // Display the key
 void Key::display(int mode){
-	tft -> fillRoundRect(x, y, w, h, 2, UNSELECTED_BG_COLOUR);
+	tft -> fillRoundRect(x, y, w, h, 2, DARK_GREY);
 	tft -> setCursor(x + 4, y + 2);
-	tft -> setTextColor(UNSELECTED_LETTER_COLOUR);
+	tft -> setTextColor(WHITE);
 	if (mode == 1 && bottom_key == 0){
 		tft -> print((char) (action[0] - 32));
 	} else {
@@ -520,9 +490,9 @@ void Key::display(int mode){
 
 // Display the key as selected
 void Key::displaySelected(int mode){
-	tft -> fillRoundRect(x, y, w, h, 2, SELECTED_BG_COLOUR);
+	tft -> fillRoundRect(x, y, w, h, 2, GRAY);
 	tft -> setCursor(x + 4, y + 2);
-	tft -> setTextColor(SELECTED_LETTER_COLOUR);
+	tft -> setTextColor(BLACK);
 	if (mode == 1 && bottom_key == 0){
 		tft -> print((char) (action[0] - 32));
 	} else {

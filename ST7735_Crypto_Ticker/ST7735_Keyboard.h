@@ -14,15 +14,6 @@
 #define NORMAL_KEY_WIDTH 12
 #define EDGE_BORDER 4
 
-#define KEYBOARD_BG_COLOUR 0x0000
-#define UNSELECTED_BG_COLOUR 0x8C51
-#define SELECTED_BG_COLOUR 0xD69A
-#define PROMPT_COLOUR 0xFFFF
-#define INPUT_COLOUR 0x07E0
-#define PROMPT_BACKGROUND 0x0000
-#define SELECTED_LETTER_COLOUR 0x0000
-#define UNSELECTED_LETTER_COLOUR 0xFFFF
-
 class Key
 {
 	public:
@@ -85,7 +76,7 @@ class ST7735_Keyboard
 	int enter_pressed; // Indicate if enter pressed
 	int last_mode; // Mode to return to when exiting tabs
 	int last_key; // Key last selected when entering tabs
-	int length_limit = 29;
+	int length_limit = 30;
 };
 
 #endif

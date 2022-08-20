@@ -51,20 +51,22 @@ extern unsigned char epd_bitmap_dai[];
 
 #define UPDATE_INTERVAL 30 // Update every 30 seconds
 
-#define MAX_SELECTED_COINS 8
+#define MAX_SELECTED_COINS 8 // Maximum of 8 coins in coin list
 
 #define COIN_MENU_BUTTON_COUNT 8
 
-#define SETTINGS_START_ADDRESS 64
+#define SETTINGS_START_ADDRESS 64 // Where settings are saved in EEPROM
 
-#define COIN_COUNT_ADDRESS 80
-#define COIN_START_ADDRESS 81
+// Additional coins save details
+#define COIN_COUNT_ADDRESS 105
+#define COIN_START_ADDRESS 106
 #define COIN_BLOCK_SIZE 45
 #define ADDED_COINS_LIMIT 5
 
+// Portfolio save details
 #define PORTFOLIO_BLOCK_SIZE 20
-#define PORTFOLIO_START_ADDRESS 312
-#define PORTFOLIO_COUNT_ADDRESS 311
+#define PORTFOLIO_START_ADDRESS 332
+#define PORTFOLIO_COUNT_ADDRESS 331
 #define PORTFOLIO_LIMIT 9
 
 #define EEPROM_SIZE 512
@@ -236,7 +238,7 @@ void setup(void) {
   coins[15] = 
     COIN("TRX", "tron", epd_bitmap_tron, RED, WHITE, RED, 0, value_drawer);
   coins[16] = 
-    COIN("ETC", "ethereum-classic", epd_bitmap_etc, WHITE, LIGHT_GREEN, LIGHT_GREEN, 0, value_drawer);
+    COIN("ETC", "ethereum-classic", epd_bitmap_etc, WHITE, ETC_GREEN, ETC_GREEN, 0, value_drawer);
   coins[17] =
     COIN("LTC", "litecoin", epd_bitmap_litecoin, DARK_GREY, WHITE, DARK_GREY, 0, value_drawer);
   coins[18] =
@@ -293,9 +295,11 @@ void setup(void) {
   if (value == 0) {
     ssid_entered = 0;
     password_entered = 0;
+    keyboard->setModeClear(0, 14);
     keyboard->displayInstructions();
     keyboard->displayPrompt("Enter Network Name (SSID):");
     keyboard->display();
+    keyboard->setInputLengthLimit(30);
   } else if (value == 1) {
     ssid_entered = 1;
     password_entered = 1;
@@ -305,12 +309,11 @@ void setup(void) {
 
   // Get default coin delay time from selector
   coin_cycle_delay = coin_change_times_values[coin_menu->getButtons()[3].selectors[0].getSelected()[0]];
-  last_coin_candle_update_delay = coin_cycle_delay;
 
   // Get default update times from selector
   coin_candle_update_delay = candle_change_times_values
       [coin_menu->getButtons()[3].selectors[1].getSelected()[0]];
-  last_coin_candle_update_delay = portfolio_candle_update_delay;
+  last_coin_candle_update_delay = coin_candle_update_delay;
   
   portfolio_candle_update_delay = candle_change_times_values
       [coin_menu->getButtons()[4].selectors[0].getSelected()[0]];
@@ -345,11 +348,13 @@ void loop() {
       EEPROM.write(eeprom_address, 1);
       eeprom_address++;
       writeToEEPROM(keyboard->getCurrentInput());
-      keyboard->reset();
 
       ssid_entered = 1;
 
+      keyboard->reset();
+      keyboard->setModeClear(0, 14);
       keyboard->displayPrompt("Enter Network Password:");
+      keyboard->display();
     } else if (irrecv.decode()) {
       keyboard->interact(&irrecv.decodedIRData.decodedRawData);
       irrecv.resume();
@@ -370,8 +375,8 @@ void loop() {
     EEPROM.commit();
   } else if (network_initialised == 0) { // Initialise network
     // Load the credentials from EEPROM and init network connection
-    char loaded_ssid[30];
-    char loaded_password[30];
+    char loaded_ssid[31];
+    char loaded_password[31];
 
     drawIntroAnimation();
 
@@ -387,8 +392,7 @@ void loop() {
     }
 
     // Data fetching time affordance
-    tft.setCursor(30, tft.height()/2);
-    tft.print("Fetching data...");
+    drawFetchingData();
 
     network_initialised = 1; // Indicate successful network init
   } else if (in_menu == 1) { // Do menu operations
@@ -412,9 +416,25 @@ void loop() {
         int response =
             coin_changer->interact(&irrecv.decodedIRData.decodedRawData);
         if (response >= 0) { // Successful
+          tft.fillScreen(BLACK);
+          drawFetchingData();
+          
+          // If overwritten coin was in portfolio, reset the EEPROM candles and set coin amount to 0
+          if (coins[response].amount != 0){
+            coins[response].amount = 0;
+            portfolio->clearCandles();
+
+            // Get data if portfolio not empty
+            if (portfolio_editor->selected_portfolio_indexes[0] != -1)
+              getData(2); // Get data for portfolio
+            
+            portfolio->addPriceToCandles();
+          }
+          
           writeCoinToEEPROM(coins+response, response);
-          drawMenu();
           resetCoins();
+
+          drawMenu();
         } else if (response == -2) { // Perform verification
           if (verifyID(coin_changer->loaded_id) == 1) {
             // Ensure not adding a coin that already exists
@@ -471,8 +491,8 @@ void loop() {
     for (int i = 0; i < 10; i++) {
       delay(50);
       if (irrecv.decode()) {
-        // Check if '#' pressed to open menu
-        if (irrecv.decodedIRData.decodedRawData == 0xF20DFF00) {
+        // Check if 'OK' pressed to open menu
+        if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00) {
           in_menu = 1;
           drawMenu();
           delay(250);
@@ -653,7 +673,7 @@ void displayAllCoins(){
     tft.fillRect(2, (i-display_all_start_index) * height, 2, height,
                   selected_coins[i]->portfolio_colour);
 
-    tft.setCursor(7, (i-display_all_start_index) * height + (height/2 - 5));
+    tft.setCursor(7, (i-display_all_start_index) * height + (height/2 - 4));
     tft.print(selected_coins[i]->coin_code);
     
     tft.setCursor(52, (i-display_all_start_index) * height + (height-20)/2);
@@ -661,11 +681,12 @@ void displayAllCoins(){
     value_drawer->drawPrice(7, selected_coins[i]->current_price, 7, 1, 
       coin_menu -> getButtons()[3].selectors[2].getSelected()[0]); // Currency
 
-    tft.setCursor(52,  (i-display_all_start_index) * height + height/2);
+    tft.setCursor(52,  (i-display_all_start_index) * height + height/2 + 2);
     value_drawer->drawPercentageChange(5,
       selected_coins[i]->current_change, 3, 1);
 
-    selected_coins[i]->candles->displaySmall(105, tft.width()-105, (i-display_all_start_index) * height + 1, (i-display_all_start_index) * height + height - 2);
+    selected_coins[i]->candles->displaySmall(105, tft.width()-105, 
+      (i-display_all_start_index) * height + 1, (i-display_all_start_index) * height + height - 2);
   }
 
   incrementCoinCycleDelay();
@@ -680,12 +701,12 @@ void drawIntroAnimation() {
 
   tft.fillScreen(BLACK);
   tft.setCursor(10, 5);
-  drawBitmap(0, 0, epd_bitmap_logo_green, 160, 58, ST77XX_GREEN);
-  drawBitmap(0, 0, epd_bitmap_logo_red, 160, 58, ST77XX_RED);
+  drawBitmap(0, 0, epd_bitmap_logo_green, 160, 58, GREEN);
+  drawBitmap(0, 0, epd_bitmap_logo_red, 160, 58, RED);
 
   delay(500);
 
-  tft.setTextColor(ST77XX_GREEN);
+  tft.setTextColor(LIGHT_GREEN);
   tft.setCursor(8, tft.height() - 67);
   tft.write("Powered by CoinGecko API");
 
@@ -794,8 +815,8 @@ void getData(int app_mode) {
     http.end();
     
     // If WiFi becomes disconnected, load credentials and reconnect
-    char loaded_ssid[30];
-    char loaded_password[30];
+    char loaded_ssid[31];
+    char loaded_password[31];
 
     loadCredsFromEEPROM(loaded_ssid, loaded_password);
 
@@ -972,12 +993,12 @@ void initialiseNetwork(char *ssid, char *password) {
   tft.setTextColor(WHITE);
   tft.setCursor(0, 10);
   tft.println(" SSID: ");
-  tft.setTextColor(RED);
+  tft.setTextColor(LIGHT_RED);
   tft.print(" ");
   tft.println(ssid);
   tft.setTextColor(WHITE);
   tft.println("\n Password: ");
-  tft.setTextColor(RED);
+  tft.setTextColor(LIGHT_RED);
   tft.print(" ");
   tft.println(password);
   tft.setTextColor(WHITE);
@@ -1003,7 +1024,7 @@ void initialiseNetwork(char *ssid, char *password) {
   WiFi.persistent(true);
 
   tft.print("\n ");
-  tft.setTextColor(ST77XX_GREEN);
+  tft.setTextColor(LIGHT_GREEN);
   tft.println("\n Connection Established");
   tft.setTextColor(WHITE);
   tft.println("\n IP address: ");
@@ -1126,18 +1147,18 @@ void writeCoinToEEPROM(COIN* coin, char index){
   do {
     EEPROM.write(write_address+i, coin->coin_code[i]);
     i++;
-  } while (coin->coin_code[i] != 0 && i < 9);
+  } while (coin->coin_code[i] != 0 && i < 8);
   EEPROM.write(write_address+i, 0);
-  write_address+=10;
+  write_address+=9;
 
   // Write tag to eeprom
   i = 0;
   do {
     EEPROM.write(write_address+i, coin->coin_id[i]);
     i++;
-  } while (coin->coin_id[i] != 0 && i < 29);
+  } while (coin->coin_id[i] != 0 && i < 30);
   EEPROM.write(write_address+i, 0);
-  write_address+=30;
+  write_address+=31;
 
   // Write the colour  
   EEPROM.write(write_address, (byte) coin_changer->pickers[0].getValue());
@@ -1159,16 +1180,16 @@ void readCoinsFromEEPROM(){
       write_address++;
 
       // Read coin code
-      for (int i = 0; i < 10; i++){
+      for (int i = 0; i < 9; i++){
         coins[index].coin_code[i] = (char) EEPROM.read(write_address+i);
       }
-      write_address+=10;
+      write_address+=9;
 
       // Read coin id
-      for (int i = 0; i < 30; i++){
+      for (int i = 0; i < 31; i++){
         coins[index].coin_id[i] = EEPROM.read(write_address+i);
       }
-      write_address+=30;
+      write_address+=31;
 
       coins[index].bitmap_present = 0;
 
@@ -1402,8 +1423,8 @@ void interactWithMenu() {
   if (irrecv.decode()) {
       if (irrecv.decodedIRData.decodedRawData == 0xBA45FF00){
         // If WiFi becomes disconnected, load credentials and reconnect
-        char loaded_ssid[30];
-        char loaded_password[30];
+        char loaded_ssid[31];
+        char loaded_password[31];
     
         loadCredsFromEEPROM(loaded_ssid, loaded_password);
     
@@ -1430,9 +1451,7 @@ void interactWithMenu() {
         in_menu = 0;
 
         tft.fillScreen(ST77XX_BLACK);
-        tft.setTextColor(ST77XX_WHITE);
-        tft.setCursor(30, tft.height()/2);
-        tft.print("Fetching data...");
+        drawFetchingData();
         
         getData(1); 
 
@@ -1510,6 +1529,12 @@ void interactWithMenu() {
     }
   }
 
+void drawFetchingData(){
+  tft.setTextColor(ST77XX_WHITE);
+  tft.setCursor(30, tft.height()/2);
+  tft.print("Fetching data...");
+}
+
 
 void drawMenu() {
   coin_menu->display();
@@ -1518,10 +1543,10 @@ void drawMenu() {
   tft.setTextSize(1);
   if (WiFi.status() == WL_CONNECTED && coingecko_up == 1){
     tft.setCursor(52, tft.height()-10);
-    tft.setTextColor(ST77XX_GREEN);
+    tft.setTextColor(LIGHT_GREEN);
     tft.print("Connected");
   } else {
-    tft.setTextColor(ST77XX_RED);
+    tft.setTextColor(LIGHT_RED);
     if (WiFi.status() != WL_CONNECTED){
       tft.setCursor(29, tft.height()-10);
       tft.print("WiFi Disconnected");
@@ -1539,13 +1564,17 @@ void drawMenu() {
 void interactWithCoinList() {
   coin_menu->getButtons()[0].flashSelectedSelector();
   if (irrecv.decode()) {
+    // Exit sub menu
+    if (irrecv.decodedIRData.decodedRawData == 0xF20DFF00) {
+      tft.fillScreen(BLACK);
+      drawFetchingData();
+      resetCoins();
+      in_coinlist = 0;
+      drawMenu();
+    }
+    
     if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00) {
       char *action = coin_menu->getButtons()[0].pressSubMenu();
-      if (action == "Return") {
-        resetCoins();
-        in_coinlist = 0;
-        coin_menu->display();
-      }
     }
 
     if (irrecv.decodedIRData.decodedRawData == 0xAD52FF00)
@@ -1572,47 +1601,49 @@ void interactWithCoinList() {
 void interactWithCryptoSettings() {
     coin_menu->getButtons()[3].flashSelectedSelector();
     if (irrecv.decode()) {
+      // Exit sub menu
+      if (irrecv.decodedIRData.decodedRawData == 0xF20DFF00) {
+        // Update selected settings
+        coin_cycle_delay = coin_change_times_values[coin_menu->getButtons()[3].selectors[0].getSelected()[0]];
+        coin_candle_update_delay = candle_change_times_values[coin_menu->getButtons()[3].selectors[1].getSelected()[0]];
+
+        if (coin_candle_update_delay != last_coin_candle_update_delay || 
+              last_currency != coin_menu -> getButtons()[3].selectors[2].getSelected()[0]){
+          tft.fillScreen(ST77XX_BLACK);
+          drawFetchingData();
+          resetCoins();
+        }
+
+        last_coin_candle_update_delay = coin_candle_update_delay;
+        
+        // If currency changes, also reset portfolio candles
+        if (last_currency != coin_menu -> getButtons()[3].selectors[2].getSelected()[0]){
+          // Reset portfolio candles and data
+          portfolio->clearCandles();
+          
+          // Get data if portfolio not empty
+          if (portfolio_editor->selected_portfolio_indexes[0] != -1)
+            getData(2); // Get data for portfolio
+          
+          portfolio->addPriceToCandles();
+          
+          last_currency = coin_menu -> getButtons()[3].selectors[2].getSelected()[0];
+        }
+
+        if (last_bitmap_toggle != coin_menu -> getButtons()[3].selectors[3].getSelected()[0]){
+          for (int i = 0; i < COIN_COUNT; i++)
+            coins[i].toggleBitmap();
+
+          last_bitmap_toggle = coin_menu -> getButtons()[3].selectors[3].getSelected()[0];
+        }
+
+        in_crypto_settings = 0;
+        drawMenu();
+      }
+
+      // Pass pressed buttons into coin settings sub menu
       if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00) {
         char *action = coin_menu->getButtons()[3].pressSubMenu();
-        if (action == "Return") {
-          // If currency changes, reset coins and portfolio candles
-          if (last_currency != coin_menu -> getButtons()[3].selectors[2].getSelected()[0]){
-            // Reset the coins for the new currency (clear candles etc)
-            resetCoins();
-
-            // Reset portfolio candles and data
-            portfolio->clearCandles();
-            
-            // Get data if portfolio not empty
-            if (portfolio_editor->selected_portfolio_indexes[0] != -1){
-              getData(2); // Get data for portfolio
-            }
-            
-            portfolio->addPriceToCandles();
-            
-            last_currency = coin_menu -> getButtons()[3].selectors[2].getSelected()[0];
-          }
-
-          if (last_bitmap_toggle != coin_menu -> getButtons()[3].selectors[3].getSelected()[0]){
-            for (int i = 0; i < COIN_COUNT; i++){
-              coins[i].toggleBitmap();
-            }
-
-            last_bitmap_toggle = coin_menu -> getButtons()[3].selectors[3].getSelected()[0];
-          }
-          
-          coin_cycle_delay = coin_change_times_values[coin_menu->getButtons()[3].selectors[0].getSelected()[0]];
-
-          coin_candle_update_delay = candle_change_times_values[coin_menu->getButtons()[3].selectors[1].getSelected()[0]];
-
-          if (coin_candle_update_delay != last_coin_candle_update_delay)
-            resetCoins();
-
-          last_coin_candle_update_delay = coin_candle_update_delay;
-
-          in_crypto_settings = 0;
-          coin_menu->display();
-        }
       }
 
       if (irrecv.decodedIRData.decodedRawData == 0xAD52FF00)
@@ -1635,23 +1666,26 @@ void interactWithCryptoSettings() {
 void interactWithPortfolioSettings() {
     coin_menu->getButtons()[4].flashSelectedSelector();
     if (irrecv.decode()) {
+      // Exit sub menu
+      if (irrecv.decodedIRData.decodedRawData == 0xF20DFF00) {
+        portfolio_candle_update_delay = candle_change_times_values
+            [coin_menu->getButtons()[4].selectors[0].getSelected()[0]];
+
+        if (portfolio_candle_update_delay !=
+            last_portfolio_candle_update_delay)
+          portfolio->clearCandles();
+
+        last_portfolio_candle_update_delay = portfolio_candle_update_delay;
+
+        portfolio_cycle_disabled = coin_menu->getButtons()[4].selectors[1].getSelected()[0];
+
+        in_portfolio_settings = 0;
+        drawMenu();
+      }
+
+      // Pass pressed buttons into portfolio settings sub menu
       if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00) {
         char *action = coin_menu->getButtons()[4].pressSubMenu();
-        if (action == "Return") {
-          portfolio_candle_update_delay = candle_change_times_values
-              [coin_menu->getButtons()[4].selectors[0].getSelected()[0]];
-
-          if (portfolio_candle_update_delay !=
-              last_portfolio_candle_update_delay)
-            portfolio->clearCandles();
-
-          last_portfolio_candle_update_delay = portfolio_candle_update_delay;
-
-          portfolio_cycle_disabled = coin_menu->getButtons()[4].selectors[1].getSelected()[0];
-
-          in_portfolio_settings = 0;
-          coin_menu->display();
-        }
       }
 
       if (irrecv.decodedIRData.decodedRawData == 0xAD52FF00)
@@ -1669,4 +1703,4 @@ void interactWithPortfolioSettings() {
       delay(50);
       irrecv.resume();
     }
-  }
+}

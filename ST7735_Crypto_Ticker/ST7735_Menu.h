@@ -17,14 +17,7 @@
 #define LAST_BUTTON_X 32
 #define FIRST_BUTTON_X 4
 
-#define KEYBOARD_BG_COLOUR 0x0000
-#define UNSELECTED_BG_COLOUR 0x8C51
-#define SELECTED_BG_COLOUR 0xD69A
-#define PROMPT_COLOUR 0xFFFF
 #define INPUT_COLOUR 0xF800
-#define PROMPT_BACKGROUND 0x0000
-#define SELECTED_LETTER_COLOUR 0x0000
-#define UNSELECTED_LETTER_COLOUR 0xFFFF
 #define MAX_INPUT_LENGTH 32
 
 class Selector {
@@ -63,7 +56,7 @@ private:
 
 class Button {
 public:
-  Button(Adafruit_ST7735 *, int, int, int, int, char *, int);
+  Button(Adafruit_ST7735 *, int, int, int, int, char *);
   void addSelector(char *, char **, int, int, int);
   void display();
   void displaySelected();
@@ -81,9 +74,9 @@ public:
   char *action;
   Selector *selectors;
   int selector_count;
-  Button *return_button;
+  //Button *return_button;
   char *pressSubMenu();
-  int on_return_button;
+ // int on_return_button;
   int current_selector;
 
 private:

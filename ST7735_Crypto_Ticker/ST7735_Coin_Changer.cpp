@@ -35,7 +35,7 @@ ST7735_Coin_Changer::ST7735_Coin_Changer(Adafruit_ST7735 *display,
 int ST7735_Coin_Changer::isActive() { return active; }
 
 // Set the coin changer to active
-void ST7735_Coin_Changer::setActive() { active = 1; }
+void ST7735_Coin_Changer::setActive() { active = 1; keyboard->setModeClear(0, 14);}
 
 // Exit the coin changer
 void ST7735_Coin_Changer::exit() { active = 0; }
@@ -44,7 +44,7 @@ void ST7735_Coin_Changer::exit() { active = 0; }
 void ST7735_Coin_Changer::verificationSuccess() {
   verified_id = 1;
   tft->setCursor(0, 30);
-  tft->setTextColor(ST77XX_GREEN);
+  tft->setTextColor(LIGHT_GREEN);
   tft->print("Coin ID verified");
   delay(2000);
   stage++;
@@ -54,21 +54,25 @@ void ST7735_Coin_Changer::verificationSuccess() {
 // Indicate that the verification of the entered id was a failure
 void ST7735_Coin_Changer::verificationFailed() {
   tft->setCursor(0, 30);
-  tft->setTextColor(RED);
+  tft->setTextColor(LIGHT_RED);
   tft->print("Coin ID not verified\nTry again");
   delay(2000);
   keyboard->reset();
+  keyboard->setModeClear(0, 14);
   keyboard->displayPrompt("Enter coin id:");
+  keyboard->display();
 }
 
 // Indicate that the id is already present
 void ST7735_Coin_Changer::duplicateDetected() {
   tft->setCursor(0, 30);
-  tft->setTextColor(RED);
+  tft->setTextColor(LIGHT_RED);
   tft->print("Duplicate ID Detected\nTry again");
   delay(2000);
   keyboard->reset();
+  keyboard->setModeClear(0, 14);
   keyboard->displayPrompt("Enter coin id:");
+  keyboard->display();
 }
 
 // Draw the square indicating the currently selected colour
@@ -108,6 +112,7 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
     verified_id = 0;
     selected_picker = 0;
     keyboard->reset();
+    keyboard->setModeClear(0, 14);
     current_replacing_index = 0;
     return -3;
   }
@@ -154,7 +159,7 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
     // ok
     if (*ir_data == 0xE31CFF00) {
       stage++;
-      keyboard->setInputLengthLimit(29); // Limit id size to 29
+      keyboard->setInputLengthLimit(30); // Limit id size to 29
       display();
     }
   } else if (stage == 1) { // Search for coin id
@@ -172,7 +177,8 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
       loaded_id[i] = 0;
 
       keyboard->reset();
-      keyboard->setInputLengthLimit(7); // Limit id size to 29
+      keyboard->setModeClear(1, 14);
+      keyboard->setInputLengthLimit(7); // Limit id size to 7
 
       return -2;
     }
@@ -200,7 +206,8 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
       active = 0;
       verified_id = 0;
       selected_picker = 0;
-      keyboard->end();
+      keyboard->reset();
+      keyboard->setModeClear(0, 14);
       return current_replacing_index;
     }
 
@@ -238,6 +245,7 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
 void ST7735_Coin_Changer::loadIntoSelectedCoin() {
   coins[current_replacing_index].bitmap_present = 0;
   
+  // Load the coin code
   int i = 0;
   while(loaded_code[i] != 0){
     coins[current_replacing_index].coin_code[i] = loaded_code[i];
@@ -245,6 +253,7 @@ void ST7735_Coin_Changer::loadIntoSelectedCoin() {
   }
   coins[current_replacing_index].coin_code[i] = 0;
 
+  // Load the coin id
   i = 0;
   while(loaded_id[i] != 0){
      coins[current_replacing_index].coin_id[i] = loaded_id[i];
@@ -252,12 +261,15 @@ void ST7735_Coin_Changer::loadIntoSelectedCoin() {
   }
   coins[current_replacing_index].coin_id[i] = 0;
 
+  // Load the coin colour
   coins[current_replacing_index].portfolio_colour = rgb_to_bgr(
       pickers[0].getValue(), pickers[1].getValue(), pickers[2].getValue());
 
+  // Reset coins if populated
   if (coins[current_replacing_index].candles_init == 1)
     coins[current_replacing_index].candles->reset();
 
+  // Add code to coin code list
   coin_code_list[current_replacing_index] = coins[current_replacing_index].coin_code;
 }
 
@@ -340,10 +352,10 @@ void Colour_Picker_Component::display() {
 
   if (colour == 0) {
     tft->println("Red:");
-    tft->setTextColor(RED);
+    tft->setTextColor(LIGHT_RED);
   } else if (colour == 1) {
     tft->println("Green:");
-    tft->setTextColor(ST77XX_GREEN);
+    tft->setTextColor(LIGHT_GREEN);
   } else if (colour == 2) {
     tft->println("Blue:");
     tft->setTextColor(BLUE);
@@ -358,16 +370,16 @@ void Colour_Picker_Component::display() {
 // Display the picker as selected
 void Colour_Picker_Component::displaySelected() {
   tft->setTextSize(1);
-  tft->setTextColor(BLACK);
-  tft->fillRoundRect(x, y, 46, 32, 3, GRAY);
+  tft->setTextColor(WHITE);
+  tft->fillRoundRect(x, y, 46, 32, 3, DARK_GREY);
   tft->setCursor(x + 5, y + 2);
 
   if (colour == 0) {
     tft->println("Red:");
-    tft->setTextColor(RED);
+    tft->setTextColor(LIGHT_RED);
   } else if (colour == 1) {
     tft->println("Green:");
-    tft->setTextColor(ST77XX_GREEN);
+    tft->setTextColor(LIGHT_GREEN);
   } else if (colour == 2) {
     tft->println("Blue:");
     tft->setTextColor(BLUE);
@@ -384,14 +396,14 @@ unsigned char Colour_Picker_Component::getValue() { return value; }
 
 // Increase the value by the amount selected by the user
 void Colour_Picker_Component::incrementValue() {
-  tft->fillRoundRect(x, y + 10, 46, 22, 3, GRAY);
+  tft->fillRoundRect(x, y + 10, 46, 22, 3, DARK_GREY);
 
   value = value < 245 ? value + 10 : 255;
 
   if (colour == 0) {
-    tft->setTextColor(RED);
+    tft->setTextColor(LIGHT_RED);
   } else if (colour == 1) {
-    tft->setTextColor(ST77XX_GREEN);
+    tft->setTextColor(LIGHT_GREEN);
   } else if (colour == 2) {
     tft->setTextColor(BLUE);
   }
@@ -406,14 +418,14 @@ void Colour_Picker_Component::incrementValue() {
 
 // Decrease the value by the amount selected by the user
 void Colour_Picker_Component::decrementValue() {
-  tft->fillRoundRect(x, y + 10, 46, 22, 3, GRAY);
+  tft->fillRoundRect(x, y + 10, 46, 22, 3, DARK_GREY);
 
   value = value > 15 ? value - 10 : 5;
 
   if (colour == 0) {
-    tft->setTextColor(RED);
+    tft->setTextColor(LIGHT_RED);
   } else if (colour == 1) {
-    tft->setTextColor(ST77XX_GREEN);
+    tft->setTextColor(LIGHT_GREEN);
   } else if (colour == 2) {
     tft->setTextColor(BLUE);
   }

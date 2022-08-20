@@ -93,9 +93,9 @@ void Candle_Graph::displaySmall(int x, int w, int top, int bottom){
     if (candles[i].low < 0) continue;
 
     if (point_y <= last_y){
-      tft->drawLine(map(i-1, 0, count, x, x + w), last_y, map(i, 0, count, x, x + w), point_y, ST77XX_GREEN);
+      tft->drawLine(map(i-1, 0, count, x, x + w), last_y, map(i, 0, count, x, x + w), point_y, LIGHT_GREEN);
     } else {
-      tft->drawLine(map(i-1, 0, count, x, x + w), last_y, map(i, 0, count, x, x + w), point_y, RED);
+      tft->drawLine(map(i-1, 0, count, x, x + w), last_y, map(i, 0, count, x, x + w), point_y, LIGHT_RED);
     }
 
     last_y = point_y;
@@ -117,7 +117,7 @@ void Candle_Graph::display(int currency) {
 
   if (labels == 1) {
     tft->setTextSize(1);
-    tft->setTextColor(ST77XX_GREEN);
+    tft->setTextColor(LIGHT_GREEN);
     tft->setCursor(0, top - 10);
     
     if (currency == 0){ // GBP
@@ -129,7 +129,7 @@ void Candle_Graph::display(int currency) {
     }
 
     tft->print(max_val);
-    tft->setTextColor(RED);
+    tft->setTextColor(LIGHT_RED);
     tft->setCursor(0, bottom + 2);
     
     if (currency == 0){ // GBP
@@ -175,7 +175,7 @@ void Candle_Graph::display(int currency) {
     int bar_x = map(i, 0, count, 2, tft->width() - 2);
     uint16_t color;
 
-    color = (candles[i].opening > candles[i].closing) ? RED : ST77XX_GREEN;
+    color = (candles[i].opening > candles[i].closing) ? RED : LIGHT_GREEN;
 
     tft->drawLine(bar_x, high_y, bar_x + 2, high_y, color);
     tft->drawLine(bar_x + 1, high_y, bar_x + 1, min(opening_y, closing_y),

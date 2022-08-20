@@ -104,10 +104,10 @@ void ST7735_Value_Drawer::drawPrice(double available_space, double price, double
 
 void ST7735_Value_Drawer::drawSign(double value){
     if (value < 0) {
-        display->setTextColor(RED);
+        display->setTextColor(LIGHT_RED);
         display->print('-');
     } else {
-        display->setTextColor(ST77XX_GREEN);
+        display->setTextColor(LIGHT_GREEN);
         display->print('+');
     }
 }

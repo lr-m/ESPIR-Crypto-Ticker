@@ -103,6 +103,7 @@ void ST7735_Portfolio::drawBarSummary(double *total_value, int currency) {
     coin_total =
         coins[portfolio_editor->selected_portfolio_indexes[i]].current_price *
         coins[portfolio_editor->selected_portfolio_indexes[i]].amount;
+    
     tft->setTextSize(1);
     tft->setCursor(7, 33 + i * 10);
     tft->fillRect(2, 32 + i * 10, 2, 10,

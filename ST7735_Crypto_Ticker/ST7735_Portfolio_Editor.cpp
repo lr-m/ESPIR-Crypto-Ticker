@@ -212,7 +212,7 @@ Price_Selector::Price_Selector(Adafruit_ST7735 *display) {
 
 // Adds the currently selected value
 void Price_Selector::addValue() {
-  value = value + value_to_add < 99999999999 ? value + value_to_add : value;
+  value = value + value_to_add < 10000000000 ? value + value_to_add : value;
   redrawValue();
 }
 
@@ -237,7 +237,11 @@ double Price_Selector::getValue() { return value; }
 // Multiplies the selected value to add by 10
 void Price_Selector::increaseValueToAdd() {
   value_to_add =
-      value_to_add * 10 < 10000000000 ? value_to_add * 10 : value_to_add;
+      value_to_add * 10 < 1000000000 ? value_to_add * 10 : value_to_add;
+
+  // Avoid dodgy floating point stuff
+  value_to_add = value_to_add >= 1 ? round(value_to_add) : value_to_add;
+
   redrawValueChange();
 }
 
@@ -273,10 +277,14 @@ void Price_Selector::redrawValueChange() {
   tft->setTextSize(1);
   tft->fillRect(0, 116, tft->width(), 8, BLACK);
   tft->setCursor(2, 116);
-  tft->setTextColor(GREEN);
+  tft->setTextColor(LIGHT_GREEN);
   tft->print('+');
-  tft->setTextColor(RED);
+  tft->setTextColor(LIGHT_RED);
   tft->print('-');
   tft->setTextColor(WHITE);
-  tft->print(value_to_add, 6);
+  if (value_to_add < 1){
+    tft->print(value_to_add, 6);
+  } else {
+    tft->print(value_to_add, 0);
+  }
 }
