@@ -1,18 +1,16 @@
 #include "ST7735_Value_Drawer.h"
-#include <cmath>
 
- #define max(a,b) \
-   ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
-     _a > _b ? _a : _b; })
- 
- #define min(a,b) \
-   ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
-     _a < _b ? _a : _b; })
+#define max(a,b) \
+    ({ __typeof__ (a) _a = (a); \
+        __typeof__ (b) _b = (b); \
+        _a > _b ? _a : _b; })
 
-ST7735_Value_Drawer::ST7735_Value_Drawer(Adafruit_ST7735* tft)
-{
+#define min(a,b) \
+    ({ __typeof__ (a) _a = (a); \
+        __typeof__ (b) _b = (b); \
+        _a < _b ? _a : _b; })
+
+ST7735_Value_Drawer::ST7735_Value_Drawer(Adafruit_ST7735* tft) {
 	display = tft;
 }
 
@@ -102,7 +100,7 @@ void ST7735_Value_Drawer::drawPrice(double available_space, double price, double
     display->setTextColor(WHITE);
 }
 
-void ST7735_Value_Drawer::drawSign(double value){
+void ST7735_Value_Drawer::drawSign(double value) {
     if (value < 0) {
         display->setTextColor(LIGHT_RED);
         display->print('-');
@@ -113,7 +111,8 @@ void ST7735_Value_Drawer::drawSign(double value){
 }
 
 // Draws the percentage change on the screen.
-void ST7735_Value_Drawer::drawPercentageChange(double available_space, double value, double max_precision, int size) {
+void ST7735_Value_Drawer::drawPercentageChange(double available_space, 
+        double value, double max_precision, int size) {
     display->setTextSize(1);
 
     int sign;

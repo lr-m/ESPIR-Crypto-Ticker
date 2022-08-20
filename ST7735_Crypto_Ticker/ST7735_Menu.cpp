@@ -4,11 +4,6 @@
 */
 
 #include "ST7735_Menu.h"
-#include "HardwareSerial.h"
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
-#include <Colours.h>
-#include <math.h>       /* floor */
 
 // Constructor for Keyboard
 ST7735_Menu::ST7735_Menu(Adafruit_ST7735* display, int btn_count, 
@@ -206,7 +201,8 @@ int Selector::atBottom(){
 
 void Selector::drawItem(int index){
 	tft -> setCursor(map(index%window_size, 0, window_size - 1, 
-		3, tft -> width() - (tft -> width()/window_size)) - 3, y + 5 + 13*floor(index/window_size));
+		3, tft -> width() - (tft -> width()/window_size)) - 3, y + 5 + 
+		13*floor(index/window_size));
 	
 	int selected_test = 0;
 	for (int j = 0; j < max_selected; j++){
@@ -227,7 +223,8 @@ void Selector::drawItem(int index){
 void Selector::display() {
 	tft->setTextColor(WHITE);
 	tft -> setCursor(x + 5, y);
-	tft -> fillRect(x, y - 3, tft -> width(), 31 + 13 * (ceil(value_count/window_size) - 1), ST77XX_BLACK);
+	tft -> fillRect(x, y - 3, tft -> width(), 31 + 13 * 
+		(ceil(value_count/window_size) - 1), ST77XX_BLACK);
 	tft -> print(prompt);
 	
 	this -> cycleButtons();
@@ -237,10 +234,13 @@ void Selector::display() {
 void Selector::selectIndex(int index){
 	tft -> setTextColor(WHITE);
 	
-	tft -> fillRoundRect(map(index%window_size, 0, window_size - 1, 3, tft -> width() - (tft -> width()/window_size)), 
-		y + 10 + 13*floor(index/window_size), 0.9 * (tft -> width() / window_size), 12, 2, GREEN);
+	tft -> fillRoundRect(map(index%window_size, 0, window_size - 1, 3, 
+		tft -> width() - (tft -> width()/window_size)), 
+		y + 10 + 13*floor(index/window_size), 
+		0.9 * (tft -> width() / window_size), 12, 2, GREEN);
 		
-	tft -> setCursor(map(index%window_size, 0, window_size - 1, 3, tft -> width() - (tft -> width()/window_size)) + 2, 
+	tft -> setCursor(map(index%window_size, 0, window_size - 1, 3, 
+		tft -> width() - (tft -> width()/window_size)) + 2, 
 		y + 12 + 13*floor(index/window_size));
 	
 	tft -> print(options[index]);
@@ -250,10 +250,13 @@ void Selector::selectIndex(int index){
 void Selector::unselectIndex(int index){
 	tft -> setTextColor(WHITE);
 	
-	tft -> fillRoundRect(map(index%window_size, 0, window_size - 1, 3, tft -> width() - (tft -> width()/window_size)), 
-		y + 10 + 13*floor(index/window_size), 0.9 * (tft -> width() / window_size), 12, 2, RED);
+	tft -> fillRoundRect(map(index%window_size, 0, window_size - 1, 3, 
+		tft -> width() - (tft -> width()/window_size)), 
+		y + 10 + 13*floor(index/window_size), 
+		0.9 * (tft -> width() / window_size), 12, 2, RED);
 		
-	tft -> setCursor(map(index%window_size, 0, window_size - 1, 3, tft -> width() - (tft -> width()/window_size)) + 2, 
+	tft -> setCursor(map(index%window_size, 0, window_size - 1, 3, 
+		tft -> width() - (tft -> width()/window_size)) + 2, 
 		y + 12 + 13*floor(index/window_size));
 	
 	tft -> print(options[index]);
@@ -263,7 +266,7 @@ void Selector::unselectIndex(int index){
 void Selector::flashSelected() {
 	tft -> setCursor(map(current_changing_index%window_size, 0, 
 		window_size - 1, FIRST_BUTTON_X, tft -> width() - 
-			LAST_BUTTON_X) - 3, y + 13 + 13*floor(current_changing_index/window_size));
+		LAST_BUTTON_X) - 3, y + 13 + 13*floor(current_changing_index/window_size));
 	
 	int selected_test = 0;
 	for (int j = 0; j < max_selected; j++){
@@ -273,10 +276,13 @@ void Selector::flashSelected() {
 		}
 	}
 	
-	tft -> fillRoundRect(map(current_changing_index%window_size, 0, window_size - 1, 3, tft -> width() - (tft -> width()/window_size)), 
-		y + 10 + 13*floor(current_changing_index/window_size), 0.9 * (tft -> width() / window_size), 12, 2, DARK_GREY);
+	tft -> fillRoundRect(map(current_changing_index%window_size, 0, 
+		window_size - 1, 3, tft -> width() - (tft -> width()/window_size)), 
+		y + 10 + 13*floor(current_changing_index/window_size), 
+		0.9 * (tft -> width() / window_size), 12, 2, DARK_GREY);
 		
-	tft -> setCursor(map(current_changing_index%window_size, 0, window_size - 1, 3, tft -> width() - (tft -> width()/window_size)) + 2, 
+	tft -> setCursor(map(current_changing_index%window_size, 0, 
+	window_size - 1, 3, tft -> width() - (tft -> width()/window_size)) + 2, 
 		y + 12 + 13*floor(current_changing_index/window_size));
 
 	tft -> print(options[current_changing_index]);

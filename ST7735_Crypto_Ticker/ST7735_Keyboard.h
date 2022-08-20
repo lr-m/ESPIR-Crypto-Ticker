@@ -3,10 +3,11 @@
   Copyright (c) 2021 Luke Mills.  All right reserved.
 */
 
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
+#include <Adafruit_GFX.h>
+#include <Adafruit_ST7735.h>
 
-// ensure this library description is only included once
+#include "Colours.h"
+
 #ifndef ST7735_Keyboard_h
 #define ST7735_Keyboard_h
 
@@ -14,8 +15,7 @@
 #define NORMAL_KEY_WIDTH 12
 #define EDGE_BORDER 4
 
-class Key
-{
+class Key {
 	public:
 		Key(Adafruit_ST7735*, int, int, int, int, char*, int);
 		void display(int);
@@ -32,10 +32,7 @@ class Key
 		int bottom_key;
 };
 
-// library interface description
-class ST7735_Keyboard
-{
-  // user-accessible "public" interface
+class ST7735_Keyboard {
   public:
     ST7735_Keyboard(Adafruit_ST7735*);
 	void press();
@@ -60,7 +57,6 @@ class ST7735_Keyboard
 	int getCurrentInputLength();
 	void setInputLengthLimit(int);
 
-  // library-accessible "private" interface
   private:
     Adafruit_ST7735* tft;
 	Key* letters;
@@ -70,13 +66,13 @@ class ST7735_Keyboard
 	
 	Key* selected;
 	char* current_string; // Entered string
-	int mode; // Keyboard mode
-	int selected_index; // Index of selected key in list
-	int current_input_length; // Length of current input
-	int enter_pressed; // Indicate if enter pressed
-	int last_mode; // Mode to return to when exiting tabs
-	int last_key; // Key last selected when entering tabs
-	int length_limit = 30;
+	char mode; // Keyboard mode
+	char selected_index; // Index of selected key in list
+	char current_input_length; // Length of current input
+	char enter_pressed; // Indicate if enter pressed
+	char last_mode; // Mode to return to when exiting tabs
+	char last_key; // Key last selected when entering tabs
+	char length_limit = 30;
 };
 
 #endif

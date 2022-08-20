@@ -2,6 +2,7 @@
 #include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
 #include <ArduinoJson.h>
 #include <Colours.h>
+#include <IR_Codes.h>
 #include <EEPROM.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WiFi.h>
@@ -48,6 +49,14 @@ extern unsigned char epd_bitmap_dai[];
 #define TFT_DC    D4
 #define RECV_PIN  D5
 #define TFT_CS    D6
+
+// OLD PIN CONFIG
+//#define TFT_SCL   D1
+//#define TFT_SDA   D2
+//#define TFT_RES   D3
+//#define RECV_PIN  D4
+//#define TFT_DC    D5
+//#define TFT_CS    D6
 
 #define UPDATE_INTERVAL 30 // Update every 30 seconds
 
@@ -296,7 +305,6 @@ void setup(void) {
     ssid_entered = 0;
     password_entered = 0;
     keyboard->setModeClear(0, 14);
-    keyboard->displayInstructions();
     keyboard->displayPrompt("Enter Network Name (SSID):");
     keyboard->display();
     keyboard->setInputLengthLimit(30);
@@ -494,7 +502,7 @@ void loop() {
       delay(50);
       if (irrecv.decode()) {
         // Check if 'OK' pressed to open menu
-        if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00) {
+        if (irrecv.decodedIRData.decodedRawData == IR_OK){
           in_menu = 1;
           drawMenu();
           delay(250);
@@ -503,18 +511,18 @@ void loop() {
         }
 
         // Change mode if up or down pressed
-        if (irrecv.decodedIRData.decodedRawData == 0xE718FF00 ||
-            irrecv.decodedIRData.decodedRawData == 0xAD52FF00) {
+        if (irrecv.decodedIRData.decodedRawData == IR_UP ||
+            irrecv.decodedIRData.decodedRawData == IR_DOWN){
 
           // Increase mode 
-          if (irrecv.decodedIRData.decodedRawData == 0xE718FF00){
+          if (irrecv.decodedIRData.decodedRawData == IR_UP){
             mode++;
             if (mode > 3)
               mode = 1;
           }
 
           // Decrease mode
-          if (irrecv.decodedIRData.decodedRawData == 0xAD52FF00){
+          if (irrecv.decodedIRData.decodedRawData == IR_DOWN){
             mode--;
             if (mode < 1)
               mode = 3;
@@ -523,7 +531,8 @@ void loop() {
           irrecv.resume();
 
           if (mode == 1) {
-            selected_coins[current_coin]->display(&tft, coin_menu->getButtons()[3].selectors[2].getSelected()[0]);
+            selected_coins[current_coin]->display(&tft, 
+              coin_menu->getButtons()[3].selectors[2].getSelected()[0]);
             incrementCoinCycleDelay();
           } else if (mode == 2) {
             portfolio->display(coin_menu->getButtons()[3].selectors[2].getSelected()[0]);
@@ -537,24 +546,24 @@ void loop() {
         // Check if user wants to move to next/previous coin
         if (mode == 1) {
           // Previous coin
-          if (irrecv.decodedIRData.decodedRawData == 0xF708FF00)
+          if (irrecv.decodedIRData.decodedRawData == IR_LEFT)
             displayPreviousCoin();
 
           // Next coin
-          if (irrecv.decodedIRData.decodedRawData == 0xA55AFF00)
+          if (irrecv.decodedIRData.decodedRawData == IR_RIGHT)
             displayNextCoin();
         } else if (mode == 2) {
-          if (irrecv.decodedIRData.decodedRawData == 0xF708FF00) { // Previous mode
+          if (irrecv.decodedIRData.decodedRawData == IR_LEFT) { // Previous mode
             portfolio->previousMode();
             portfolio->display(coin_menu->getButtons()[3].selectors[2].getSelected()[0]);
-          } else if (irrecv.decodedIRData.decodedRawData == 0xA55AFF00) { // Next mode
+          } else if (irrecv.decodedIRData.decodedRawData == IR_RIGHT) { // Next mode
             portfolio->nextMode();
             portfolio->display(coin_menu->getButtons()[3].selectors[2].getSelected()[0]);
           }
         } else if (mode == 3 && selected_coins_count > 4){ // Check that multiple pages filled
           // Invert currently shown coins (left/right, max 2 pages so both identical result)
-          if (irrecv.decodedIRData.decodedRawData == 0xF708FF00 || 
-              irrecv.decodedIRData.decodedRawData == 0xA55AFF00) { 
+          if (irrecv.decodedIRData.decodedRawData == IR_LEFT || 
+              irrecv.decodedIRData.decodedRawData == IR_RIGHT) { 
             display_all_start_index += 4;
             if (display_all_start_index >= MAX_SELECTED_COINS){
               display_all_start_index = 0;
@@ -724,11 +733,13 @@ void drawIntroAnimation() {
     tft.fillRect(i, tft.height() - 15, 3, 10, WHITE);
 
     if (irrecv.decode()) {
-      if (irrecv.decodedIRData.decodedRawData == 0xE916FF00) {
+      // Clear WiFi creds
+      if (irrecv.decodedIRData.decodedRawData == IR_ASTERISK) {
         clearEEPROMArea(0, SETTINGS_START_ADDRESS);
         ESP.restart();
       }
 
+      // Clear Selected Coins
       if (irrecv.decodedIRData.decodedRawData == 0xBA45FF00) {
         for (int i = 0; i < 10; i++){
           EEPROM.write(SETTINGS_START_ADDRESS+i, 255);
@@ -737,7 +748,8 @@ void drawIntroAnimation() {
         ESP.restart();
       }
 
-      if (irrecv.decodedIRData.decodedRawData == 0xF20DFF00) {
+      // Wipe EEPROM
+      if (irrecv.decodedIRData.decodedRawData == IR_HASHTAG) {
         clearEEPROM();
         ESP.restart();
       }
@@ -1422,34 +1434,17 @@ void loadCredsFromEEPROM(char *ssid, char *pass) {
  * menu actions.
  */
 void interactWithMenu() {
-  if (irrecv.decode()) {
-      if (irrecv.decodedIRData.decodedRawData == 0xBA45FF00){
-        // If WiFi becomes disconnected, load credentials and reconnect
-        char loaded_ssid[31];
-        char loaded_password[31];
-    
-        loadCredsFromEEPROM(loaded_ssid, loaded_password);
-    
-        WiFi.disconnect();
-        WiFi.begin(loaded_ssid, loaded_password);
-    
-        while (WiFi.status() != WL_CONNECTED){
-          delay(500);
-        }
-
-        drawMenu();
-      }
-      
+  if (irrecv.decode()) {     
       // Down key pressed, select next element in menu
-      if (irrecv.decodedIRData.decodedRawData == 0xAD52FF00)
+      if (irrecv.decodedIRData.decodedRawData == IR_DOWN)
         coin_menu->moveDown();
 
       // Down key pressed, select previous element in menu
-      if (irrecv.decodedIRData.decodedRawData == 0xE718FF00)
+      if (irrecv.decodedIRData.decodedRawData == IR_UP)
         coin_menu->moveUp();
 
       // # to exit menu
-      if (irrecv.decodedIRData.decodedRawData == 0xF20DFF00){
+      if (irrecv.decodedIRData.decodedRawData == IR_HASHTAG){
         in_menu = 0;
 
         tft.fillScreen(ST77XX_BLACK);
@@ -1482,7 +1477,7 @@ void interactWithMenu() {
       }
 
       // OK pressed, see what button was pressed and take action
-      if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00) {
+      if (irrecv.decodedIRData.decodedRawData == IR_OK) {
         char *button_action = coin_menu->press();
 
         if (button_action == "Select Coins") {
@@ -1567,7 +1562,7 @@ void interactWithCoinList() {
   coin_menu->getButtons()[0].flashSelectedSelector();
   if (irrecv.decode()) {
     // Exit sub menu
-    if (irrecv.decodedIRData.decodedRawData == 0xF20DFF00) {
+    if (irrecv.decodedIRData.decodedRawData == IR_HASHTAG) {
       tft.fillScreen(BLACK);
       drawFetchingData();
       resetCoins();
@@ -1575,20 +1570,20 @@ void interactWithCoinList() {
       drawMenu();
     }
     
-    if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00) {
+    if (irrecv.decodedIRData.decodedRawData == IR_OK) {
       char *action = coin_menu->getButtons()[0].pressSubMenu();
     }
 
-    if (irrecv.decodedIRData.decodedRawData == 0xAD52FF00)
+    if (irrecv.decodedIRData.decodedRawData == IR_DOWN)
       coin_menu->getButtons()[0].subMenuDown();
 
-    if (irrecv.decodedIRData.decodedRawData == 0xE718FF00)
+    if (irrecv.decodedIRData.decodedRawData == IR_UP)
       coin_menu->getButtons()[0].subMenuUp();
 
-    if (irrecv.decodedIRData.decodedRawData == 0xF708FF00)
+    if (irrecv.decodedIRData.decodedRawData == IR_LEFT)
       coin_menu->getButtons()[0].subMenuLeft();
 
-    if (irrecv.decodedIRData.decodedRawData == 0xA55AFF00)
+    if (irrecv.decodedIRData.decodedRawData == IR_RIGHT)
       coin_menu->getButtons()[0].subMenuRight();
 
     delay(50);
@@ -1604,7 +1599,7 @@ void interactWithCryptoSettings() {
     coin_menu->getButtons()[3].flashSelectedSelector();
     if (irrecv.decode()) {
       // Exit sub menu
-      if (irrecv.decodedIRData.decodedRawData == 0xF20DFF00) {
+      if (irrecv.decodedIRData.decodedRawData == IR_HASHTAG) {
         // Update selected settings
         coin_cycle_delay = coin_change_times_values[coin_menu->getButtons()[3].selectors[0].getSelected()[0]];
         coin_candle_update_delay = candle_change_times_values[coin_menu->getButtons()[3].selectors[1].getSelected()[0]];
@@ -1644,20 +1639,20 @@ void interactWithCryptoSettings() {
       }
 
       // Pass pressed buttons into coin settings sub menu
-      if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00) {
+      if (irrecv.decodedIRData.decodedRawData == IR_OK) {
         char *action = coin_menu->getButtons()[3].pressSubMenu();
       }
 
-      if (irrecv.decodedIRData.decodedRawData == 0xAD52FF00)
+      if (irrecv.decodedIRData.decodedRawData == IR_DOWN)
         coin_menu->getButtons()[3].subMenuDown();
 
-      if (irrecv.decodedIRData.decodedRawData == 0xE718FF00)
+      if (irrecv.decodedIRData.decodedRawData == IR_UP)
         coin_menu->getButtons()[3].subMenuUp();
 
-      if (irrecv.decodedIRData.decodedRawData == 0xF708FF00)
+      if (irrecv.decodedIRData.decodedRawData == IR_LEFT)
         coin_menu->getButtons()[3].subMenuLeft();
 
-      if (irrecv.decodedIRData.decodedRawData == 0xA55AFF00)
+      if (irrecv.decodedIRData.decodedRawData == IR_RIGHT)
         coin_menu->getButtons()[3].subMenuRight();
 
       delay(50);
@@ -1669,7 +1664,7 @@ void interactWithPortfolioSettings() {
     coin_menu->getButtons()[4].flashSelectedSelector();
     if (irrecv.decode()) {
       // Exit sub menu
-      if (irrecv.decodedIRData.decodedRawData == 0xF20DFF00) {
+      if (irrecv.decodedIRData.decodedRawData == IR_HASHTAG) {
         portfolio_candle_update_delay = candle_change_times_values
             [coin_menu->getButtons()[4].selectors[0].getSelected()[0]];
 
@@ -1686,20 +1681,19 @@ void interactWithPortfolioSettings() {
       }
 
       // Pass pressed buttons into portfolio settings sub menu
-      if (irrecv.decodedIRData.decodedRawData == 0xE31CFF00) {
+      if (irrecv.decodedIRData.decodedRawData == IR_OK) 
         char *action = coin_menu->getButtons()[4].pressSubMenu();
-      }
 
-      if (irrecv.decodedIRData.decodedRawData == 0xAD52FF00)
+      if (irrecv.decodedIRData.decodedRawData == IR_DOWN)
         coin_menu->getButtons()[4].subMenuDown();
 
-      if (irrecv.decodedIRData.decodedRawData == 0xE718FF00)
+      if (irrecv.decodedIRData.decodedRawData == IR_UP)
         coin_menu->getButtons()[4].subMenuUp();
 
-      if (irrecv.decodedIRData.decodedRawData == 0xF708FF00)
+      if (irrecv.decodedIRData.decodedRawData == IR_LEFT)
         coin_menu->getButtons()[4].subMenuLeft();
 
-      if (irrecv.decodedIRData.decodedRawData == 0xA55AFF00)
+      if (irrecv.decodedIRData.decodedRawData == IR_RIGHT)
         coin_menu->getButtons()[4].subMenuRight();
 
       delay(50);

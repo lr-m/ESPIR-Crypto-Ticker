@@ -5,10 +5,12 @@
 
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
-#include <ST7735_Candle_Graph.h>
-#include <ST7735_Coin.h>
-#include <ST7735_Portfolio_Editor.h>
-//#include "ST7735_Value_Drawer.h"
+#include <cmath>
+
+#include "ST7735_Candle_Graph.h"
+#include "ST7735_Coin.h"
+#include "ST7735_Portfolio_Editor.h"
+#include "Colours.h"
 
 #define DEG2RAD 0.0174532925
 #define MODE_COUNT 3

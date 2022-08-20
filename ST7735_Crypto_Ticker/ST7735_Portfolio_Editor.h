@@ -3,11 +3,12 @@
   Copyright (c) 2021 Luke Mills.  All right reserved.
 */
 
-#include "ST7735_Coin.h"
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
+#include <Adafruit_GFX.h>
+#include <Adafruit_ST7735.h>
 
-// ensure this library description is only included once
+#include "ST7735_Coin.h"
+#include "Colours.h"
+
 #ifndef ST7735_Portfolio_Editor_h
 #define ST7735_Portfolio_Editor_h
 

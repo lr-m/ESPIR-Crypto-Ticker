@@ -4,10 +4,6 @@
 */
 
 #include "ST7735_Coin_Changer.h"
-#include "HardwareSerial.h"
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
-#include <Colours.h>
 
 // Constructor for Portfolio Editor
 ST7735_Coin_Changer::ST7735_Coin_Changer(Adafruit_ST7735 *display,
@@ -35,7 +31,10 @@ ST7735_Coin_Changer::ST7735_Coin_Changer(Adafruit_ST7735 *display,
 int ST7735_Coin_Changer::isActive() { return active; }
 
 // Set the coin changer to active
-void ST7735_Coin_Changer::setActive() { active = 1; keyboard->setModeClear(0, 14);}
+void ST7735_Coin_Changer::setActive() { 
+  active = 1; 
+  keyboard->setModeClear(0, 14);
+}
 
 // Exit the coin changer
 void ST7735_Coin_Changer::exit() { active = 0; }
@@ -48,6 +47,7 @@ void ST7735_Coin_Changer::verificationSuccess() {
   tft->print("Coin ID verified");
   delay(2000);
   stage++;
+  keyboard->setInputLengthLimit(7); // Limit code size to 7
   display();
 }
 
@@ -59,6 +59,7 @@ void ST7735_Coin_Changer::verificationFailed() {
   delay(2000);
   keyboard->reset();
   keyboard->setModeClear(0, 14);
+  keyboard->setInputLengthLimit(30); // Limit id size to 30
   keyboard->displayPrompt("Enter coin id:");
   keyboard->display();
 }
@@ -71,6 +72,7 @@ void ST7735_Coin_Changer::duplicateDetected() {
   delay(2000);
   keyboard->reset();
   keyboard->setModeClear(0, 14);
+  keyboard->setInputLengthLimit(30); // Limit id size to 30
   keyboard->displayPrompt("Enter coin id:");
   keyboard->display();
 }
@@ -106,7 +108,7 @@ void ST7735_Coin_Changer::drawCoinUnselected(int index) {
 
 // Interact with the coin changer
 int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
-  if (*ir_data == 0xF20DFF00) {
+  if (*ir_data == IR_HASHTAG) {
     stage = 0;
     active = 0;
     verified_id = 0;
@@ -121,7 +123,7 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
     drawCoinUnselected(current_replacing_index);
 
     // left
-    if (*ir_data == 0xF708FF00) {
+    if (*ir_data == IR_LEFT) {
       drawCoinUnselected(current_replacing_index);
       current_replacing_index = current_replacing_index == 0
                                     ? COIN_COUNT - 1
@@ -130,7 +132,7 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
     }
 
     // right
-    if (*ir_data == 0xA55AFF00) {
+    if (*ir_data == IR_RIGHT) {
       drawCoinUnselected(current_replacing_index);
       current_replacing_index = current_replacing_index == COIN_COUNT - 1
                                     ? 0
@@ -139,7 +141,7 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
     }
 
     // down
-    if (*ir_data == 0xAD52FF00) {
+    if (*ir_data == IR_DOWN) {
       drawCoinUnselected(current_replacing_index);
       current_replacing_index = current_replacing_index + 3 >= COIN_COUNT
                                     ? current_replacing_index
@@ -148,7 +150,7 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
     }
 
     // up
-    if (*ir_data == 0xE718FF00) {
+    if (*ir_data == IR_UP) {
       drawCoinUnselected(current_replacing_index);
       current_replacing_index = current_replacing_index - 3 < 0
                                     ? current_replacing_index
@@ -157,7 +159,7 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
     }
 
     // ok
-    if (*ir_data == 0xE31CFF00) {
+    if (*ir_data == IR_OK) {
       stage++;
       keyboard->setInputLengthLimit(30); // Limit id size to 29
       display();
@@ -178,7 +180,6 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
 
       keyboard->reset();
       keyboard->setModeClear(1, 14);
-      keyboard->setInputLengthLimit(7); // Limit id size to 7
 
       return -2;
     }
@@ -199,8 +200,10 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
       display();
     }
   } else if (stage == 3) { // Select coin colour
+    Serial.println(*ir_data, HEX);
+
     // ok
-    if (*ir_data == 0xE31CFF00) {
+    if (*ir_data == IR_OK) {
       loadIntoSelectedCoin();
       stage = 0;
       active = 0;
@@ -212,30 +215,56 @@ int ST7735_Coin_Changer::interact(uint32_t *ir_data) {
     }
 
     // left
-    if (*ir_data == 0xF708FF00) {
+    if (*ir_data == IR_LEFT) {
       pickers[selected_picker].display();
       selected_picker = selected_picker == 0 ? 2 : selected_picker - 1;
       pickers[selected_picker].displaySelected();
+      return -1;
     }
 
     // right
-    if (*ir_data == 0xA55AFF00) {
+    if (*ir_data == IR_RIGHT) {
       pickers[selected_picker].display();
       selected_picker = selected_picker == 2 ? 0 : selected_picker + 1;
       pickers[selected_picker].displaySelected();
+      return -1;
     }
 
-    // up
-    if (*ir_data == 0xE718FF00) {
-      pickers[selected_picker].incrementValue();
-      drawColour();
-    }
+    if (*ir_data == IR_ASTERISK) // 9
+      pickers[selected_picker].clear();
 
-    // down
-    if (*ir_data == 0xAD52FF00) {
-      pickers[selected_picker].decrementValue();
-      drawColour();
-    }
+    // Numerical picker inputs
+    if (*ir_data == IR_ZERO)  // 0
+      pickers[selected_picker].incrementValue(0);
+
+    if (*ir_data == IR_ONE) // 1
+      pickers[selected_picker].incrementValue(1);
+
+    if (*ir_data == IR_TWO) // 2
+      pickers[selected_picker].incrementValue(2);
+
+    if (*ir_data == IR_THREE) // 3
+      pickers[selected_picker].incrementValue(3);
+
+    if (*ir_data == IR_FOUR) // 4
+      pickers[selected_picker].incrementValue(4);
+
+    if (*ir_data == IR_FIVE) // 5
+      pickers[selected_picker].incrementValue(5);
+
+    if (*ir_data == IR_SIX) // 6
+      pickers[selected_picker].incrementValue(6);
+
+    if (*ir_data == IR_SEVEN) // 7
+      pickers[selected_picker].incrementValue(7);
+
+    if (*ir_data == IR_EIGHT) // 8
+      pickers[selected_picker].incrementValue(8);
+
+    if (*ir_data == IR_NINE) // 9
+      pickers[selected_picker].incrementValue(9);
+
+    drawColour();
   }
 
   return -1;
@@ -340,14 +369,14 @@ Colour_Picker_Component::Colour_Picker_Component(Adafruit_ST7735 *display,
   y = y_co;
   colour = col;
   x = x_co;
-  value = 255;
+  value = 0;
 }
 
 // Display the picker normally
 void Colour_Picker_Component::display() {
   tft->setTextSize(1);
   tft->setTextColor(WHITE);
-  tft->fillRoundRect(x, y, 46, 32, 3, BLACK);
+  tft->fillRoundRect(x, y, 46, 12, 3, BLACK);
   tft->setCursor(x + 5, y + 2);
 
   if (colour == 0) {
@@ -370,8 +399,8 @@ void Colour_Picker_Component::display() {
 // Display the picker as selected
 void Colour_Picker_Component::displaySelected() {
   tft->setTextSize(1);
-  tft->setTextColor(WHITE);
-  tft->fillRoundRect(x, y, 46, 32, 3, DARK_GREY);
+  tft->setTextColor(BLACK);
+  tft->fillRoundRect(x, y, 46, 12, 3, GRAY);
   tft->setCursor(x + 5, y + 2);
 
   if (colour == 0) {
@@ -394,11 +423,10 @@ void Colour_Picker_Component::displaySelected() {
 // Get the current value selected
 unsigned char Colour_Picker_Component::getValue() { return value; }
 
-// Increase the value by the amount selected by the user
-void Colour_Picker_Component::incrementValue() {
-  tft->fillRoundRect(x, y + 10, 46, 22, 3, DARK_GREY);
+void Colour_Picker_Component::clear(){
+  tft->fillRoundRect(x, y + 12, 46, 20, 3, BLACK);
 
-  value = value < 245 ? value + 10 : 255;
+  value = 0;
 
   if (colour == 0) {
     tft->setTextColor(LIGHT_RED);
@@ -416,11 +444,11 @@ void Colour_Picker_Component::incrementValue() {
   tft->setTextColor(WHITE);
 }
 
-// Decrease the value by the amount selected by the user
-void Colour_Picker_Component::decrementValue() {
-  tft->fillRoundRect(x, y + 10, 46, 22, 3, DARK_GREY);
+// Increase the value by the amount selected by the user
+void Colour_Picker_Component::incrementValue(int incr) {
+  tft->fillRoundRect(x, y + 12, 46, 20, 3, BLACK);
 
-  value = value > 15 ? value - 10 : 5;
+  value = value*10 + incr < 255 ? value*10 + incr : 255;
 
   if (colour == 0) {
     tft->setTextColor(LIGHT_RED);

@@ -3,12 +3,14 @@
   Copyright (c) 2021 Luke Mills.  All right reserved.
 */
 
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
-#include "ST7735_Coin.h"
-#include <ST7735_Keyboard.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_ST7735.h>
 
-// ensure this library description is only included once
+#include "Colours.h"
+#include "IR_Codes.h"
+#include "ST7735_Keyboard.h"
+#include "ST7735_Coin.h"
+
 #ifndef ST7735_Coin_Changer_h
 #define ST7735_Coin_Changer_h
 
@@ -22,9 +24,9 @@ class Colour_Picker_Component
 		int y;
 		int colour;
 		unsigned char value;
-		void incrementValue();
-		void decrementValue();
+		void incrementValue(int);
 		unsigned char getValue();
+		void clear();
 
 	private:
 		Adafruit_ST7735* tft;

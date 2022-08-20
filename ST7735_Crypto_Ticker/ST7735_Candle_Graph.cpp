@@ -4,11 +4,7 @@
 */
 
 #include "ST7735_Candle_Graph.h"
-#include "HardwareSerial.h"
 #include "ST7735_Portfolio_Editor.h"
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
-#include <Colours.h>
 
 // Constructor for Portfolio Editor
 Candle_Graph::Candle_Graph(Adafruit_ST7735 *display, int candle_count,
@@ -24,11 +20,8 @@ Candle_Graph::Candle_Graph(Adafruit_ST7735 *display, int candle_count,
   }
 
   current_candles = 1;
-
   labels = labels_val;
-
   candles_init = 0;
-
   count = candle_count;
 
   candles = (G_CANDLE *)malloc(sizeof(G_CANDLE) * candle_count);
@@ -75,7 +68,8 @@ void Candle_Graph::displaySmall(int x, int w, int top, int bottom){
     min_val = min(min_val, (double) (candles[i].high + candles[i].low)/2);
   }
 
-  int last_y = ((candles[count - current_candles].high + candles[count - current_candles].low)/2 - min_val) * 
+  int last_y = ((candles[count - current_candles].high + 
+    candles[count - current_candles].low)/2 - min_val) * 
     ((double)top - (double)bottom) / (max_val - min_val) + (double)bottom;
 
   if (max_val - min_val == 0) last_y = (top+bottom)/2;
@@ -84,7 +78,8 @@ void Candle_Graph::displaySmall(int x, int w, int top, int bottom){
     int point_y;
 
     if (min_val != max_val) {
-      point_y = ((candles[i].high + candles[i].low)/2 - min_val) * ((double)top - (double)bottom) /
+      point_y = ((candles[i].high + candles[i].low)/2 - min_val) * 
+        ((double)top - (double)bottom) /
         (max_val - min_val) + (double)bottom;
     } else {
       point_y = (top + bottom) / 2;
@@ -93,9 +88,11 @@ void Candle_Graph::displaySmall(int x, int w, int top, int bottom){
     if (candles[i].low < 0) continue;
 
     if (point_y <= last_y){
-      tft->drawLine(map(i-1, 0, count, x, x + w), last_y, map(i, 0, count, x, x + w), point_y, LIGHT_GREEN);
+      tft->drawLine(map(i-1, 0, count, x, x + w), last_y, 
+        map(i, 0, count, x, x + w), point_y, LIGHT_GREEN);
     } else {
-      tft->drawLine(map(i-1, 0, count, x, x + w), last_y, map(i, 0, count, x, x + w), point_y, LIGHT_RED);
+      tft->drawLine(map(i-1, 0, count, x, x + w), last_y, 
+        map(i, 0, count, x, x + w), point_y, LIGHT_RED);
     }
 
     last_y = point_y;

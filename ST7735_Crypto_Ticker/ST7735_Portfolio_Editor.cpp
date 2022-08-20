@@ -4,10 +4,6 @@
 */
 
 #include "ST7735_Portfolio_Editor.h"
-#include "HardwareSerial.h"
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
-#include <Colours.h>
 
 // Constructor for Portfolio Editor
 ST7735_Portfolio_Editor::ST7735_Portfolio_Editor(Adafruit_ST7735 *display,
@@ -87,7 +83,7 @@ void ST7735_Portfolio_Editor::drawCoinUnselected(int index) {
 
 // Interacts with the portfolio editor using the passed decoded IR data
 int ST7735_Portfolio_Editor::interact(uint32_t *ir_data) {
-  if (*ir_data == 0xF20DFF00) {
+  if (*ir_data == IR_HASHTAG) {
     active = 0;
     
     if (changing_amount == 1){
@@ -113,7 +109,7 @@ int ST7735_Portfolio_Editor::interact(uint32_t *ir_data) {
 
   if (changing_amount == 0) {
     // left
-    if (*ir_data == 0xF708FF00) {
+    if (*ir_data == IR_LEFT) {
       drawCoinUnselected(selected_portfolio_index);
       selected_portfolio_index = selected_portfolio_index == 0
                                      ? COIN_COUNT - 1
@@ -122,7 +118,7 @@ int ST7735_Portfolio_Editor::interact(uint32_t *ir_data) {
     }
 
     // right
-    if (*ir_data == 0xA55AFF00) {
+    if (*ir_data == IR_RIGHT) {
       drawCoinUnselected(selected_portfolio_index);
       selected_portfolio_index = selected_portfolio_index == COIN_COUNT - 1
                                      ? 0
@@ -131,7 +127,7 @@ int ST7735_Portfolio_Editor::interact(uint32_t *ir_data) {
     }
 
     // down
-    if (*ir_data == 0xAD52FF00) {
+    if (*ir_data == IR_DOWN) {
       drawCoinUnselected(selected_portfolio_index);
       selected_portfolio_index = selected_portfolio_index + 3 >= COIN_COUNT
                                      ? selected_portfolio_index
@@ -140,7 +136,7 @@ int ST7735_Portfolio_Editor::interact(uint32_t *ir_data) {
     }
 
     // up
-    if (*ir_data == 0xE718FF00) {
+    if (*ir_data == IR_UP) {
       drawCoinUnselected(selected_portfolio_index);
       selected_portfolio_index = selected_portfolio_index - 3 < 0
                                      ? selected_portfolio_index
@@ -149,7 +145,7 @@ int ST7735_Portfolio_Editor::interact(uint32_t *ir_data) {
     }
 
     // ok
-    if (*ir_data == 0xE31CFF00) {
+    if (*ir_data == IR_OK) {
       selector->setValue(coins[selected_portfolio_index].amount);
       selector->display();
       changing_amount = 1;
@@ -158,27 +154,27 @@ int ST7735_Portfolio_Editor::interact(uint32_t *ir_data) {
     drawCoinSelected(selected_portfolio_index);
   } else {
     // left
-    if (*ir_data == 0xF708FF00)
+    if (*ir_data == IR_LEFT)
       selector->increaseValueToAdd();
 
     // right
-    if (*ir_data == 0xA55AFF00)
+    if (*ir_data == IR_RIGHT)
       selector->decreaseValueToAdd();
 
     // up
-    if (*ir_data == 0xE718FF00) {
+    if (*ir_data == IR_UP) {
       selector->addValue();
       amount_changed = 1;
     }
 
     // down
-    if (*ir_data == 0xAD52FF00) {
+    if (*ir_data == IR_DOWN) {
       selector->subValue();
       amount_changed = 1;
     }
 
     // ok
-    if (*ir_data == 0xE31CFF00) {
+    if (*ir_data == IR_OK) {
       changing_amount = 0;
 
       // Set the value

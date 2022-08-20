@@ -4,10 +4,6 @@
 */
 
 #include "ST7735_Keyboard.h"
-#include "HardwareSerial.h"
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
-#include <Colours.h>
 
 // Constructor for Keyboard
 ST7735_Keyboard::ST7735_Keyboard(Adafruit_ST7735* display)
@@ -18,7 +14,7 @@ ST7735_Keyboard::ST7735_Keyboard(Adafruit_ST7735* display)
 	letters = (Key*) malloc(sizeof(Key) * 26);
 	numbers = (Key*) malloc(sizeof(Key) * 10);
 	specials = (Key*) malloc(sizeof(Key) * 32);
-	bottom_keys = (Key*) malloc(sizeof(Key) * 3);
+	bottom_keys = (Key*) malloc(sizeof(Key) * 4);
 	
 	// Allocate selected key
 	selected = (Key*) malloc(sizeof(Key));
@@ -35,12 +31,15 @@ ST7735_Keyboard::ST7735_Keyboard(Adafruit_ST7735* display)
 	last_key = 0;
 	
 	// Define bottom keys
-	int tab_width = 36;
-	bottom_keys[0] = Key(tft, EDGE_BORDER, tft -> height() - 15, 
-		tab_width, KEY_HEIGHT, " <-- ", 1);
-	bottom_keys[1] = Key(tft, tft -> width() / 2 - tab_width / 2, 
+	int tab_width = 35;
+	int button_gap = 5;
+	bottom_keys[0] = Key(tft, button_gap, 
+		tft -> height() - 15, tab_width, KEY_HEIGHT, "Help", 1);
+	bottom_keys[1] = Key(tft, 2*button_gap + tab_width, tft -> height() - 15, 
+		tab_width, KEY_HEIGHT, " <--", 1);
+	bottom_keys[2] = Key(tft, 3*button_gap + 2*tab_width, 
 		tft -> height() - 15, tab_width, KEY_HEIGHT, "Space", 1);
-	bottom_keys[2] = Key(tft, tft -> width() - EDGE_BORDER - tab_width, 
+	bottom_keys[3] = Key(tft, 4*button_gap + 3*tab_width, 
 		tft -> height() - 15, tab_width, KEY_HEIGHT, "Enter", 1);
 	
 	int current_letter = 0;
@@ -121,47 +120,47 @@ ST7735_Keyboard::ST7735_Keyboard(Adafruit_ST7735* display)
 
 // Interacts with the keyboard
 void ST7735_Keyboard::interact(uint32_t* ir_data){
-  if (*ir_data == 0xE31CFF00)
+  if (*ir_data == IR_OK)
     press();
 
   // 1
-  if (*ir_data == 0xBA45FF00){
+  if (*ir_data == IR_ONE){
     setModeClear(0, 14);
 	this -> display();
   }
 
   // 2
-  if (*ir_data == 0xB946FF00){
+  if (*ir_data == IR_TWO){
     setModeClear(1, 14);
 	this -> display();
   }
 
   // 3
-  if (*ir_data == 0xB847FF00){
+  if (*ir_data == IR_THREE){
     setModeClear(2, 0);
 	this -> display();
   }
 
   // 4
-  if (*ir_data == 0xBB44FF00){
+  if (*ir_data == IR_FOUR){
     setModeClear(3, 16);
 	this -> display();
   }
 
   // DOWN
-  if (*ir_data == 0xAD52FF00)
+  if (*ir_data == IR_DOWN)
     moveDown();
 
   // UP
-  if (*ir_data == 0xE718FF00)
+  if (*ir_data == IR_UP)
     moveUp();
 
   // RIGHT
-  if (*ir_data == 0xA55AFF00)
+  if (*ir_data == IR_RIGHT)
     moveRight();
 
   // LEFT
-  if (*ir_data == 0xF708FF00)
+  if (*ir_data == IR_LEFT)
     moveLeft();
 }
 
@@ -198,7 +197,7 @@ void ST7735_Keyboard::press(){
 			current_string[current_input_length] = ' ';
 			current_input_length++;
 		}
-	} else if (selected -> action == " <-- "){
+	} else if (selected -> action == " <--"){
 		// Remove last element from entered string
 		if (current_input_length > 0){
 			current_input_length--;
@@ -210,6 +209,9 @@ void ST7735_Keyboard::press(){
 		// Signal that enter has been pressed
 		if (current_string[0] != 0)
 			enter_pressed = 1;
+	} else if (selected -> action == "Help"){
+		displayInstructions();
+		display();
 	} else {
 		if (current_input_length < length_limit){
 			// Add pressed key to current string
@@ -236,10 +238,19 @@ void ST7735_Keyboard::goToTabs(){
 	if (mode != 4){
 		last_mode = mode;
 		last_key = selected_index;
-		
 		mode = 4;
-		selected_index = 0;
-		selected = bottom_keys;
+
+		if (selected -> x < tft->width() / 4){
+			selected_index = 0;
+		} else if (selected -> x < tft->width() / 2){
+			selected_index = 1;
+		} else if (selected -> x < 3 * tft->width() / 4) {
+			selected_index = 2;
+		} else {
+			selected_index = 3;
+		}
+
+		selected = bottom_keys + selected_index;
 		selected -> displaySelected(mode);
 	}
 }
@@ -255,24 +266,30 @@ void ST7735_Keyboard::exitTabs(){
 // Display the keyboard on the screen
 void ST7735_Keyboard::display()
 {
+	
 	tft -> fillRect(0, tft -> height() / 2, tft -> width(), 
 		tft -> height() / 2, BLACK);
-	
-	if (mode == 0 || mode == 1){
-		for (int i = 0; i < 26; i++)
-			letters[i].display(mode);
-	} else if (mode == 2){
-		for (int i = 0; i < 10; i++)
-			numbers[i].display(mode);
-	} else {
-		for (int i = 0; i < 32; i++)
-			specials[i].display(mode);
+
+	char temp_mode = mode;
+	if (mode == 4){
+		temp_mode = last_mode;
 	}
 	
-	for (int i = 0; i < 3; i++)
-		bottom_keys[i].display(mode);
+	if (temp_mode == 0 || temp_mode == 1){
+		for (int i = 0; i < 26; i++)
+			letters[i].display(temp_mode);
+	} else if (temp_mode == 2){
+		for (int i = 0; i < 10; i++)
+			numbers[i].display(temp_mode);
+	} else if (temp_mode == 3) {
+		for (int i = 0; i < 32; i++)
+			specials[i].display(temp_mode);
+	}
 	
-	selected -> displaySelected(mode);
+	for (int i = 0; i < 4; i++)
+		bottom_keys[i].display(temp_mode);
+	
+	selected -> displaySelected(temp_mode);
 }
 
 // Set the mode of the keyboard, and set selected key to passed value
@@ -399,7 +416,7 @@ void ST7735_Keyboard::moveRight(){
 		selected = specials + selected_index;
 	} else if (mode == 4){
 		selected_index++;
-		if (selected_index == 3)
+		if (selected_index == 4)
 			selected_index = 0;
 		
 		selected = bottom_keys + selected_index;
@@ -413,29 +430,36 @@ void ST7735_Keyboard::moveLeft(){
 	selected -> display(mode);
 	
 	if (mode == 0 || mode == 1){
-		selected_index--;
-		if (selected_index == -1)
+		if (selected_index == 0){
 			selected_index = 25;
+		} else {
+			selected_index--;
+		}
 		
 		selected = letters + selected_index;
 	} else if (mode == 2){
-		
-		selected_index--;
-		if (selected_index == -1)
+		if (selected_index == 0){
 			selected_index = 9;
+		} else {
+			selected_index--;
+		}
 		
 		selected = numbers + selected_index;
 	} else if (mode == 3) {
-		selected_index--;
-		if (selected_index == -1)
+		if (selected_index == 0){
 			selected_index = 31;
+		} else {
+			selected_index--;
+		}
 		
 		selected = specials + selected_index;
 	} else if (mode == 4){
-		selected_index--;
-		if (selected_index == -1)
-			selected_index = 2;
-		
+		if (selected_index == 0){
+			selected_index = 3;
+		} else {
+			selected_index--;
+		}
+
 		selected = bottom_keys + selected_index;
 	}
 	
@@ -444,20 +468,18 @@ void ST7735_Keyboard::moveLeft(){
 
 // Displays the keyboard instructions for 5 seconds
 void ST7735_Keyboard::displayInstructions(){
-  tft -> fillScreen(BLACK);
-  tft -> setCursor(0, 0);
+  tft -> fillRect(0, tft->height()/2, tft->width(), tft->height()/2, BLACK);
+  tft -> setCursor(0, tft->height()/2 + 5);
   tft -> setTextColor(WHITE);
-  tft -> println("Keyboard Instructions");
-  tft -> setTextColor(LIGHT_RED);
-  tft -> println("\n*To see again, unplug device and plug it back in*\n");
-  tft -> setTextColor(WHITE);
-  tft -> println("<-- : Select Key on Left");
-  tft -> println("--> : Select Key on Right");
-  tft -> println("DOWN: Enter Bottom Row");
-  tft -> println("UP  : Exit Bottom Row\n");
+  tft -> println("Use arrows to navigate\n");
+
+  tft->setCursor(0, tft->height()/2 + 18);
   tft -> println("1   : Lower Case");
+  tft->setCursor(0, tft->height()/2 + 29);
   tft -> println("2   : Upper Case");
+  tft->setCursor(0, tft->height()/2 + 40);
   tft -> println("3   : Numbers");
+  tft->setCursor(0, tft->height()/2 + 51);
   tft -> println("4   : Special Characters");
   delay(5000);
 }

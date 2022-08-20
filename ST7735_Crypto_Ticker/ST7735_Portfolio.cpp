@@ -1,15 +1,9 @@
 /*
   ST7735_Portfolio.cpp - Portfolio interface for ST7735
-  Copyright (c) 2021 Luke Mills.  All right reserved.
+  Copyright (c) 2022 Luke Mills.  All right reserved.
 */
 
 #include "ST7735_Portfolio.h"
-#include "HardwareSerial.h"
-#include "ST7735_Candle_Graph.h"
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
-#include <Colours.h>
-#include <cmath>
 
 // Constructor for Portfolio Editor
 ST7735_Portfolio::ST7735_Portfolio(Adafruit_ST7735 *display,

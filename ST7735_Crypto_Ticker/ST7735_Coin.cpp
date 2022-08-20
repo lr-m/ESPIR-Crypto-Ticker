@@ -1,12 +1,9 @@
 #include "ST7735_Coin.h"
-#include "HardwareSerial.h"
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
-#include <Colours.h>
 
 // Constructor for Coin with bitmap
 COIN::COIN(char* code, char *id, const unsigned char* bm, uint16_t circle_col,
-           uint16_t bm_col, uint16_t portfolio_col, double coin_amount, ST7735_Value_Drawer* drawer) {
+           uint16_t bm_col, uint16_t portfolio_col, double coin_amount, 
+           ST7735_Value_Drawer* drawer) {
 
   int i = 0;
   while(code[i] != 0){
