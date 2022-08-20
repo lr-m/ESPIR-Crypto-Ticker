@@ -8,6 +8,7 @@
 
 #include "ST7735_Coin.h"
 #include "Colours.h"
+#include "IR_Codes.h"
 
 #ifndef ST7735_Portfolio_Editor_h
 #define ST7735_Portfolio_Editor_h
@@ -21,23 +22,22 @@ public:
   void moveLeft();
   void moveRight();
   void press();
-  void setValue(double);
+  void setOldValue(double);
   double getValue();
-  void increaseValueToAdd();
-  void decreaseValueToAdd();
   void clear();
-  void addValue();
-  void subValue();
-  void redrawValue();
-  void redrawValueChange();
-  int current_changing_index;
+  void takeNumericalInput(uint32_t*);
+  void reset();
+  char interact(uint32_t*);
+  void refresh();
 
 private:
   Adafruit_ST7735 *tft;
-  int selected_index;
-  int in_selector;
-  double value;
-  double value_to_add;
+  double old_value;
+
+  char new_double[14];
+  char decimal_component_active = 0;
+  char input_index = 0;
+  char decimal_point_index = 0;
 };
 
 // library interface description

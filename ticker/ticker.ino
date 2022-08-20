@@ -346,11 +346,11 @@ void setup(void) {
 void loop() {
   updateTime(); // Update time variables
 
-  Serial.print(millis());
-  Serial.print(" - Heap: ");
-  Serial.print(ESP.getFreeHeap());
-  Serial.print(", Block Size: ");
-  Serial.println(ESP.getMaxFreeBlockSize());
+//  Serial.print(millis());
+//  Serial.print(" - Heap: ");
+//  Serial.print(ESP.getFreeHeap());
+//  Serial.print(", Block Size: ");
+//  Serial.println(ESP.getMaxFreeBlockSize());
 
   if (ssid_entered == 0) { // Get network name
     if (keyboard->enterPressed() == 1) {
@@ -712,7 +712,7 @@ void drawIntroAnimation() {
 
   tft.fillScreen(BLACK);
   tft.setCursor(10, 5);
-  drawBitmap(0, 0, epd_bitmap_logo_green, 160, 58, GREEN);
+  drawBitmap(0, 0, epd_bitmap_logo_green, 160, 58, LIGHT_GREEN);
   drawBitmap(0, 0, epd_bitmap_logo_red, 160, 58, RED);
 
   delay(500);

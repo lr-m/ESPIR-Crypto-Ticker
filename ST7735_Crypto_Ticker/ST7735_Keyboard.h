@@ -7,6 +7,7 @@
 #include <Adafruit_ST7735.h>
 
 #include "Colours.h"
+#include "IR_Codes.h"
 
 #ifndef ST7735_Keyboard_h
 #define ST7735_Keyboard_h

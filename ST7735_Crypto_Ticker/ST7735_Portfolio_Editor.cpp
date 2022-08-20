@@ -83,27 +83,19 @@ void ST7735_Portfolio_Editor::drawCoinUnselected(int index) {
 
 // Interacts with the portfolio editor using the passed decoded IR data
 int ST7735_Portfolio_Editor::interact(uint32_t *ir_data) {
-  if (*ir_data == IR_HASHTAG) {
+  // Clear existing entry
+  if (*ir_data == IR_ASTERISK) {
+    selector->reset();
+    selector->refresh();
+  }
+
+  // If # pressed when changing value do not save it and exit
+  if (*ir_data == IR_HASHTAG && changing_amount == 1) {
+    selector->clear();
+    selector->reset();
+    changing_amount = 0;
+  } else if (*ir_data == IR_HASHTAG && changing_amount == 0){ // else exit
     active = 0;
-    
-    if (changing_amount == 1){
-      // Set the value
-      coins[selected_portfolio_index].amount = selector->getValue();
-
-      // Make sure the portfolio limit has not been exceeded
-      int count = 0;
-      for (int i = 0; i < COIN_COUNT; i++){
-        if (coins[i].amount > 0)
-          count++;
-      }
-
-      if (count > MAX_COINS)
-        coins[selected_portfolio_index].amount = 0;
-
-      selector->clear();
-      changing_amount = 0;
-    }
-    
     return 0;
   }
 
@@ -146,38 +138,15 @@ int ST7735_Portfolio_Editor::interact(uint32_t *ir_data) {
 
     // ok
     if (*ir_data == IR_OK) {
-      selector->setValue(coins[selected_portfolio_index].amount);
+      selector->setOldValue(coins[selected_portfolio_index].amount);
       selector->display();
       changing_amount = 1;
     }
 
     drawCoinSelected(selected_portfolio_index);
   } else {
-    // left
-    if (*ir_data == IR_LEFT)
-      selector->increaseValueToAdd();
-
-    // right
-    if (*ir_data == IR_RIGHT)
-      selector->decreaseValueToAdd();
-
-    // up
-    if (*ir_data == IR_UP) {
-      selector->addValue();
-      amount_changed = 1;
-    }
-
-    // down
-    if (*ir_data == IR_DOWN) {
-      selector->subValue();
-      amount_changed = 1;
-    }
-
-    // ok
-    if (*ir_data == IR_OK) {
+    if (selector->interact(ir_data) == 0){ // Success
       changing_amount = 0;
-
-      // Set the value
       coins[selected_portfolio_index].amount = selector->getValue();
 
       // Make sure the portfolio limit has not been exceeded
@@ -189,8 +158,9 @@ int ST7735_Portfolio_Editor::interact(uint32_t *ir_data) {
 
       if (count > MAX_COINS)
         coins[selected_portfolio_index].amount = 0;
-      
+
       selector->clear();
+      selector->reset();
     }
   }
   delay(100);
@@ -201,86 +171,145 @@ int ST7735_Portfolio_Editor::interact(uint32_t *ir_data) {
 Price_Selector::Price_Selector(Adafruit_ST7735 *display) {
   tft = display;
 
-  selected_index = 0;
-  value = 0;
-  value_to_add = 1;
+  // Initialise new value string
+  for (int i = 0; i < 13; i++){
+    new_double[i] = '0';
+  }
+  new_double[13] = 0;
 }
 
-// Adds the currently selected value
-void Price_Selector::addValue() {
-  value = value + value_to_add < 10000000000 ? value + value_to_add : value;
-  redrawValue();
+char Price_Selector::interact(uint32_t* ir_data){
+  if (decimal_component_active == 0){
+    if (input_index < 10)
+      takeNumericalInput(ir_data);
+
+    // Add decimal point and move to decimal component
+    if (*ir_data == IR_OK){
+      // Put a 0 before the decimal point if no inputs
+      if (input_index == 0)
+        input_index++;
+
+      decimal_component_active = 1;
+      decimal_point_index = input_index;
+      new_double[input_index] = '.';
+      input_index++;
+
+      refresh();
+    }
+  } else {
+    if (input_index < 13 && input_index - decimal_point_index < 7)
+      takeNumericalInput(ir_data);
+
+    // Finished input
+    if (*ir_data == IR_OK) {
+      return 0;
+    }
+  }
+
+  Serial.println(new_double);
+  return -1;
 }
 
-// Subtracts the currently selected value
-void Price_Selector::subValue() {
-  value = value - value_to_add >= 0 ? value - value_to_add : 0;
-  redrawValue();
-}
-
-// Display the selector on the screen
-void Price_Selector::display() {
-  redrawValue();
-  redrawValueChange();
+void Price_Selector::takeNumericalInput(uint32_t* ir_data){
+  if (*ir_data == IR_ZERO){
+    new_double[input_index] = '0';
+    input_index++;
+    refresh();
+  } else if (*ir_data == IR_ONE){
+    new_double[input_index] = '1';
+    input_index++;
+    refresh();
+  } else if (*ir_data == IR_TWO){
+    new_double[input_index] = '2';
+    input_index++;
+    refresh();
+  } else if (*ir_data == IR_THREE){
+    new_double[input_index] = '3';
+    input_index++;
+    refresh();
+  } else if (*ir_data == IR_FOUR){
+    new_double[input_index] = '4';
+    input_index++;
+    refresh();
+  } else if (*ir_data == IR_FIVE){
+    new_double[input_index] = '5';
+    input_index++;
+    refresh();
+  } else if (*ir_data == IR_SIX){
+    new_double[input_index] = '6';
+    input_index++;
+    refresh();
+  } else if (*ir_data == IR_SEVEN){
+    new_double[input_index] = '7';
+    input_index++;
+    refresh();
+  } else if (*ir_data == IR_EIGHT){
+    new_double[input_index] = '8';
+    input_index++;
+    refresh();
+  } else if (*ir_data == IR_NINE){
+    new_double[input_index] = '9';
+    input_index++;
+    refresh();
+  }
 }
 
 // Sets the value to the passed value
-void Price_Selector::setValue(double val) { value = val; }
+void Price_Selector::setOldValue(double val) { 
+  old_value = val; 
+}
 
 // Returns the current value
-double Price_Selector::getValue() { return value; }
-
-// Multiplies the selected value to add by 10
-void Price_Selector::increaseValueToAdd() {
-  value_to_add =
-      value_to_add * 10 < 1000000000 ? value_to_add * 10 : value_to_add;
-
-  // Avoid dodgy floating point stuff
-  value_to_add = value_to_add >= 1 ? round(value_to_add) : value_to_add;
-
-  redrawValueChange();
-}
-
-// Divides the selected value to add by 10
-void Price_Selector::decreaseValueToAdd() {
-  value_to_add =
-      value_to_add / 10 >= 0.000001 ? value_to_add / 10 : value_to_add;
-  redrawValueChange();
-}
+double Price_Selector::getValue() { return strtod(new_double, NULL); }
 
 // Clears the area occupied by the selector
 void Price_Selector::clear() {
-  tft->fillRect(0, 98, tft->width(), 40, BLACK);
+  tft->fillRect(0, 92, tft->width(), tft->height()-92, BLACK);
   tft->setTextSize(2);
+}
+
+void Price_Selector::reset(){
+  for (int i = 0; i < 13; i++){
+    new_double[i] = '0';
+  }
+  new_double[13] = 0;
+
+  decimal_component_active = 0;
+  input_index = 0;
+  decimal_point_index = 0;
 }
 
 // Redraws the value selected by the user
-void Price_Selector::redrawValue() {
-  tft->fillRect(0, 98, tft->width(), 15, BLACK);
-  tft->setTextColor(WHITE);
-  tft->setCursor(2, 98);
-  tft->setTextSize(2);
+void Price_Selector::display() {
+  tft->fillRect(0, 100, tft->width(), 15, BLACK);
 
-  if (value >= 1000000) {
-    tft->print(value, 0);
-  } else {
-    tft->print(value, 6);
-  }
+  // Draw old value
+  tft->setTextSize(1);
+  tft->setTextColor(GRAY);
+  tft->setCursor(2, 92);
+  tft->print("Old: ");
+  tft->print(old_value, 6);
+
+  // Indicate entry
+  tft->setTextColor(WHITE);
+  tft->setCursor(2, 108);
+  tft->setTextSize(2);
+  tft->print('_');
 }
 
-// Redraws the value change selected by the user
-void Price_Selector::redrawValueChange() {
-  tft->setTextSize(1);
-  tft->fillRect(0, 116, tft->width(), 8, BLACK);
-  tft->setCursor(2, 116);
-  tft->setTextColor(LIGHT_GREEN);
-  tft->print('+');
-  tft->setTextColor(LIGHT_RED);
-  tft->print('-');
+void Price_Selector::refresh(){
+  // Clear old value
+  tft->fillRect(0, 100, tft->width(), tft->height()-100, BLACK);
+
+  // Draw new value
   tft->setTextColor(WHITE);
-  if (value_to_add < 1){
-    tft->print(value_to_add, 6);
-  } else {
-    tft->print(value_to_add, 0);
-  }
+  tft->setCursor(2, 108);
+  tft->setTextSize(2);
+
+  for (int i = 0; i < input_index; i++)
+    tft->print(new_double[i]);
+
+  if (input_index < 13 && (!decimal_component_active) || 
+      (decimal_component_active && input_index - decimal_point_index < 7))
+    tft->print('_');
 }
