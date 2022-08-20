@@ -323,6 +323,8 @@ void setup(void) {
 
   portfolio_cycle_disabled = coin_menu->getButtons()[4].selectors[1].getSelected()[0];
 
+  last_currency = coin_menu -> getButtons()[3].selectors[2].getSelected()[0];
+
   if (last_bitmap_toggle == 1){
     for (int i = 0; i < COIN_COUNT; i++){
       coins[i].toggleBitmap();
