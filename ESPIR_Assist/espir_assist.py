@@ -331,7 +331,7 @@ logo_colour_888 = [0, 0, 0]
 background_colour_888 = [0, 0, 0]
 
 root = tk.Tk()
-root.title('ESPIR Helper')
+root.title('ESPIR Assist')
 root.geometry('1280x720')
 root.configure(bg='black')
 
@@ -378,7 +378,7 @@ id_frame.grid(column=2, row=1, padx=10, pady=10)
 
 fg_button = tk.Button(
     details_frame,
-    text='Select Logo PNG',
+    text='Select Logo',
     command=get_logo_filename, 
     bg='green', 
     fg='white', 
