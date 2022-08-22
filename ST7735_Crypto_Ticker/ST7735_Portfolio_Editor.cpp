@@ -161,9 +161,11 @@ int ST7735_Portfolio_Editor::interact(uint32_t *ir_data) {
 
       selector->clear();
       selector->reset();
+
+      amount_changed = 1; // Indicate an amount has been changed (clears candles)
     }
   }
-  delay(100);
+  delay(50);
   return 1;
 }
 

@@ -20,27 +20,27 @@ extern unsigned char epd_bitmap_logo_red[];
 extern unsigned char epd_bitmap_logo_green[];
 
 // Coin bitmaps
-extern unsigned char epd_bitmap_bitcoin[];
-extern unsigned char epd_bitmap_ethereum[];
-extern unsigned char epd_bitmap_tether[];
-extern unsigned char epd_bitmap_cardano[];
-extern unsigned char epd_bitmap_binance[];
-extern unsigned char epd_bitmap_xrp[];
-extern unsigned char epd_bitmap_solana[];
-extern unsigned char epd_bitmap_dot[];
-extern unsigned char epd_bitmap_dogecoin[];
-extern unsigned char epd_bitmap_litecoin[];
-extern unsigned char epd_bitmap_avax[];
-extern unsigned char epd_bitmap_algorand[];
-extern unsigned char epd_bitmap_xmr[];
-extern unsigned char epd_bitmap_matic[];
-extern unsigned char epd_bitmap_tron[];
-extern unsigned char epd_bitmap_etc[];
-extern unsigned char epd_bitmap_bat[];
-extern unsigned char epd_bitmap_usdc[];
-extern unsigned char epd_bitmap_busd[];
-extern unsigned char epd_bitmap_shib[];
-extern unsigned char epd_bitmap_dai[];
+extern unsigned char BTC_logo[];
+extern unsigned char ETH_logo[];
+extern unsigned char USDT_logo[];
+extern unsigned char ADA_logo[];
+extern unsigned char BNB_logo[];
+extern unsigned char XRP_logo[];
+extern unsigned char SOL_logo[];
+extern unsigned char DOT_logo[];
+extern unsigned char DOGE_logo[];
+extern unsigned char LTC_logo[];
+extern unsigned char AVAX_logo[];
+extern unsigned char ALGO_logo[];
+extern unsigned char XMR_logo[];
+extern unsigned char MATIC_logo[];
+extern unsigned char TRON_logo[];
+extern unsigned char ETC_logo[];
+extern unsigned char BAT_logo[];
+extern unsigned char USDC_logo[];
+extern unsigned char BUSD_logo[];
+extern unsigned char SHIB_logo[];
+extern unsigned char DAI_logo[];
 
 // Define PIN config
 #define TFT_SCL   D1
@@ -215,47 +215,47 @@ void setup(void) {
 
   // Background col, bitmap col, portfolio col
   coins[0] = 
-    COIN("BTC", "bitcoin", epd_bitmap_bitcoin, GOLD, WHITE, GOLD, 0, value_drawer);
+    COIN("BTC", "bitcoin", BTC_logo, GOLD, WHITE, GOLD, 0, value_drawer);
   coins[1] = 
-    COIN("ETH", "ethereum", epd_bitmap_ethereum, VIOLET, GRAY, VIOLET, 0, value_drawer);
+    COIN("ETH", "ethereum", ETH_logo, VIOLET, GRAY, VIOLET, 0, value_drawer);
   coins[2] =
-    COIN("USDT", "tether", epd_bitmap_tether, GREEN, WHITE, GREEN, 0, value_drawer);
+    COIN("USDT", "tether", USDT_logo, GREEN, WHITE, GREEN, 0, value_drawer);
   coins[3] =
-    COIN("USDC", "usd-coin", epd_bitmap_usdc, DARK_BLUE, WHITE, DARK_BLUE, 0, value_drawer);
+    COIN("USDC", "usd-coin", USDC_logo, DARK_BLUE, WHITE, DARK_BLUE, 0, value_drawer);
   coins[4] = 
-    COIN("BNB", "binancecoin", epd_bitmap_binance, WHITE, GOLD, GOLD, 0, value_drawer);
+    COIN("BNB", "binancecoin", BNB_logo, WHITE, GOLD, GOLD, 0, value_drawer);
   coins[5] = 
-    COIN("XRP", "ripple", epd_bitmap_xrp, DARK_GREY, WHITE, DARK_GREY, 0, value_drawer);
+    COIN("XRP", "ripple", XRP_logo, DARK_GREY, WHITE, DARK_GREY, 0, value_drawer);
   coins[6] = 
-    COIN("ADA", "cardano", epd_bitmap_cardano, DARK_BLUE, WHITE, DARK_BLUE, 0, value_drawer);
+    COIN("ADA", "cardano", ADA_logo, DARK_BLUE, WHITE, DARK_BLUE, 0, value_drawer);
   coins[7] = 
-    COIN("BUSD", "binance-usd", epd_bitmap_busd, WHITE, GOLD, GOLD, 0, value_drawer);
+    COIN("BUSD", "binance-usd", BUSD_logo, WHITE, GOLD, GOLD, 0, value_drawer);
   coins[8] =
-    COIN("SOL", "solana", epd_bitmap_solana, PINK, LIGHTNING_BLUE, PINK, 0, value_drawer);
+    COIN("SOL", "solana", SOL_logo, PINK, LIGHTNING_BLUE, PINK, 0, value_drawer);
   coins[9] = 
-    COIN("DOT", "polkadot", epd_bitmap_dot, WHITE, BLACK, WHITE, 0, value_drawer);
+    COIN("DOT", "polkadot", DOT_logo, WHITE, BLACK, WHITE, 0, value_drawer);
   coins[10] = 
-    COIN("DOGE", "dogecoin", epd_bitmap_dogecoin, GOLD, WHITE, GOLD, 0, value_drawer);
+    COIN("DOGE", "dogecoin", DOGE_logo, GOLD, WHITE, GOLD, 0, value_drawer);
   coins[11] =
-    COIN("MATIC", "matic-network", epd_bitmap_matic, PURPLE, WHITE, PURPLE, 0, value_drawer);
+    COIN("MATIC", "matic-network", MATIC_logo, PURPLE, WHITE, PURPLE, 0, value_drawer);
   coins[12] =
-    COIN("SHIB", "shiba-inu", epd_bitmap_shib, RED, ORANGE, ORANGE, 0, value_drawer);
+    COIN("SHIB", "shiba-inu", SHIB_logo, RED, ORANGE, ORANGE, 0, value_drawer);
   coins[13] = 
-    COIN("AVAX", "avalanche-2", epd_bitmap_avax, RED, WHITE, RED, 0, value_drawer);
+    COIN("AVAX", "avalanche-2", AVAX_logo, RED, WHITE, RED, 0, value_drawer);
   coins[14] = 
-    COIN("DAI", "dai", epd_bitmap_dai, GOLD, WHITE, GOLD, 0, value_drawer);
+    COIN("DAI", "dai", DAI_logo, GOLD, WHITE, GOLD, 0, value_drawer);
   coins[15] = 
-    COIN("TRX", "tron", epd_bitmap_tron, RED, WHITE, RED, 0, value_drawer);
+    COIN("TRX", "tron", TRON_logo, RED, WHITE, RED, 0, value_drawer);
   coins[16] = 
-    COIN("ETC", "ethereum-classic", epd_bitmap_etc, WHITE, ETC_GREEN, ETC_GREEN, 0, value_drawer);
+    COIN("ETC", "ethereum-classic", ETC_logo, WHITE, ETC_GREEN, ETC_GREEN, 0, value_drawer);
   coins[17] =
-    COIN("LTC", "litecoin", epd_bitmap_litecoin, DARK_GREY, WHITE, DARK_GREY, 0, value_drawer);
+    COIN("LTC", "litecoin", LTC_logo, DARK_GREY, WHITE, DARK_GREY, 0, value_drawer);
   coins[18] =
-    COIN("XMR", "monero", epd_bitmap_xmr, ORANGE, DARK_GREY, ORANGE, 0, value_drawer);
+    COIN("XMR", "monero", XMR_logo, ORANGE, DARK_GREY, ORANGE, 0, value_drawer);
   coins[19] =
-    COIN("ALGO", "algorand", epd_bitmap_algorand, WHITE, BLACK, WHITE, 0, value_drawer);
+    COIN("ALGO", "algorand", ALGO_logo, WHITE, BLACK, WHITE, 0, value_drawer);
   coins[20] =
-    COIN("BAT", "basic-attention-token", epd_bitmap_bat, WHITE, SALMON, SALMON, 0, value_drawer);
+    COIN("BAT", "basic-attention-token", BAT_logo, WHITE, SALMON, SALMON, 0, value_drawer);
 
   // Add selectors to respective submenus
   coin_menu->getButtons()[0].addSelector("Select up to 8 coins:", coin_list, 3,

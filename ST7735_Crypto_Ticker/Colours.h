@@ -50,3 +50,5 @@
 #define MOON_YELLOW 0x67DF
 #define HOT_PINK 0xF817
 */
+
+// NEW COLOURS
