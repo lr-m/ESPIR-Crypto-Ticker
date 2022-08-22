@@ -1,36 +1,50 @@
-# ESPIR Crypto
-ESP8266 NodeMCU powered Crypto Ticker that uses an ST7735 TFT screen to display statistics and the candle chart for various cryptocurrencies, also utilising an IR remote for configuration and user input. Also has functionality that allows the user to add their own portfolio. This device is powered by the CoinGecko API.
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/47477832/186001930-5562fb9b-8846-4075-aa5e-04bce7119049.png" width="400">
+</p>
 
-![Picture1-min](https://user-images.githubusercontent.com/47477832/177369521-61dd770e-b6c1-48b3-a355-2782ca483f29.png)
+<div align="center">
 
-**NOTE: If you are using this and would like any more features or modifications to be made please let me know by opening an issue, with the title beginning with 'Feature Request'.**
+[![GitHub stars](https://img.shields.io/github/stars/luke-r-mills/ESPIR_Crypto_Ticker?style=for-the-badge)](https://github.com/luke-r-mills/ESPIR_Crypto_Ticker/stargazers)
+[![GitHub license](https://img.shields.io/github/license/luke-r-mills/ESPIR_Crypto_Ticker?style=for-the-badge)](https://github.com/luke-r-mills/ESPIR_Crypto_Ticker/blob/main/LICENSE)
+![GitHub last commit](https://img.shields.io/github/last-commit/luke-r-mills/ESPIR_Crypto_Ticker?style=for-the-badge)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/luke-r-mills/ESPIR_Crypto_Ticker?style=for-the-badge)
+  
+</div>
+  
+# ESPIR
+
+ESPIR is an ESP8266 powered Crypto Ticker that uses an ST7735 TFT screen to display statistics and a candle chart for various cryptocurrencies, as well as a configured portfolio. It utilises an IR remote for configuration and user input. This device is powered by the CoinGecko API.
+
+![banner](https://user-images.githubusercontent.com/47477832/186010050-b5c61aa1-e33b-4f22-beec-9d5df50403ed.png)
+
+**Note: If you would like to suggest features or modifications to be made, open an issue beginning with 'Feature Request'.**
 
 ## IMPORTANT
 
-- To use, put the ST7735_Crypto_Ticker directory in your Arduino libraries directory, dependencies will also need to be installed, see Libraries section. 
+- To use, put the *ST7735_Crypto_Ticker* directory in your Arduino libraries directory, dependencies will also need to be installed, see Libraries section. 
 - If the display is not properly aligned (edges of pixels with random colour) or the colours are inverted, look at the Display Fix section.
 - If you have used a previous version of this software then you may have issues with the EEPROM storage, to resolve any issues, press '#' during the initial boot screen (with the logo) to completely clear the EEPROM, you will need to re-enter your WiFi credentials but everything will work fine after.
 
 ### Display Fix
 
-There are 2 types of ST7735 screens, black tab and green tab. Although if the screen has a green tab, is sometimes acts like a black tab. If the display is working, but is misaligned and the colours are inverted, you will need to swap which type of screen the sketch is configured with, this involves modification of 2 files:
+There are 2 types of ST7735 screens, black tab and green tab. Although if the screen has a green tab, it sometimes acts like a black tab. If the display is working, but is misaligned and the colours are inverted, you will need to swap which type of screen the sketch is configured with, this involves modification of 2 files:
 
 - In the Arduino library, ST7735_Crypto_Ticker, the colours.h file needs to be edited to comment out the set colours that are not currently commented out, and to comment out the current set colours. 
-- In the arduino sketch itself, comment out line 158 (//), and uncomment line 157. This will configure the device with the green tab settings.
+- In the arduino sketch itself, change the display initialisation to GREEN_TAB, his will configure the device with the green tab settings.
 
 These modifications should fix the problem, if there are still issues, try and modify only 1 of them.
 
 ## Libraries
-- In Arduino Boards Manager - ESP8266 Boards (2.7.4)
-- IRremote v3.3.0
-- Adafruit_GFX_library (for Adafruit_GFX.h)
-- Adafruit_ST7735_and_ST7789_Library (for Adafruit_ST7735.h)
-- ArduinoJson v6.18.3
+- In Arduino Boards Manager - ESP8266 Boards : Version 2.7.4
+- ArduinoJSON : Version 6.19.4
+- Adafruit ST7735 & ST7789 Library : Version 1.9.3
+- IRremote : Version 3.3.0
+- Adafruit GFX Library : Version 1.11.3
 
 ## Components
-- NodeMCU ESP8266 WiFi Microcontroller CP2102
+- NodeMCU ESP8266 WiFi Microcontroller v2 CP2102
 - IR Reciever / Remote
-- ST7735 1.77" display
+- ST7735 1.77" TFT display
 
 ### Configuration
 <img src="https://user-images.githubusercontent.com/47477832/181909269-97a67ce6-c805-4d76-8e40-3429da166fd5.png" width="500">
