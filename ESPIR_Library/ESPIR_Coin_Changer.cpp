@@ -200,8 +200,6 @@ int ESPIR_Coin_Changer::interact(uint32_t *ir_data) {
       display();
     }
   } else if (stage == 3) { // Select coin colour
-    Serial.println(*ir_data, HEX);
-
     // ok
     if (*ir_data == IR_OK) {
       loadIntoSelectedCoin();

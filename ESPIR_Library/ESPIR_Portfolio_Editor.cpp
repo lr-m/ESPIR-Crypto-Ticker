@@ -208,7 +208,6 @@ char Price_Selector::interact(uint32_t* ir_data){
     }
   }
 
-  Serial.println(new_double);
   return -1;
 }
 

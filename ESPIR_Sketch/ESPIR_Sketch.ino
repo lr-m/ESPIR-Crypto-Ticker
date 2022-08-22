@@ -82,8 +82,6 @@ extern unsigned char DAI_logo[];
 
 int coingecko_up = 1;
 
-char *stack_start;
-
 // For ST7735-based displays, we will use this call
 Adafruit_ST7735 tft =
     Adafruit_ST7735(TFT_CS, TFT_DC, TFT_SDA, TFT_SCL, TFT_RES);
@@ -346,11 +344,11 @@ void setup(void) {
 void loop() {
   updateTime(); // Update time variables
 
-//  Serial.print(millis());
-//  Serial.print(" - Heap: ");
-//  Serial.print(ESP.getFreeHeap());
-//  Serial.print(", Block Size: ");
-//  Serial.println(ESP.getMaxFreeBlockSize());
+  Serial.print(millis());
+  Serial.print(" - Heap: ");
+  Serial.print(ESP.getFreeHeap());
+  Serial.print(", Block Size: ");
+  Serial.println(ESP.getMaxFreeBlockSize());
 
   if (ssid_entered == 0) { // Get network name
     if (keyboard->enterPressed() == 1) {
@@ -632,7 +630,7 @@ void loop() {
       }
 
       // Refresh coins if cycle disabled
-      if (mode == 3 && coin_cycle_delay == 0) displayAllCoins();
+      if (mode == 3 && (coin_cycle_delay == 0 || selected_coins_count <= 4)) displayAllCoins();
     } else if (current_second % UPDATE_INTERVAL > 5) {
       data_refreshed = 0;
     }
@@ -641,7 +639,7 @@ void loop() {
     if (coin_cycle_delay > 0 && millis()/1000 > next_coin_change) {
       if (mode == 1) {
         displayNextCoin();
-      } else if (mode == 3){
+      } else if (mode == 3 && selected_coins_count > 4){
         display_all_start_index += 4;
         if (display_all_start_index >= MAX_SELECTED_COINS){
           display_all_start_index = 0;
@@ -654,7 +652,7 @@ void loop() {
 
 void displayNextCoin(){      
   current_coin++;
-  if (current_coin == selected_coins_count)
+  if (current_coin >= selected_coins_count)
     current_coin = 0;
 
   selected_coins[current_coin]->display(&tft, coin_menu->getButtons()[3].selectors[2].getSelected()[0]);
@@ -736,15 +734,6 @@ void drawIntroAnimation() {
       // Clear WiFi creds
       if (irrecv.decodedIRData.decodedRawData == IR_ASTERISK) {
         clearEEPROMArea(0, SETTINGS_START_ADDRESS);
-        ESP.restart();
-      }
-
-      // Clear Selected Coins
-      if (irrecv.decodedIRData.decodedRawData == 0xBA45FF00) {
-        for (int i = 0; i < 10; i++){
-          EEPROM.write(SETTINGS_START_ADDRESS+i, 255);
-        }
-        EEPROM.commit();
         ESP.restart();
       }
 
@@ -1464,6 +1453,8 @@ void interactWithMenu() {
         }
         
         portfolio->addPriceToCandles();
+
+        display_all_start_index = 0;
         
         if (mode == 1) {
           selected_coins[current_coin]->display(&tft, coin_menu->getButtons()[3].selectors[2].getSelected()[0]);
