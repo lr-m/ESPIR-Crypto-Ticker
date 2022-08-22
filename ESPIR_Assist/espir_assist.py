@@ -5,7 +5,7 @@ from PIL import Image, ImageTk
 from math import sqrt, floor
 import os
 import re
-from tkinter.filedialog import askopenfilename, askdirectory
+from tkinter.filedialog import askopenfilename
 
 # Changes logo colour
 def change_logo_colour():
@@ -175,7 +175,7 @@ def slider_changed(event):
 def replace_sequence():
     # Check that there are no empty inputs
     if (new_code_entry.get() == "" or new_id_entry.get() == "" \
-            or old_code_entry.get() == "" or ticker_directory_entry.get() == "" \
+            or old_code_entry.get() == "" or sketch_directory_entry.get() == "" \
             or library_directory_entry.get() == ""):
         result_label.config(text= "Missing Input", fg='red')
         return
@@ -185,27 +185,27 @@ def replace_sequence():
     refresh_bitmaps()
 
     library_path = library_directory_entry.get()
-    ticker_path = ticker_directory_entry.get()
+    sketch_path = sketch_directory_entry.get()
 
     # Either entry ends in desired entries, or the directory is in provided directory
 
-    # Handle ticker
-    if (os.path.exists(ticker_directory_entry.get())):
+    # Handle sketch
+    if (os.path.exists(sketch_directory_entry.get())):
         print("\nValid Sketch Path")
 
     # Check that the path is valid
-    if ('ticker' in os.listdir(ticker_directory_entry.get()) and \
-            not ticker_directory_entry.get().endswith('ticker')):
-        print('ticker found (subdirectory)')
-        ticker_path = ticker_path + '\\ticker'
-    elif (ticker_directory_entry.get().endswith('ticker')):
-        print('ticker found (directory)')
+    if ('ESPIR_Sketch' in os.listdir(sketch_directory_entry.get()) and \
+            not sketch_directory_entry.get().endswith('ESPIR_Sketch')):
+        print('ESPIR_Sketch found (subdirectory)')
+        sketch_path = sketch_path + '\\ESPIR_Sketch'
+    elif (sketch_directory_entry.get().endswith('ESPIR_Sketch')):
+        print('ESPIR_Sketch found (directory)')
 
     # Replace the bitmap in bitmaps.c
     print("\nModifying bitmaps.c")
 
     # Load data
-    bitmaps_c = open(ticker_path + '\\bitmaps.c', 'r+')
+    bitmaps_c = open(sketch_path + '\\bitmaps.c', 'r+')
     bitmaps_c_data = bitmaps_c.read()
     bitmaps_c.close()
 
@@ -224,63 +224,63 @@ def replace_sequence():
 
     print("Success")
 
-    # Replace data in ticker.ino
-    print("\nModifying ticker.ino...")
-    ticker_ino = open(ticker_path + '\\ticker.ino', 'r+')
-    ticker_ino_data = ticker_ino.read()
-    ticker_ino.close()
+    # Replace data in ESPIR_Sketch.ino
+    print("\nModifying ESPIR_Sketch.ino...")
+    sketch_ino = open(sketch_path + '\\ESPIR_Sketch.ino', 'r+')
+    sketch_ino_data = sketch_ino.read()
+    sketch_ino.close()
 
     # Replace the extern bitmap 
     if (len(re.findall('extern unsigned char ' +  old_code_entry.get() + \
-            '_logo\[\]', ticker_ino_data)) == 0):
-        result_label.config(text= "Failed in ticker.ino (1)", fg='red')
+            '_logo\[\]', sketch_ino_data)) == 0):
+        result_label.config(text= "Failed in ESPIR_Sketch.ino (1)", fg='red')
         return
     
     print("Replacing: " + re.findall('extern unsigned char ' +  \
-        old_code_entry.get() + '_logo\[\]', ticker_ino_data)[0])
+        old_code_entry.get() + '_logo\[\]', sketch_ino_data)[0])
 
-    ticker_data = re.sub('extern unsigned char ' +  old_code_entry.get() + \
+    sketch_data = re.sub('extern unsigned char ' +  old_code_entry.get() + \
         '_logo\[\]', 'extern unsigned char ' +  new_code_entry.get() + \
-        '_logo[]', ticker_ino_data)
+        '_logo[]', sketch_ino_data)
 
     # Replace the coin definition
     accent_colour = new_code_entry.get() + '_LOGO_COLOUR'
     if (accent_options.get() == 'Background'):
         accent_colour = new_code_entry.get() + '_BACKGROUND_COLOUR'
 
-    if (len(re.findall(" *COIN\(\"" + old_code_entry.get() + ".*", ticker_data)) == 0):
-        result_label.config(text= "Failed in ticker.ino (2)", fg='red')
+    if (len(re.findall(" *COIN\(\"" + old_code_entry.get() + ".*", sketch_data)) == 0):
+        result_label.config(text= "Failed in ESPIR_Sketch.ino (2)", fg='red')
         return
 
     print("Replacing: " + re.findall(" *COIN\(\"" + old_code_entry.get() + \
-        ".*", ticker_data)[0])
+        ".*", sketch_data)[0])
 
-    final_ticker_data = re.sub(" *COIN\(\"" + old_code_entry.get() + ".*", \
+    final_sketch_data = re.sub(" *COIN\(\"" + old_code_entry.get() + ".*", \
         "    COIN(\"" + new_code_entry.get() + '\", \"' + new_id_entry.get() + \
         '\", ' + new_code_entry.get() + '_logo, ' + new_code_entry.get() + \
         '_BACKGROUND_COLOUR, ' + new_code_entry.get() + '_LOGO_COLOUR, ' + \
-        accent_colour + ', 0, value_drawer);', ticker_data)
+        accent_colour + ', 0, value_drawer);', sketch_data)
 
     # Save all the data back to files once all checks pass
-    bitmaps_c_write = open(ticker_path + '\\bitmaps.c', 'w')
+    bitmaps_c_write = open(sketch_path + '\\bitmaps.c', 'w')
     bitmaps_c_write.write(new_data)
     bitmaps_c_write.close()
 
-    ticker_ino_write = open(ticker_path + '\\ticker.ino', 'w')
-    ticker_ino_write.write(final_ticker_data)
-    ticker_ino_write.close()
+    sketch_ino_write = open(sketch_path + '\\ESPIR_Sketch.ino', 'w')
+    sketch_ino_write.write(final_sketch_data)
+    sketch_ino_write.close()
 
     # Handle library
     if (os.path.exists(library_directory_entry.get())):
-        print("\nValid Library Path")
+        print("Valid Library Path")
 
     # Check that the path is valid
-    if ('ST7735_Crypto_Ticker' in os.listdir(library_directory_entry.get()) and \
-            not library_directory_entry.get().endswith('ST7735_Crypto_Ticker')):
-        print('ST7735_Crypto_Ticker found (subdirectory)')
-        library_path = library_path + '\ST7735_Crypto_Ticker'
-    elif (ticker_directory_entry.get().endswith('ST7735_Crypto_Ticker')):
-        print('ST7735_Crypto_Ticker found (directory)')
+    if ('ESPIR_Library' in os.listdir(library_directory_entry.get()) and \
+            not library_directory_entry.get().endswith('ESPIR_Library')):
+        print('ESPIR_Library found (subdirectory)')
+        library_path = library_path + '\ESPIR_Library'
+    elif (sketch_directory_entry.get().endswith('ESPIR_Library')):
+        print('ESPIR_Library found (directory)')
 
     # Open colours.h and append new colours to file
     print("\nModifying Colours.h...")
@@ -309,18 +309,6 @@ def get_logo_filename():
 
     refresh_bitmaps()
 
-# Get location of ticker directory from user
-def get_ticker_directory():
-    ticker_directory_entry.delete(0, tk.END)
-    directory = askdirectory()
-    ticker_directory_entry.insert(0, directory)
-
-# Get location of library directory from user
-def get_library_directory():
-    library_directory_entry.delete(0, tk.END)
-    directory = askdirectory()
-    library_directory_entry.insert(0, directory)
-
 logo_filename = "" # Path location of logo
 
 # Colours
@@ -331,7 +319,7 @@ logo_colour_888 = [0, 0, 0]
 background_colour_888 = [0, 0, 0]
 
 root = tk.Tk()
-root.title('ESPIR Assist')
+root.title('ESPIR Helper')
 root.geometry('1280x720')
 root.configure(bg='black')
 
@@ -378,7 +366,7 @@ id_frame.grid(column=2, row=1, padx=10, pady=10)
 
 fg_button = tk.Button(
     details_frame,
-    text='Select Logo',
+    text='Select Logo PNG',
     command=get_logo_filename, 
     bg='green', 
     fg='white', 
@@ -580,47 +568,41 @@ dir_location_title = tk.Label(dir_location_frame, text="Directories", \
     font=("Arial", 25), bg='black', fg='white')
 dir_location_title.grid(row=0,column=0,columnspan=2)
 
-# ST7735_Crypto_Ticker library
+# ESPIR_Library library
 library_directory_frame = tk.Frame(dir_location_frame, bg='black')
 
-library_directory_button = tk.Button(
-    library_directory_frame,
-    text='Select \'ST7735_Crypto_Ticker\' Directory/Folder',
-    command=get_library_directory,bg='green', fg='white', activeforeground='white', \
-        activebackground='red')
-library_directory_button.pack(expand=True, side=tk.TOP)  
+library_directory_label = tk.Label(library_directory_frame, \
+    text = "Enter 'ESPIR_Library' Directory Path", bg='black', fg='white')  
+library_directory_label.pack(expand=True, side=tk.TOP)  
 
 library_directory_canvas = tk.Canvas(library_directory_frame, width = 500, \
     height = 40, bg='black', highlightthickness=0)
 library_directory_canvas.pack(expand=True, side=tk.TOP)
-library_directory_entry = tk.Entry(library_directory_frame, width=70) 
+library_directory_entry = tk.Entry (library_directory_frame, width=70) 
 library_directory_canvas.create_window(250, 20, window=library_directory_entry)
 
 library_directory_frame.grid(column=0, row=1, padx=10, pady=10)
 
-# Ticker directory
-ticker_directory_frame = tk.Frame(dir_location_frame, bg='black')
+# sketch directory
+sketch_directory_frame = tk.Frame(dir_location_frame, bg='black')
 
-ticker_directory_button = tk.Button(
-    ticker_directory_frame,
-    text='Select \'ticker\' Directory/Folder',
-    command=get_ticker_directory,bg='green', fg='white', activeforeground='white', \
-        activebackground='red')
-ticker_directory_button.pack(expand=True, side=tk.TOP)  
+sketch_directory_label = tk.Label(sketch_directory_frame, \
+    text = "Enter 'ESPIR_Sketch' Directory Path", bg='black', fg='white')  
+sketch_directory_label.pack(expand=True, side=tk.TOP)  
 
-ticker_directory_canvas = tk.Canvas(ticker_directory_frame, width = 500, \
+sketch_directory_canvas = tk.Canvas(sketch_directory_frame, width = 500, \
     height = 40, bg='black', highlightthickness=0)
-ticker_directory_canvas.pack(expand=True, side=tk.TOP)
-ticker_directory_entry = tk.Entry (ticker_directory_frame, width=70) 
-ticker_directory_canvas.create_window(250, 20, window=ticker_directory_entry)
+sketch_directory_canvas.pack(expand=True, side=tk.TOP)
+sketch_directory_entry = tk.Entry (sketch_directory_frame, width=70) 
+sketch_directory_canvas.create_window(250, 20, window=sketch_directory_entry)
 
-ticker_directory_frame.grid(column=0, row=2, padx=10, pady=10)
+sketch_directory_frame.grid(column=0, row=2, padx=10, pady=10)
 
-result_label = tk.Label(ticker_directory_frame, text = "", bg='black', fg='white')  
+result_label = tk.Label(sketch_directory_frame, text = "", bg='black', fg='white')  
 result_label.pack(expand=True, side=tk.BOTTOM)  
 
 replace_button = tk.Button(
-    ticker_directory_frame,
+    sketch_directory_frame,
     text='REPLACE',
     command=replace_sequence, width=25,
     bg='green', fg='white', activeforeground='white', activebackground='red')
