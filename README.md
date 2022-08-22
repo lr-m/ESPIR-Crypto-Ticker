@@ -13,7 +13,7 @@
   
 # ESPIR
 
-ESPIR is an ESP8266 powered Crypto Ticker that uses an ST7735 TFT screen to display statistics and a candle chart for various cryptocurrencies, as well as a configured portfolio. It utilises an IR remote for configuration and user input. This device is powered by the CoinGecko API.
+ESPIR is an ESP8266 powered Crypto Ticker and Portfolio Tracker that uses an ST7735 TFT screen to display statistics and a candle chart for various cryptocurrencies, as well as a configured portfolio. It utilises an IR remote for configuration and user input. This device is powered by the CoinGecko API.
 
 ![banner](https://user-images.githubusercontent.com/47477832/186010050-b5c61aa1-e33b-4f22-beec-9d5df50403ed.png)
 
@@ -35,12 +35,12 @@ ESPIR is an ESP8266 powered Crypto Ticker that uses an ST7735 TFT screen to disp
 <img src="https://user-images.githubusercontent.com/47477832/181909269-97a67ce6-c805-4d76-8e40-3429da166fd5.png" width="500">
 
 ## Installation
-- To use, put the *ST7735_Crypto_Ticker* directory in your Arduino libraries directory
+- To use, put the *ESPIR_Library* directory in your Arduino libraries directory
 - If the display is not properly aligned (edges of pixels with random colour) or the colours are inverted, look at the Display Fix section.
 - If you have used a previous version of this software then you may have issues with the EEPROM storage, to resolve any issues, press '#' during the initial boot screen (with the logo) to completely clear the EEPROM, you will need to re-enter your WiFi credentials
 
 ### Display Fix (Working on an auto-convert feature for ESPIR Helper)
 
 There are 2 types of ST7735 screens, black tab and green tab. If the display is working, but is misaligned and/or the colours are inverted, you will need to swap which type of screen the sketch is configured with, this involves modification of 2 files:
-- In the Arduino library, ST7735_Crypto_Ticker, the colours.h file needs to be changed from 5:6:5 RGB to 5:6:5 BGR
-- In the Arduino sketch itself, change the display initialisation to GREEN_TAB, this will configure the device with the green tab settings
+- In the Arduino library, *ESPIR_Library*, the *Colours.h* file needs to be changed from 5:6:5 RGB to 5:6:5 BGR
+- In the Arduino sketch itself, change the display initialisation to *GREEN_TAB*, this will configure the device with the green tab settings
