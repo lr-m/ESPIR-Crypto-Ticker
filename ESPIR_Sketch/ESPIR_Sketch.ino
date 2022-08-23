@@ -176,7 +176,6 @@ void setup(void) {
   request_url = (char*) malloc(sizeof(char) * 450);
 
   // Initialise display
-  //tft.initR(INITR_GREENTAB); // Init ST7735S chip
   tft.initR(INITR_BLACKTAB); // Init ST7735S chip
   tft.setRotation(1);
 

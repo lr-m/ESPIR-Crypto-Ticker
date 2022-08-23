@@ -9,7 +9,8 @@ from tkinter.filedialog import askopenfilename, askdirectory
 
 # Changes logo colour
 def change_logo_colour():
-    global logo_colour_565
+    global logo_colour_565_rgb
+    global logo_colour_565_bgr
     global logo_colour_888
 
     # Get colour from user
@@ -17,18 +18,19 @@ def change_logo_colour():
 
     # Convert to rgb 565 and 888
     logo_colour_888 = hex_to_rgb_888(colours[1][1:])
-    logo_colour_565 = hex_to_rgb_565(colours[1][1:])
+    logo_colour_565_rgb = hex_to_rgb_565(colours[1][1:])
+    logo_colour_565_bgr = hex_to_bgr_565(colours[1][1:])
 
     # Update label
-    logo_label.configure(text=hex(logo_colour_565))
+    logo_label.configure(text=logo_colour_888)
 
     # Refresh colour and bitmap gen
-    generate_output()
     refresh_bitmaps()
 
 # Changes bitmap background colour
 def change_bg_colour():
-    global background_colour_565
+    global background_colour_565_rgb
+    global background_colour_565_bgr
     global background_colour_888
 
     # Get colour from user
@@ -36,13 +38,13 @@ def change_bg_colour():
 
     # Convert to rgb 565 and 888
     background_colour_888 = hex_to_rgb_888(colours[1][1:])
-    background_colour_565 = hex_to_rgb_565(colours[1][1:])
+    background_colour_565_rgb = hex_to_rgb_565(colours[1][1:])
+    background_colour_565_bgr = hex_to_bgr_565(colours[1][1:])
 
     # Update label
-    bg_label.configure(text=hex(background_colour_565))
+    bg_label.configure(text=background_colour_888)
 
     # Refresh colour and bitmap gen
-    generate_output()
     refresh_bitmaps()
 
 def hex_to_rgb_888(hex):
@@ -59,18 +61,14 @@ def hex_to_rgb_565(hex):
         ((rgb888[1] & 0b11111100) << 3) + \
         ((rgb888[2] & 0b11111000) >> 3)
 
-# Generate colour.h output
-def generate_output():
-    # Set output text
-    output_copy.configure(text='#define ' + new_code_entry.get() + \
-    '_LOGO_COLOUR ' + hex(logo_colour_565) + '\n#define ' + \
-    new_code_entry.get() + '_BACKGROUND_COLOUR ' + hex(background_colour_565))
+def hex_to_bgr_565(hex):
+    # Convert to RGB
+    rgb888 = hex_to_rgb_888(hex)
 
-# Copies value in colour output to clipboard
-def colour_h_clipboard():
-    generate_output() # Update output
-    root.clipboard_append(output_copy["text"])
-    root.update()
+    # Shift to get 5:6:5 RGB
+    return ((rgb888[2] & 0b11111000) << 8) + \
+        ((rgb888[1] & 0b11111100) << 3) + \
+        ((rgb888[0] & 0b11111000) >> 3)
 
 # Copies value in bitmap output to clipboard
 def bitmap_clipboard():
@@ -181,7 +179,6 @@ def replace_sequence():
         return
 
     # Make sure all outputs have been generated
-    generate_output()
     refresh_bitmaps()
 
     library_path = library_directory_entry.get()
@@ -218,7 +215,7 @@ def replace_sequence():
         old_code_entry.get() + '_logo \[\] PROGMEM = {[0-9|a-f|\n|x| |,]*};', \
         bitmaps_c_data)[0])
 
-    new_data = re.sub('const unsigned char ' +  old_code_entry.get() + \
+    new_colour_h_data = re.sub('const unsigned char ' +  old_code_entry.get() + \
         '_logo \[\] PROGMEM = {[0-9|a-f|\n|x| |,]*};', bitmap_output["text"], \
         bitmaps_c_data, re.DOTALL)
 
@@ -263,7 +260,7 @@ def replace_sequence():
 
     # Save all the data back to files once all checks pass
     bitmaps_c_write = open(sketch_path + '\\bitmaps.c', 'w')
-    bitmaps_c_write.write(new_data)
+    bitmaps_c_write.write(new_colour_h_data)
     bitmaps_c_write.close()
 
     sketch_ino_write = open(sketch_path + '\\ESPIR_Sketch.ino', 'w')
@@ -284,10 +281,23 @@ def replace_sequence():
 
     # Open colours.h and append new colours to file
     print("\nModifying Colours.h...")
+
+    # Get colour mode
+    colours_h_r = open(library_path + '\Colours.h', 'r')
+    mode = colours_h_r.readline()
+    print(mode)
+    colours_h_r.close()
+
     colours_h = open(library_path + '\Colours.h', 'a')
-    colours_h.write('#define ' + new_code_entry.get() + '_LOGO_COLOUR ' + \
-        hex(logo_colour_565) + '\n#define ' + new_code_entry.get() + \
-        '_BACKGROUND_COLOUR ' + hex(background_colour_565) + '\n')
+    if ('BLACK' in mode):
+        colours_h.write('#define ' + new_code_entry.get() + '_LOGO_COLOUR ' + \
+            hex(logo_colour_565_rgb) + '\n#define ' + new_code_entry.get() + \
+            '_BACKGROUND_COLOUR ' + hex(background_colour_565_rgb) + '\n')
+    elif ('GREEN' in mode):
+        colours_h.write('#define ' + new_code_entry.get() + '_LOGO_COLOUR ' + \
+            hex(logo_colour_565_bgr) + '\n#define ' + new_code_entry.get() + \
+            '_BACKGROUND_COLOUR ' + hex(background_colour_565_bgr) + '\n')
+
     colours_h.close()
     print("Success")
 
@@ -321,17 +331,99 @@ def get_sketch_path():
     print(folder_selected)
     sketch_directory_entry.insert(0, folder_selected)
 
+def swap_565(colour):
+    # Convert to binary
+    hex_col = int(colour[2:], 16)
+    bin_col_str = bin(hex_col)
+    bin_col = int(bin_col_str, 2)
+
+    ## Get RGB components (swap R and B)
+    last_5_bits = (bin_col << 11) % 65536
+    first_5_bits = bin_col >> 11
+    middle_6_bits = bin_col & (0b111111 << 5)
+
+    # Return OR of componenets
+    return hex(middle_6_bits | last_5_bits | first_5_bits)
+
+
+def display_fix():
+    # Check that there are no empty inputs
+    if (sketch_directory_entry.get() == "" \
+            or library_directory_entry.get() == ""):
+        mode_change_label.config(text= "Missing Directory Input", fg='red')
+        return
+
+    library_path = library_directory_entry.get()
+    sketch_path = sketch_directory_entry.get()
+
+    # Change the colours in Colours.h to be bgr instead of rgb
+    colours_h_r = open(library_path + '\Colours.h', 'r')
+    colours = colours_h_r.readlines()
+    colours_h_r.close()
+
+    # Generate new data
+    new_colour_h_data = []
+    for line in colours:
+        if ('INITR_BLACKTAB' in line):
+            if ('BLACK' in colour_mode_options.get()):
+                mode_change_label.config(text= "Already Set", fg='red')
+                return
+            new_colour_h_data.append('// INITR_GREENTAB\n')
+        elif ('INITR_GREENTAB' in line):
+            if ('GREEN' in colour_mode_options.get()):
+                mode_change_label.config(text= "Already Set", fg='red')
+                return
+            new_colour_h_data.append('// INITR_BLACKTAB\n')
+        elif ('0x' in line):
+            colour = re.findall('0x.*', line)[0] # Get colour
+            new_colour_h_data.append(re.sub('0x.*', swap_565(colour), line)) # Replace with swapped
+        else:
+            new_colour_h_data.append(line)
+    
+    colours_h_write = open(library_path + '\Colours.h', 'w')
+
+    for new_line in new_colour_h_data:
+        colours_h_write.write(new_line)
+
+    colours_h_write.close()
+
+     # Modify the initialisation of the display in ESPIR_Sketch.ino
+    sketch_ino = open(sketch_path + '\\ESPIR_Sketch.ino', 'r+')
+    sketch_ino_data = sketch_ino.read()
+    sketch_ino.close()
+
+    # Replace the INITR_TAB
+    all_regex = re.findall('INITR_[A-Z]*', sketch_ino_data)
+    if (len(all_regex) != 1):
+        mode_change_label.config(text= "Failed in ESPIR_Sketch.ino", fg='red')
+        return
+    
+    print("Replacing: " + re.findall('INITR_[A-Z]*', sketch_ino_data)[0])
+
+    sketch_data = re.sub('INITR_[A-Z]*', 'INITR_' + colour_mode_options.get(), sketch_ino_data)
+
+    # Write new sketch data to file
+    sketch_ino_write = open(sketch_path + '\\ESPIR_Sketch.ino', 'w')
+    sketch_ino_write.write(sketch_data)
+    sketch_ino_write.close()
+
+    mode_change_label.config(text= "Success", fg='green')
+
+    print("Success")
+
 logo_filename = "" # Path location of logo
 
 # Colours
-logo_colour_565 = 0x0000
-background_colour_565 = 0x0000
+logo_colour_565_rgb = 0x0000
+logo_colour_565_bgr = 0x0000
+background_colour_565_rgb = 0x0000
+background_colour_565_bgr = 0x0000
 
 logo_colour_888 = [0, 0, 0]
 background_colour_888 = [0, 0, 0]
 
 root = tk.Tk()
-root.title('ESPIR Helper')
+root.title('ESPIR Assist')
 root.geometry('1280x720')
 root.configure(bg='black')
 
@@ -378,7 +470,7 @@ id_frame.grid(column=2, row=1, padx=10, pady=10)
 
 fg_button = tk.Button(
     details_frame,
-    text='Select Logo PNG',
+    text='Select Logo',
     command=get_logo_filename, 
     bg='green', 
     fg='white', 
@@ -398,8 +490,8 @@ colour_title.grid(row=0,column=0,columnspan=5)
 # Logo colour frame
 logo_frame = tk.Frame(colour_h_frame, bg='black')
 
-logo_label = tk.Label(logo_frame, text = "0x0", bg='black', fg='white')  
-logo_label.pack(expand=True, side=tk.BOTTOM)  
+logo_label = tk.Label(logo_frame, text = "0 0 0", bg='black', fg='white')  
+logo_label.pack(expand=True, side=tk.TOP)  
 
 fg_button = tk.Button(
     logo_frame,
@@ -407,13 +499,13 @@ fg_button = tk.Button(
     command=change_logo_colour,bg='green', fg='white', activeforeground='white', \
         activebackground='red').pack()
 
-logo_frame.grid(column=1, row=1, pady=5);
+logo_frame.grid(column=1, row=1, padx=30, pady=10);
 
 # Background colour frame
 bg_frame = tk.Frame(colour_h_frame, bg='black')
 
-bg_label = tk.Label(bg_frame, text = "0x0", bg='black', fg='white')  
-bg_label.pack(expand=True, side=tk.BOTTOM)  
+bg_label = tk.Label(bg_frame, text = "0 0 0", bg='black', fg='white')  
+bg_label.pack(expand=True, side=tk.TOP)  
 
 bg_button = tk.Button(
     bg_frame,
@@ -421,35 +513,15 @@ bg_button = tk.Button(
     command=change_bg_colour,bg='green', fg='white', activeforeground='white', \
         activebackground='red').pack()
 
-bg_frame.grid(column=1, row=2, pady=5)
-
-# Output label
-output_frame = tk.Frame(colour_h_frame, bg='black')
-
-output_copy = tk.Label(output_frame, text = "",justify=tk.LEFT, bg="white", \
-    width=40, height=2)
-output_copy.pack(side = tk.BOTTOM, fill='both')
-
-generate_button = tk.Button(
-    output_frame,
-    text='Generate Output',
-    command=generate_output,bg='green', fg='white', activeforeground='white', \
-        activebackground='red').pack(side = tk.LEFT, fill='both', anchor='nw', \
-        pady=10)
-
-clipboard_colour_copy = tk.Button(
-    output_frame,
-    text='Copy',
-    command=colour_h_clipboard, bg='green', fg='white', activeforeground='white', \
-        activebackground='red').pack(fill='both', anchor='ne',side = tk.RIGHT, \
-        pady=10)
-
-output_frame.grid(column=4, row=1, padx=5, pady=20, rowspan=2, sticky='n')
+bg_frame.grid(column=2, row=1, padx=30, pady=10)
 
 # Accent colour
 select_frame = tk.Frame(colour_h_frame, bg='black')
 accent_options = tk.StringVar(root)
 accent_options.set("Logo") # default value
+
+colour_mode_options = tk.StringVar(root)
+colour_mode_options.set("BLACKTAB") # default value
 
 accent_label = tk.Label(select_frame, text = "Accent Colour:", bg='black', \
     fg='white')  
@@ -460,8 +532,7 @@ w.config(bg='green', fg='white', highlightthickness=0, width=15, \
     activebackground="red", activeforeground="white")
 w["menu"].config(bg="green", fg='white')
 w.pack(fill='both')
-select_frame.grid(column=3, row=1, rowspan=2, padx=30, pady=10, sticky='n')
-
+select_frame.grid(column=3, row=1, rowspan=2, padx=30, sticky='n', pady=10)
 
 # bitmap_h frame
 bitmap_frame = tk.Frame(left_frame, bg='black');
@@ -469,7 +540,7 @@ bitmap_frame.pack()
 
 bitmap_title = tk.Label(bitmap_frame, font=("Arial", 25), text='bitmaps.c', \
     bg='black', fg='white')
-bitmap_title.grid(row=0, column=0, columnspan=5)
+bitmap_title.grid(row=0, column=0, columnspan=5, pady=10)
 
 #logo_original = Image.open(logo_filename, 'r')
 logo_original = Image.new("RGBA", (40,40))
@@ -544,7 +615,7 @@ left_frame.pack(side=tk.LEFT, padx=25)
 right_frame = tk.Frame(root, bg='black')
 
 # Logo at top right
-espir = Image.open('espir_logo.png', 'r').resize((550, 200))
+espir = Image.open('espir_logo.png', 'r').resize((400, 150))
 espir_tk=ImageTk.PhotoImage(espir)
 
 espir_orig_img = tk.Label(right_frame, image=espir_tk, bg='black')
@@ -569,7 +640,7 @@ old_code_canvas.pack(expand=True, side=tk.TOP)
 old_code_entry = tk.Entry (old_code_frame) 
 old_code_canvas.create_window(100, 20, window=old_code_entry)
 
-old_code_frame.grid(column=0, row=1, padx=10, pady=20)
+old_code_frame.grid(column=0, row=1, padx=10, pady=10)
 
 replacing_details_frame.pack(side=tk.TOP)
 
@@ -593,10 +664,10 @@ library_directory_button.pack(expand=True, side=tk.TOP)
 library_directory_canvas = tk.Canvas(library_directory_frame, width = 500, \
     height = 40, bg='black', highlightthickness=0)
 library_directory_canvas.pack(expand=True, side=tk.TOP)
-library_directory_entry = tk.Entry (library_directory_frame, width=70) 
+library_directory_entry = tk.Entry (library_directory_frame, width=90) 
 library_directory_canvas.create_window(250, 20, window=library_directory_entry)
 
-library_directory_frame.grid(column=0, row=1, padx=10, pady=10)
+library_directory_frame.grid(column=0, row=1, padx=10, pady=5)
 
 # sketch directory
 sketch_directory_frame = tk.Frame(dir_location_frame, bg='black')
@@ -611,10 +682,10 @@ sketch_directory_button.pack(expand=True, side=tk.TOP)
 sketch_directory_canvas = tk.Canvas(sketch_directory_frame, width = 500, \
     height = 40, bg='black', highlightthickness=0)
 sketch_directory_canvas.pack(expand=True, side=tk.TOP)
-sketch_directory_entry = tk.Entry (sketch_directory_frame, width=70) 
+sketch_directory_entry = tk.Entry (sketch_directory_frame, width=90) 
 sketch_directory_canvas.create_window(250, 20, window=sketch_directory_entry)
 
-sketch_directory_frame.grid(column=0, row=2, padx=10, pady=10)
+sketch_directory_frame.grid(column=0, row=2, padx=10, pady=5)
 
 result_label = tk.Label(sketch_directory_frame, text = "", bg='black', fg='white')  
 result_label.pack(expand=True, side=tk.BOTTOM)  
@@ -623,11 +694,41 @@ replace_button = tk.Button(
     sketch_directory_frame,
     text='REPLACE',
     command=replace_sequence, width=25,
-    bg='green', fg='white', activeforeground='white', activebackground='red')
-replace_button.pack(side = tk.BOTTOM, pady=10)
+    bg='#C08B00', fg='white', activeforeground='white', activebackground='red')
+replace_button.pack(side = tk.BOTTOM, pady=5)
 
 dir_location_frame.pack(side=tk.TOP)
 
-right_frame.pack(side = tk.RIGHT)
+# Changing colour mode section
+colour_mode_frame = tk.Frame(right_frame, bg='black')
+
+colour_mode_title = tk.Label(colour_mode_frame, text="Display Fix", \
+    font=("Arial", 25), bg='black', fg='white')
+colour_mode_title.grid(row=0,column=0,columnspan=3, pady=5)
+
+# Select colour mode
+accent_label = tk.Label(colour_mode_frame, text = "Select Colour Mode:", bg='black', \
+    fg='white')  
+accent_label.grid(row=1,column=0)
+
+w = tk.OptionMenu(colour_mode_frame, colour_mode_options, "BLACKTAB", "GREENTAB")
+w.config(bg='green', fg='white', highlightthickness=0, width=25, \
+    activebackground="red", activeforeground="white")
+w["menu"].config(bg="green", fg='white')
+w.grid(row=2,column=0, padx=15)
+
+replace_button = tk.Button(
+    colour_mode_frame,
+    text='SET COLOUR MODE',
+    command=display_fix, width=25,
+    bg='#C08B00', fg='white', activeforeground='white', activebackground='red')
+replace_button.grid(row=2,column=1,padx=15)
+
+mode_change_label = tk.Label(colour_mode_frame, text = "", bg='black', fg='white')  
+mode_change_label.grid(row=3,column=0,columnspan=2, pady=10)
+
+colour_mode_frame.pack(side = tk.TOP)
+
+right_frame.pack(side = tk.RIGHT, padx=30)
 
 root.mainloop()
