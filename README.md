@@ -35,7 +35,7 @@ ESPIR is an ESP8266 powered Crypto Ticker and Portfolio Tracker that uses an ST7
 <img src="https://user-images.githubusercontent.com/47477832/181909269-97a67ce6-c805-4d76-8e40-3429da166fd5.png" width="500">
 
 ## Installation
-- *Install Arduino, and install all dependencies listed in Libraries/Requirements*
+- Install Arduino, and install all dependencies listed in *Libraries/Requirements*
 - Put the *ESPIR_Library* directory in your Arduino libraries directory
 - Select board to be NodeMCU 1.0 in Arduino Boards
 - Upload the sketch
@@ -51,3 +51,9 @@ There are 2 types of ST7735 screens, black tab and green tab. If the display is 
 - In the Arduino sketch itself, change the display initialisation to *GREEN_TAB*, this will configure the device with the green tab settings
 
 I added functionality to ESPIR_Assist which does all of this for you, you just need to point to the directories which store the library and sketch files, and select the colour mode to the opposite that it is currently configured with.
+
+# ESPIR Assist
+
+This is some software written using tkinter/Python, it makes the process of adding new coins with bitmaps, and changing display settings, much easier.
+
+![example](https://user-images.githubusercontent.com/47477832/186220704-f1c1bab4-66af-47a4-9c51-4d621d157a89.PNG)
