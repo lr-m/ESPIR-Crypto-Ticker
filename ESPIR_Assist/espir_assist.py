@@ -5,7 +5,7 @@ from PIL import Image, ImageTk
 from math import sqrt, floor
 import os
 import re
-from tkinter.filedialog import askopenfilename
+from tkinter.filedialog import askopenfilename, askdirectory
 
 # Changes logo colour
 def change_logo_colour():
@@ -309,6 +309,18 @@ def get_logo_filename():
 
     refresh_bitmaps()
 
+def get_library_path():
+    library_directory_entry.delete(0, tk.END)
+    folder_selected = askdirectory()
+    print(folder_selected)
+    library_directory_entry.insert(0, folder_selected)
+
+def get_sketch_path():
+    sketch_directory_entry.delete(0, tk.END)
+    folder_selected = askdirectory()
+    print(folder_selected)
+    sketch_directory_entry.insert(0, folder_selected)
+
 logo_filename = "" # Path location of logo
 
 # Colours
@@ -571,9 +583,12 @@ dir_location_title.grid(row=0,column=0,columnspan=2)
 # ESPIR_Library library
 library_directory_frame = tk.Frame(dir_location_frame, bg='black')
 
-library_directory_label = tk.Label(library_directory_frame, \
-    text = "Enter 'ESPIR_Library' Directory Path", bg='black', fg='white')  
-library_directory_label.pack(expand=True, side=tk.TOP)  
+library_directory_button = tk.Button(
+    library_directory_frame,
+    text='Enter \'ESPIR_Library\' Directory/Folder',
+    command=get_library_path, width=40,
+    bg='green', fg='white', activeforeground='white', activebackground='red')
+library_directory_button.pack(expand=True, side=tk.TOP)  
 
 library_directory_canvas = tk.Canvas(library_directory_frame, width = 500, \
     height = 40, bg='black', highlightthickness=0)
@@ -586,9 +601,12 @@ library_directory_frame.grid(column=0, row=1, padx=10, pady=10)
 # sketch directory
 sketch_directory_frame = tk.Frame(dir_location_frame, bg='black')
 
-sketch_directory_label = tk.Label(sketch_directory_frame, \
-    text = "Enter 'ESPIR_Sketch' Directory Path", bg='black', fg='white')  
-sketch_directory_label.pack(expand=True, side=tk.TOP)  
+sketch_directory_button = tk.Button(
+    sketch_directory_frame,
+    text='Enter \'ESPIR_Sketch\' Directory/Folder',
+    command=get_sketch_path, width=40,
+    bg='green', fg='white', activeforeground='white', activebackground='red')
+sketch_directory_button.pack(expand=True, side=tk.TOP)  
 
 sketch_directory_canvas = tk.Canvas(sketch_directory_frame, width = 500, \
     height = 40, bg='black', highlightthickness=0)
