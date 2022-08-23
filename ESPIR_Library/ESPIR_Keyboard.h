@@ -69,7 +69,7 @@ class ESPIR_Keyboard {
 	char* current_string; // Entered string
 	char mode; // Keyboard mode
 	char selected_index; // Index of selected key in list
-	char current_input_length; // Length of current input
+	char current_input_length = 0; // Length of current input
 	char enter_pressed; // Indicate if enter pressed
 	char last_mode; // Mode to return to when exiting tabs
 	char last_key; // Key last selected when entering tabs

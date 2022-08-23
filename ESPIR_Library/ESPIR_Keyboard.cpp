@@ -24,7 +24,10 @@ ESPIR_Keyboard::ESPIR_Keyboard(Adafruit_ST7735* display)
 	mode = 0;
 	current_input_length = 0;
 	current_string = (char*) malloc(sizeof(char) * (length_limit + 1));
-	current_string[0] = 0;
+
+	for (int i = 0; i < length_limit + 1; i++)
+		current_string[i] = '\0';
+
 	enter_pressed = 0;
 	
 	last_mode = 0;
@@ -167,9 +170,10 @@ void ESPIR_Keyboard::interact(uint32_t* ir_data){
 // Resets the keyboard between inputs
 void ESPIR_Keyboard::reset(){
 	current_input_length = 0;
-	free(current_string);
-	current_string = (char*) malloc(sizeof(char) * (length_limit + 1));
-	current_string[0] = 0;
+
+	for (int i = 0; i < length_limit + 1; i++)
+		current_string[i] = '\0';
+
 	enter_pressed = 0;
 }
 
@@ -193,7 +197,6 @@ void ESPIR_Keyboard::press(){
 	if (selected -> action == "Space"){
 		if (current_input_length < length_limit){
 			// Add space to current string
-			current_string[current_input_length + 1] = 0;
 			current_string[current_input_length] = ' ';
 			current_input_length++;
 		}
@@ -201,7 +204,7 @@ void ESPIR_Keyboard::press(){
 		// Remove last element from entered string
 		if (current_input_length > 0){
 			current_input_length--;
-			current_string[current_input_length] = 0;
+			current_string[current_input_length] = '\0';
 		}
 	} else if (selected -> action == "Enter"){
 		exitTabs();
@@ -215,7 +218,6 @@ void ESPIR_Keyboard::press(){
 	} else {
 		if (current_input_length < length_limit){
 			// Add pressed key to current string
-			current_string[current_input_length + 1] = 0;
 			if (mode == 1){
 				current_string[current_input_length] = 
 					(char) (selected -> action[0] - 32);
