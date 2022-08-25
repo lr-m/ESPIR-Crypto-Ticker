@@ -165,7 +165,7 @@ COIN **selected_coins; // List of pointers to coins currently selected
 char* request_url;
 
 void setup(void) { 
-  Serial.begin(115200);
+  //Serial.begin(115200);
 
   WiFi.mode(WIFI_OFF);
   delay(1000);
@@ -290,7 +290,7 @@ void setup(void) {
   EEPROM.begin(EEPROM_SIZE);
   byte value = EEPROM.read(0);
 
-  printEEPROM();
+  //printEEPROM();
 
   // First ever boot has random memory, need to clear
   if (value != 1 && value != 0){
@@ -343,11 +343,11 @@ void setup(void) {
 void loop() {
   updateTime(); // Update time variables
 
-  Serial.print(millis());
-  Serial.print(" - Heap: ");
-  Serial.print(ESP.getFreeHeap());
-  Serial.print(", Block Size: ");
-  Serial.println(ESP.getMaxFreeBlockSize());
+//  Serial.print(millis());
+//  Serial.print(" - Heap: ");
+//  Serial.print(ESP.getFreeHeap());
+//  Serial.print(", Block Size: ");
+//  Serial.println(ESP.getMaxFreeBlockSize());
 
   if (ssid_entered == 0) { // Get network name
     if (keyboard->enterPressed() == 1) {
@@ -757,11 +757,11 @@ void getData(int app_mode) {
   WiFiClientSecure client;
   client.setInsecure();
 
-  if (app_mode == 1){
-   Serial.println("Coin Data Update Attempt...");
-  } else {
-   Serial.println("Portfolio Data Update Attempt...");
-  }
+//  if (app_mode == 1){
+//   Serial.println("Coin Data Update Attempt...");
+//  } else {
+//   Serial.println("Portfolio Data Update Attempt...");
+//  }
 
   // HTTP request
   http.begin(client, request_url);
@@ -810,7 +810,7 @@ void getData(int app_mode) {
         }
     } while (http.getStream().findUntil(",\"", "}")); // Continue until last '}' reached
 
-    Serial.println("Success");
+    //Serial.println("Success");
    
     http.end();
   } else {
