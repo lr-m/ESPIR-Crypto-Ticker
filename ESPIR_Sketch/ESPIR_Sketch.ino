@@ -165,7 +165,7 @@ COIN **selected_coins; // List of pointers to coins currently selected
 char* request_url;
 
 void setup(void) { 
-  Serial.begin(115200);
+  // Serial.begin(115200);
 
   WiFi.mode(WIFI_OFF);
   delay(1000);
@@ -840,7 +840,7 @@ int verifyID(char *id) {
   WiFiClientSecure client;
   client.setInsecure();
 
-  StaticJsonDocument<120> doc;
+  StaticJsonDocument<100> doc;
 
   // Init HTTP
   HTTPClient http;
