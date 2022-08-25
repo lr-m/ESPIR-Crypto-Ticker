@@ -169,14 +169,11 @@ int ESPIR_Coin_Changer::interact(uint32_t *ir_data) {
 
     if (keyboard->enterPressed() == 1) {
       // Indicate SSID and pwd loaded into EEPROM
-      int i = 0;
-      char *keyboard_val = keyboard->getCurrentInput();
 
-      while (keyboard_val[i] != 0) {
-        loaded_id[i] = keyboard_val[i];
-        i++;
-      }
-      loaded_id[i] = 0;
+      memcpy(loaded_id, keyboard->getCurrentInput(), 31);
+
+      Serial.println("LOADED ID:");
+      Serial.println(loaded_id);
 
       keyboard->reset();
       keyboard->setModeClear(1, 14);
@@ -187,14 +184,11 @@ int ESPIR_Coin_Changer::interact(uint32_t *ir_data) {
     keyboard->interact(ir_data);
     if (keyboard->enterPressed() == 1) {
       // Indicate SSID and pwd loaded into EEPROM
-      int i = 0;
-      char *keyboard_val = keyboard->getCurrentInput();
 
-      while (keyboard_val[i] != 0) {
-        loaded_code[i] = keyboard_val[i];
-        i++;
-      }
-      loaded_code[i] = 0;
+      memcpy(loaded_code, keyboard->getCurrentInput(), 8);
+
+      Serial.println("LOADED CODE:");
+      Serial.println(loaded_code);
 
       stage++;
       display();
@@ -271,22 +265,19 @@ int ESPIR_Coin_Changer::interact(uint32_t *ir_data) {
 // Load the entered details into the coin with the selected ID
 void ESPIR_Coin_Changer::loadIntoSelectedCoin() {
   coins[current_replacing_index].bitmap_present = 0;
+
+  coins[current_replacing_index].clearIdCode();
+
+  Serial.println("LOADING INTO SELECTED COIN");
+  Serial.println(loaded_code);
+  Serial.println(loaded_id);
+  Serial.println();
   
   // Load the coin code
-  int i = 0;
-  while(loaded_code[i] != 0){
-    coins[current_replacing_index].coin_code[i] = loaded_code[i];
-    i++;
-  }
-  coins[current_replacing_index].coin_code[i] = 0;
+  memcpy(coins[current_replacing_index].coin_code, loaded_code, 8);
 
   // Load the coin id
-  i = 0;
-  while(loaded_id[i] != 0){
-     coins[current_replacing_index].coin_id[i] = loaded_id[i];
-    i++;
-  }
-  coins[current_replacing_index].coin_id[i] = 0;
+  memcpy(coins[current_replacing_index].coin_id, loaded_id, 31);
 
   // Load the coin colour
   coins[current_replacing_index].portfolio_colour = rgb_to_bgr(

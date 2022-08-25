@@ -23,9 +23,9 @@ ESPIR_Keyboard::ESPIR_Keyboard(Adafruit_ST7735* display)
 	selected_index = 0;
 	mode = 0;
 	current_input_length = 0;
-	current_string = (char*) malloc(sizeof(char) * (length_limit + 1));
+	current_string = (char*) malloc(sizeof(char) * (ABS_MAX_LENGTH));
 
-	for (int i = 0; i < length_limit + 1; i++)
+	for (int i = 0; i < ABS_MAX_LENGTH; i++)
 		current_string[i] = '\0';
 
 	enter_pressed = 0;
@@ -171,7 +171,7 @@ void ESPIR_Keyboard::interact(uint32_t* ir_data){
 void ESPIR_Keyboard::reset(){
 	current_input_length = 0;
 
-	for (int i = 0; i < length_limit + 1; i++)
+	for (int i = 0; i < ABS_MAX_LENGTH; i++)
 		current_string[i] = '\0';
 
 	enter_pressed = 0;

@@ -5,19 +5,21 @@ COIN::COIN(char* code, char *id, const unsigned char* bm, uint16_t circle_col,
            uint16_t bm_col, uint16_t portfolio_col, double coin_amount, 
            ESPIR_Value_Drawer* drawer) {
 
+  clearIdCode(); // Refresh identifiers
+
   int i = 0;
-  while(code[i] != 0){
+  while(code[i] != '\0'){
     coin_code[i] = code[i];
     i++;
   }
-  coin_code[i] = 0;
+  coin_code[i] = '\0';
 
   i = 0;
-  while(id[i] != 0){
+  while(id[i] != '\0'){
     coin_id[i] = id[i];
     i++;
   }
-  coin_id[i] = 0;
+  coin_id[i] = '\0';
 
   bitmap = bm;
   circle_colour = circle_col;
@@ -38,19 +40,22 @@ COIN::COIN(char* code, char *id, const unsigned char* bm, uint16_t circle_col,
 // Constructor for coin without bitmap
 COIN::COIN(char *code, char *id, uint16_t portfolio_col,
            double coin_amount, ESPIR_Value_Drawer* drawer) {
+  
+  clearIdCode(); // Refresh identifiers
+
   int i = 0;
-  while(code[i] != 0){
+  while(code[i] != '\0'){
     coin_code[i] = code[i];
     i++;
   }
-  coin_code[i] = 0;
+  coin_code[i] = '\0';
 
   i = 0;
-  while(id[i] != 0){
+  while(id[i] != '\0'){
     coin_id[i] = id[i];
     i++;
   }
-  coin_id[i] = 0;
+  coin_id[i] = '\0';
 
   portfolio_colour = portfolio_col;
   amount = coin_amount;
@@ -62,6 +67,16 @@ COIN::COIN(char *code, char *id, uint16_t portfolio_col,
 
   current_change = 0;
   current_price = 0;
+}
+
+void COIN::clearIdCode(){
+  for (int i = 0; i < 8; i++){
+    coin_code[i] = '\0';
+  }
+
+  for (int i = 0; i < 31; i++){
+    coin_id[i] = '\0';
+  }
 }
 
 // Free the candles

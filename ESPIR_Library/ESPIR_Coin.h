@@ -31,7 +31,7 @@ public:
     double, ESPIR_Value_Drawer*);
   COIN(char *, char *, uint16_t, double, ESPIR_Value_Drawer*);
 
-  char coin_code[10];
+  char coin_code[8];
   char coin_id[31];
   double current_price;
   double current_change;
@@ -56,6 +56,7 @@ public:
   void drawBitmap(Adafruit_ST7735 *, int16_t, int16_t, const uint8_t *, int16_t,
                   int16_t, uint16_t);
   void toggleBitmap();
+  void clearIdCode();
 };
 
 #endif

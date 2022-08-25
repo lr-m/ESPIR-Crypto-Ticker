@@ -47,8 +47,8 @@ class ESPIR_Coin_Changer
 		int interact(uint32_t*);
 		int active;
 		ESPIR_Keyboard* keyboard;
-		char loaded_id[30];
-		char loaded_code[10];
+		char loaded_id[31];
+		char loaded_code[8];
 		int verified_id;
 		
 		void verificationSuccess();

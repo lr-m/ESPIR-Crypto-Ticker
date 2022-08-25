@@ -15,6 +15,7 @@
 #define KEY_HEIGHT 11
 #define NORMAL_KEY_WIDTH 12
 #define EDGE_BORDER 4
+#define ABS_MAX_LENGTH 31
 
 class Key {
 	public:

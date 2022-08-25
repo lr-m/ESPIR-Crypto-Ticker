@@ -69,7 +69,7 @@ extern unsigned char DAI_logo[];
 // Additional coins save details
 #define COIN_COUNT_ADDRESS 105
 #define COIN_START_ADDRESS 106
-#define COIN_BLOCK_SIZE 45
+#define COIN_BLOCK_SIZE 44
 #define ADDED_COINS_LIMIT 5
 
 // Portfolio save details
@@ -165,7 +165,7 @@ COIN **selected_coins; // List of pointers to coins currently selected
 char* request_url;
 
 void setup(void) { 
-  //Serial.begin(115200);
+  Serial.begin(115200);
 
   WiFi.mode(WIFI_OFF);
   delay(1000);
@@ -746,7 +746,6 @@ void drawIntroAnimation() {
 }
 
 // Data Retrieval
-
 void getData(int app_mode) { 
   // Instanciate Secure HTTP communication
   HTTPClient http;
@@ -759,8 +758,10 @@ void getData(int app_mode) {
 
 //  if (app_mode == 1){
 //   Serial.println("Coin Data Update Attempt...");
+//   Serial.println(request_url);
 //  } else {
 //   Serial.println("Portfolio Data Update Attempt...");
+//   Serial.println(request_url);
 //  }
 
   // HTTP request
@@ -768,7 +769,7 @@ void getData(int app_mode) {
   int httpCode = http.GET();
 
   // Buffers for data
-  StaticJsonDocument<60> doc;
+  StaticJsonDocument<100> doc;
   char id_buffer[35];
 
   // OK http response
@@ -839,7 +840,7 @@ int verifyID(char *id) {
   WiFiClientSecure client;
   client.setInsecure();
 
-  StaticJsonDocument<90> doc;
+  StaticJsonDocument<120> doc;
 
   // Init HTTP
   HTTPClient http;
@@ -1149,9 +1150,9 @@ void writeCoinToEEPROM(COIN* coin, char index){
   do {
     EEPROM.write(write_address+i, coin->coin_code[i]);
     i++;
-  } while (coin->coin_code[i] != 0 && i < 8);
+  } while (coin->coin_code[i] != 0 && i < 7);
   EEPROM.write(write_address+i, 0);
-  write_address+=9;
+  write_address+=8;
 
   // Write tag to eeprom
   i = 0;
@@ -1182,10 +1183,10 @@ void readCoinsFromEEPROM(){
       write_address++;
 
       // Read coin code
-      for (int i = 0; i < 9; i++){
+      for (int i = 0; i < 8; i++){
         coins[index].coin_code[i] = (char) EEPROM.read(write_address+i);
       }
-      write_address+=9;
+      write_address+=8;
 
       // Read coin id
       for (int i = 0; i < 31; i++){
@@ -1326,7 +1327,6 @@ void loadSettingsFromEEPROM(){
     read_address++;
   }
 }
-
 
 /**
  * Clears the EEPROM memory.
