@@ -4,11 +4,15 @@
 
 <div align="center">
 
+**ESP8266 Cryptocurrency Ticker & Portfolio Tracker, with 1.77" ST7735 display, and IR functionality.**
+
 [![GitHub stars](https://img.shields.io/github/stars/luke-r-mills/ESPIR_Crypto_Ticker?style=for-the-badge)](https://github.com/luke-r-mills/ESPIR_Crypto_Ticker/stargazers)
 [![GitHub license](https://img.shields.io/github/license/luke-r-mills/ESPIR_Crypto_Ticker?style=for-the-badge)](https://github.com/luke-r-mills/ESPIR_Crypto_Ticker/blob/main/LICENSE)
 ![GitHub last commit](https://img.shields.io/github/last-commit/luke-r-mills/ESPIR_Crypto_Ticker?style=for-the-badge)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/luke-r-mills/ESPIR_Crypto_Ticker?style=for-the-badge)
-  
+
+<img src="https://user-images.githubusercontent.com/47477832/186770649-66c05b6f-122c-46c6-b936-4bad5599ade1.gif" width="350">
+
 </div>
   
 # ESPIR
@@ -32,7 +36,14 @@ ESPIR is an ESP8266 powered Crypto Ticker and Portfolio Tracker that uses an ST7
 - ST7735 1.77" TFT display
 
 ## Configuration
-<img src="https://user-images.githubusercontent.com/47477832/181909269-97a67ce6-c805-4d76-8e40-3429da166fd5.png" width="500">
+
+<div align="center">
+
+<img src="https://user-images.githubusercontent.com/47477832/186773802-048066a3-afe0-4c9f-b228-5477c21530b3.png" width="750">
+
+</div>
+
+
 
 ## Installation
 - Install Arduino, and install all dependencies listed in *Libraries/Requirements*
