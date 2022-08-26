@@ -14,7 +14,7 @@ ESPIR_Portfolio::ESPIR_Portfolio(Adafruit_ST7735 *display,
   coins = coin_arr;
 
   candle_graph = (Candle_Graph *)malloc(sizeof(Candle_Graph));
-  *candle_graph = Candle_Graph(tft, CANDLE_COUNT, 36, tft->height() - 10, 1);
+  *candle_graph = Candle_Graph(tft, CANDLE_COUNT, 36, tft->height() - 12, 1);
 
   display_mode = 0;
 
