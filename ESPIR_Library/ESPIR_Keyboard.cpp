@@ -211,8 +211,7 @@ void ESPIR_Keyboard::press(){
 			exitTabs();
 
 			// Signal that enter has been pressed
-			if (current_string[0] != 0)
-				enter_pressed = 1;
+			enter_pressed = 1;
 		}
 	} else if (selected -> action == "Help"){
 		displayInstructions();
