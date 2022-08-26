@@ -207,11 +207,13 @@ void ESPIR_Keyboard::press(){
 			current_string[current_input_length] = '\0';
 		}
 	} else if (selected -> action == "Enter"){
-		exitTabs();
+		if (current_input_length > 0){
+			exitTabs();
 
-		// Signal that enter has been pressed
-		if (current_string[0] != 0)
-			enter_pressed = 1;
+			// Signal that enter has been pressed
+			if (current_string[0] != 0)
+				enter_pressed = 1;
+		}
 	} else if (selected -> action == "Help"){
 		displayInstructions();
 		display();
