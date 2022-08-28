@@ -789,7 +789,8 @@ void getData(int app_mode) {
         // Add to coin or portfolio
         if (app_mode == 1) {
           for (int i = 0; i < selected_coins_count; i++) {
-            if (strcmp(id_buffer, selected_coins[i] -> coin_id) == 0){
+            if (strcmp(id_buffer, selected_coins[i] -> coin_id) == 0 
+                && doc[currency_options_lower[selected_currency]] > 0){
               selected_coins[i] -> current_price = doc[currency_options_lower[selected_currency]];
               selected_coins[i] -> current_change = doc[currency_options_changes[selected_currency]];
               selected_coins[i] -> candles -> addPrice(doc[currency_options_lower[selected_currency]]);
@@ -799,7 +800,8 @@ void getData(int app_mode) {
         } else if (app_mode == 2) {
           int j = 0;
           while (portfolio_editor->selected_portfolio_indexes[j] != -1) {
-            if (strcmp(id_buffer, coins[portfolio_editor->selected_portfolio_indexes[j]].coin_id) == 0){
+            if (strcmp(id_buffer, coins[portfolio_editor->selected_portfolio_indexes[j]].coin_id) == 0 
+                && doc[currency_options_lower[selected_currency]] > 0){
               coins[portfolio_editor->selected_portfolio_indexes[j]].current_price =
                   doc[currency_options_lower[selected_currency]];
               coins[portfolio_editor->selected_portfolio_indexes[j]].current_change =
@@ -811,7 +813,7 @@ void getData(int app_mode) {
         }
     } while (http.getStream().findUntil(",\"", "}")); // Continue until last '}' reached
 
-    //Serial.println("Success");
+    Serial.println("Success");
    
     http.end();
   } else {
@@ -1529,17 +1531,20 @@ void drawMenu() {
   // Display connection status messages
   tft.setTextSize(1);
   if (WiFi.status() == WL_CONNECTED && coingecko_up == 1){
-    tft.setCursor(52, tft.height()-10);
+    tft.setCursor(2, tft.height()-10);
     tft.setTextColor(LIGHT_GREEN);
     tft.print("Connected");
+    tft.setCursor(tft.width()-26, tft.height()-10);
+    tft.print(dBmtoPercentage(WiFi.RSSI()));
+    tft.print('%');
   } else {
     tft.setTextColor(LIGHT_RED);
     if (WiFi.status() != WL_CONNECTED){
-      tft.setCursor(29, tft.height()-10);
+      tft.setCursor(2, tft.height()-10);
       tft.print("WiFi Disconnected");
     } else if (coingecko_up == 0){
-      tft.setCursor(8, tft.height()-10);
-      tft.print("CoinGecko Not Responding");
+      tft.setCursor(2, tft.height()-10);
+      tft.print("CoinGecko Issue");
     }
   }
 }
@@ -1690,3 +1695,25 @@ void interactWithPortfolioSettings() {
       irrecv.resume();
     }
 }
+
+const int RSSI_MAX =-50;// define maximum strength of signal in dBm
+const int RSSI_MIN =-100;// define minimum strength of signal in dBm
+
+int dBmtoPercentage(int dBm)
+{
+  int quality;
+    if(dBm <= RSSI_MIN)
+    {
+        quality = 0;
+    }
+    else if(dBm >= RSSI_MAX)
+    {  
+        quality = 100;
+    }
+    else
+    {
+        quality = 2 * (dBm + 100);
+   }
+
+     return quality;
+}//dBmtoPercentage 
