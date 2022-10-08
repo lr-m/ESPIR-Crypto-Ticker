@@ -43,20 +43,20 @@ extern unsigned char SHIB_logo[];
 extern unsigned char DAI_logo[];
 
 // Define PIN config
-#define TFT_SCL   D1
-#define TFT_SDA   D2
-#define TFT_RES   D3
-#define TFT_DC    D4
-#define RECV_PIN  D5
-#define TFT_CS    D6
-
-// OLD PIN CONFIG
 //#define TFT_SCL   D1
 //#define TFT_SDA   D2
 //#define TFT_RES   D3
-//#define RECV_PIN  D4
-//#define TFT_DC    D5
+//#define TFT_DC    D4
+//#define RECV_PIN  D5
 //#define TFT_CS    D6
+
+// OLD PIN CONFIG
+#define TFT_SCL   D1
+#define TFT_SDA   D2
+#define TFT_RES   D3
+#define RECV_PIN  D4
+#define TFT_DC    D5
+#define TFT_CS    D6
 
 #define UPDATE_INTERVAL 30 // Update every 30 seconds
 
@@ -102,6 +102,7 @@ int eeprom_address = 0;      // Current address being written to on EEPROM
 int in_menu = 0;             // Indicates if currently in the menu
 int in_crypto_settings = 0;         // Indicates if currently in settings submenu
 int in_portfolio_settings = 0;         // Indicates if currently in settings submenu
+int in_wifi_settings = 0;         // Indicates if currently in settings submenu
 int in_coinlist = 0;         // Indicates if currently in coin list submenu
 int in_portfolio_editor = 0;
 int coin_time_slot_moved = 1; // Indicates if coin candles have been moved along
@@ -165,7 +166,7 @@ COIN **selected_coins; // List of pointers to coins currently selected
 char* request_url;
 
 void setup(void) { 
-  //Serial.begin(115200);
+  Serial.begin(115200);
 
   WiFi.mode(WIFI_OFF);
   delay(1000);
@@ -187,18 +188,17 @@ void setup(void) {
   coin_menu_button_functions =
       (char **)malloc(sizeof(char *) * COIN_MENU_BUTTON_COUNT);
 
-  coin_menu_button_functions[0] = "Select Coins";
-  coin_menu_button_functions[1] = "Edit Portfolio";
-  coin_menu_button_functions[2] = "Add New Coin";
-  coin_menu_button_functions[3] = "Crypto Display Settings";
-  coin_menu_button_functions[4] = "Portfolio Settings";
-  coin_menu_button_functions[5] = "Clear WiFi Credentials";
-  coin_menu_button_functions[6] = "Reset Coins (Restart)";
-  coin_menu_button_functions[7] = "Clear Portfolio";
-  coin_menu_button_functions[8] = "Exit Menu";
   coin_menu = (ESPIR_Menu *)malloc(sizeof(ESPIR_Menu));
   *coin_menu =
-      ESPIR_Menu(&tft, COIN_MENU_BUTTON_COUNT, coin_menu_button_functions);
+      ESPIR_Menu(&tft, COIN_MENU_BUTTON_COUNT);
+   coin_menu->addButton("Select Coins", 1, 0);
+   coin_menu->addButton("Edit Portfolio", 0, 0);
+   coin_menu->addButton("Add New Coin", 0, 0);
+   coin_menu->addButton("Crypto Display Settings", 4, 0);
+   coin_menu->addButton("Portfolio Settings", 2, 0);
+   coin_menu->addButton("WiFi Settings", 0, 3);
+   coin_menu->addButton("Reset Coins (Restart)", 0, 0);
+   coin_menu->addButton("Clear Portfolio", 0, 0);
 
   // For drawing prices and percentage changes
   value_drawer = (ESPIR_Value_Drawer *)malloc(sizeof(ESPIR_Value_Drawer));
@@ -271,6 +271,13 @@ void setup(void) {
       "Candle duration (mins):", candle_change_times, 4, 1, 4);
   coin_menu->getButtons()[4].addSelector(
       "Portfolio display cycle:", bitmap_toggle, 2, 1, 2);
+
+  coin_menu->getButtons()[5].addButton(
+      "Clear Credentials", 0, 0);
+  coin_menu->getButtons()[5].addButton(
+      "Change WiFi", 0, 0);
+  coin_menu->getButtons()[5].addButton(
+      "Change Security Key", 0, 0);
   
   for (int i = 0; i < COIN_COUNT; i++)
     coin_list[i] = coins[i].coin_code;
@@ -415,6 +422,11 @@ void loop() {
 
     if (in_portfolio_settings == 1) { // Interact with settings submenu
       interactWithPortfolioSettings();
+      return;
+    }
+
+    if (in_wifi_settings == 1) { // Interact with settings submenu
+      interactWithWiFiSettings();
       return;
     }
 
@@ -1500,6 +1512,11 @@ void interactWithMenu() {
           coin_menu->getButtons()[4].drawSubMenu();
         }
 
+        if (button_action == "WiFi Settings") {
+          in_wifi_settings = 1;
+          coin_menu->getButtons()[5].drawSubMenu();
+        }
+
         if (button_action == "Edit Portfolio") {
           portfolio_editor->setActive();
           portfolio_editor->display();
@@ -1649,6 +1666,36 @@ void interactWithCryptoSettings() {
 
       if (irrecv.decodedIRData.decodedRawData == IR_RIGHT)
         coin_menu->getButtons()[3].subMenuRight();
+
+      delay(50);
+      irrecv.resume();
+    }
+}
+
+void interactWithWiFiSettings() { 
+  //coin_menu->getButtons()[5].flashSelectedSelector();
+    if (irrecv.decode()) {
+      // Exit sub menu
+      if (irrecv.decodedIRData.decodedRawData == IR_HASHTAG) {
+        in_wifi_settings = 0;
+        drawMenu();
+      }
+
+      // Pass pressed buttons into portfolio settings sub menu
+      if (irrecv.decodedIRData.decodedRawData == IR_OK) 
+        char *action = coin_menu->getButtons()[4].pressSubMenu();
+
+      if (irrecv.decodedIRData.decodedRawData == IR_DOWN)
+        coin_menu->getButtons()[4].subMenuDown();
+
+      if (irrecv.decodedIRData.decodedRawData == IR_UP)
+        coin_menu->getButtons()[4].subMenuUp();
+
+      if (irrecv.decodedIRData.decodedRawData == IR_LEFT)
+        coin_menu->getButtons()[4].subMenuLeft();
+
+      if (irrecv.decodedIRData.decodedRawData == IR_RIGHT)
+        coin_menu->getButtons()[4].subMenuRight();
 
       delay(50);
       irrecv.resume();

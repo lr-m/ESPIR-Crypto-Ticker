@@ -15,9 +15,12 @@
 #define BUTTON_HEIGHT 11
 #define NORMAL_BUTTON_WIDTH 12
 #define EDGE_BORDER 4
-#define MAX_SELECTORS 4
+#define MAX_ELEMENTS 4
 #define LAST_BUTTON_X 32
 #define FIRST_BUTTON_X 4
+
+#define SELECTOR_ID 0
+#define BUTTON_ID 1
 
 #define MAX_INPUT_LENGTH 32
 
@@ -57,7 +60,7 @@ class Selector {
 
 class Button {
   public:
-    Button(Adafruit_ST7735 *, int, int, int, int, char *);
+    Button(Adafruit_ST7735 *, int, int, int, int, char *, int, int);
     void addSelector(char *, char **, int, int, int);
     void display();
     void displaySelected();
@@ -67,6 +70,7 @@ class Button {
     void subMenuLeft();
     void subMenuRight();
     void flashSelectedSelector();
+    void addButton(char*, int, int);
 
     int x;
     int y;
@@ -74,9 +78,13 @@ class Button {
     int h;
     char *action;
     Selector *selectors;
+    Button* buttons;
+    int element_count;
     int selector_count;
+    int button_count;
     char *pressSubMenu();
-    int current_selector;
+    int current_element;
+    char* element_type;
 
   private:
     Adafruit_ST7735 *tft;
@@ -84,12 +92,13 @@ class Button {
 
 class ESPIR_Menu {
   public:
-    ESPIR_Menu(Adafruit_ST7735 *, int, char **);
+    ESPIR_Menu(Adafruit_ST7735 *, int);
     char *press();
     void display();
     void moveDown();
     void moveUp();
     Button *getButtons();
+    void addButton(char*, int , int);
 
   private:
     Adafruit_ST7735 *tft;
@@ -98,6 +107,7 @@ class ESPIR_Menu {
     int selected_button_index;
     int button_count;
     char **values;
+    int buttons_added;
 };
 
 #endif

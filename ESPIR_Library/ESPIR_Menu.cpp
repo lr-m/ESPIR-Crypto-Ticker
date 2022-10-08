@@ -6,21 +6,14 @@
 #include "ESPIR_Menu.h"
 
 // Constructor for Keyboard
-ESPIR_Menu::ESPIR_Menu(Adafruit_ST7735* display, int btn_count, 
-		char** button_values) {
+ESPIR_Menu::ESPIR_Menu(Adafruit_ST7735* display, int btn_count) {
 	tft = display;
 	
-	button_count = btn_count;
-	values = button_values;
-	
-	buttons = (Button*) malloc(sizeof(Button) * button_count);
+	buttons = (Button*) malloc(sizeof(Button) * btn_count);
 
-	for (int i = 0; i < button_count; i++){
-		buttons[i] = Button(tft, 0, 4 + i * 14, tft -> width(), 12, 
-			button_values[i]);
-	}
-	
+	button_count = btn_count;
 	selected_button_index = 0;
+	buttons_added = 0;
 }
 
 // Performs the action of the currently selected key
@@ -62,21 +55,32 @@ Button* ESPIR_Menu::getButtons() {
 	return buttons;
 }
 
+void ESPIR_Menu::addButton(char* action, int total_selectors, int total_buttons){
+	this->buttons[buttons_added] = Button(tft, 0, 4 + buttons_added * 14, tft -> width(), 12, 
+	 		action, total_selectors, total_buttons);
+	buttons_added++;
+}
+
 
 
 
 // Constructor for Button
 Button::Button(Adafruit_ST7735* display, int x_pos, int y_pos, int width, 
-		int height, char* act) {
+		int height, char* act, int total_selectors, int total_buttons) {
 	tft = display;
 	x = x_pos;
 	y = y_pos;
 	w = width;
 	h = height;
 	action = act;
+	element_count = 0;
+	button_count = 0;
 	selector_count = 0;
-	selectors = (Selector*) malloc(sizeof(Selector) * MAX_SELECTORS);
-	current_selector = 0;
+	selectors = (Selector*) malloc(sizeof(Selector) * total_selectors);
+	buttons = (Button*) malloc(sizeof(Button) * total_buttons);
+	current_element = 0;
+
+	element_type = (char*) malloc(sizeof(char) * (total_selectors + total_buttons));
 }
 
 // Display the Button
@@ -98,10 +102,26 @@ void Button::displaySelected() {
 // Add a selector to the submenu of the button
 void Button::addSelector(char* prompt, char** options, 
 		int window_size, int max, int vals) {
-	if (selector_count < MAX_SELECTORS){
+	if (element_count < MAX_ELEMENTS){
+		selectors[selector_count] = Selector(tft, 0, 
+			((element_count) * 28), prompt, options, window_size, max, vals);
+		element_type[element_count] = SELECTOR_ID;
+				
+		element_count++;
 		selector_count++;
-		selectors[selector_count - 1] = Selector(tft, 0, 
-			((selector_count) * 28) - 25, prompt, options, window_size, max, vals);
+	}
+}
+
+// Add a selector to the submenu of the button
+void Button::addButton(char* prompt, int sub_button_count, int sub_selector_count) {
+	if (element_count < MAX_ELEMENTS){
+		buttons[button_count] = Button(tft, 0, 
+			((element_count) * 28), tft->width(), 12, prompt, 
+			sub_button_count, sub_selector_count);
+		element_type[element_count] = BUTTON_ID;
+
+		element_count++;
+		button_count++;
 	}
 }
 
@@ -111,52 +131,79 @@ void Button::drawSubMenu() {
 	
 	for (int i = 0; i < selector_count; i++)
 		selectors[i].display();
+
+	for (int i = 0; i < button_count; i++)
+		buttons[i].display();
 }
 
 // Press the currently selected button on the sub menu
 char* Button::pressSubMenu() {
-	selectors[current_selector].press();
+	if (element_type[current_element] == SELECTOR_ID){
+		selectors[current_element].press();
+	}
 }
 
 // Flash the current selected option
 void Button::flashSelectedSelector() {
-	selectors[current_selector].flashSelected();
+	if (element_type[current_element] == SELECTOR_ID){
+		selectors[current_element].flashSelected();
+	}
 }
 
 // Move down to the next component in the sub menu
 void Button::subMenuDown(){
-	if (selectors[current_selector].atBottom() == 1){
-		if (current_selector != selector_count - 1){
-			current_selector++;
-		} else {
-			current_selector = 0;
+	if (element_type[current_element] == SELECTOR_ID){
+		if (selectors[current_element].atBottom() == 1){
+			if (current_element != element_count - 1){
+				current_element++;
+			} else {
+				current_element = 0;
+			}
+		} else if (selectors[current_element].atBottom() == 0){
+			selectors[current_element].moveDown();
 		}
-	} else if (selectors[current_selector].atBottom() == 0){
-		selectors[current_selector].moveDown();
+	} else if (element_type[current_element] == BUTTON_ID) {
+		if (current_element != element_count - 1){
+			current_element++;
+		} else {
+			current_element = 0;
+		}
 	}
 }
 
 // Move up to the above component in the sub menu
 void Button::subMenuUp() {
-	if (selectors[current_selector].atTop() == 1){
-		if (current_selector != 0){
-			current_selector--;
+	if (element_type[current_element] == SELECTOR_ID){
+		if (selectors[current_element].atTop() == 1){
+			if (current_element != 0){
+				current_element--;
+			} else {
+				current_element = element_count-1;
+			}
 		} else {
-			current_selector = selector_count-1;
+			selectors[current_element].moveUp();
 		}
-	} else {
-		selectors[current_selector].moveUp();
+	} else if (element_type[current_element] == BUTTON_ID){
+		if (current_element != 0){
+			current_element--;
+		} else {
+			current_element = element_count-1;
+		}
 	}
 }
 
 // Selected the option on the left (if possible) in sub menu
 void Button::subMenuLeft() {
-	selectors[current_selector].moveLeft();
+	if (element_type[current_element] == SELECTOR_ID){
+		selectors[current_element].moveLeft();
+	}
 }
 
 // Selected the option on the right (if possible) in sub menu
 void Button::subMenuRight() {
-	selectors[current_selector].moveRight();
+	if (element_type[current_element] == SELECTOR_ID){
+		selectors[current_element].moveRight();
+	}
 }
 
 // Constructor for selector
